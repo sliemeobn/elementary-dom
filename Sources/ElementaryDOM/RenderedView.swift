@@ -18,9 +18,8 @@ struct _DomEventListenerStorage {
     var listeners: [EventHandler] = []
 
     // TODO: figure out how to a) do not use runtime reflection, b) do not drag JSKit dependency into app code, and c) provide extensible but typed event handling system
-    @MainActor
     func handleEvent(_ name: String, _ event: AnyObject) {
-        for listener in listeners where listener.event == name {
+        for listener in listeners where listener.event.utf8Equals(name) {
             listener.handler(event)
         }
     }
@@ -36,15 +35,13 @@ struct DomElement {
 typealias ManagedState = AnyObject
 
 // TODO: better name
-@MainActor
 struct RenderFunction {
     // TODO: think about equality checking or short-circuiting unchanged stuff
     var createInitialState: (() -> ManagedState)?
-    var getContent: @MainActor (_ state: ManagedState?) -> _RenderedView
+    var getContent: (_ state: ManagedState?) -> _RenderedView
 }
 
 extension RenderFunction {
-    @MainActor
     static func from<V: View>(_ view: consuming sending V, context: _ViewRenderingContext) -> RenderFunction {
         // TODO: maybe re-setting state-storage should be done outside of this via thread-locals or just a global thing something?
         // captures context and content's render function

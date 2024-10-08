@@ -1,7 +1,4 @@
-import Observation
-
 // TODO: main-actor stuff very unclear at the moment, ideally not needed at all
-@MainActor
 final class Reconciler<DOMInteractor: DOMInteracting> {
     typealias DOMReference = DOMInteractor.Node
 
@@ -10,19 +7,18 @@ final class Reconciler<DOMInteractor: DOMInteracting> {
 
     private var nextUpdateRun: UpdateRun = .init()
 
-    init<V: View>(dom: DOMInteractor, root view: consuming sending V) {
+    init(dom: DOMInteractor, root renderedRootView: _RenderedView) {
         self.dom = dom
         root = Node.root(domNode: dom.root)
 
         var context = UpdateRun()
-        let renderedRootView = V._renderView(view, context: .empty)
         reconcile(parent: root, withContent: renderedRootView, context: &context)
         performUpdateRun(context)
     }
 
     func reportObservedChange(in node: Node) {
         if nextUpdateRun.isEmpty {
-            Task {
+            dom.requestAnimationFrame { [self] _ in
                 var run = UpdateRun()
                 swap(&run, &nextUpdateRun)
                 performUpdateRun(run)
@@ -32,7 +28,6 @@ final class Reconciler<DOMInteractor: DOMInteracting> {
         nextUpdateRun.registerFunctionForUpdate(node)
     }
 
-    @MainActor
     struct UpdateRun {
         private var functionsToRun: [Node]
         private(set) var nodesWithChangedChildren: [Node]
@@ -78,20 +73,15 @@ final class Reconciler<DOMInteractor: DOMInteracting> {
     }
 
     func performUpdateRun(_ run: consuming UpdateRun) {
-        print("starting update run...")
-        let duration = ContinuousClock().measure {
-            while let next = run.popNextFunctionNode() {
-                runUpdatedFunctionNode(next, context: &run)
-            }
-
-            // deduplicate
-            for node in run.nodesWithChangedChildren {
-                guard let reference = node.domReference else { fatalError("DOM Children update requested for a non-dom node") }
-                dom.replaceChildren(node.getChildReferenceList(), in: reference)
-            }
+        while let next = run.popNextFunctionNode() {
+            runUpdatedFunctionNode(next, context: &run)
         }
 
-        print("update run done, took \(duration)")
+        // deduplicate
+        for node in run.nodesWithChangedChildren {
+            guard let reference = node.domReference else { fatalError("DOM Children update requested for a non-dom node") }
+            dom.replaceChildren(node.getChildReferenceList(), in: reference)
+        }
     }
 
     func runUpdatedFunctionNode(_ node: Node, context: inout UpdateRun) {
@@ -103,9 +93,7 @@ final class Reconciler<DOMInteractor: DOMInteracting> {
             function.getContent(state)
         } onChange: { [self] in
             print("change triggered")
-            Task { @MainActor in
-                self.reportObservedChange(in: node)
-            }
+            self.reportObservedChange(in: node)
         }
 
         reconcile(parent: node, withContent: value, context: &context)
@@ -163,11 +151,11 @@ final class Reconciler<DOMInteractor: DOMInteracting> {
     func tryPatchSingleNode(_ node: Node, _ element: _RenderedView, context: inout UpdateRun) -> Bool {
         switch (node.value, element.value) {
         case let (.text(text), .text(newText)):
-            if text != newText {
+            if !text.utf8Equals(newText) {
                 node.updateValue(.text(newText))
                 dom.patchText(node.domReference!, with: newText, replacing: text)
             }
-        case let (.element(element), .element(newElement, content)) where element.tagName == newElement.tagName:
+        case let (.element(element), .element(newElement, content)) where element.tagName.utf8Equals(newElement.tagName):
             node.updateValue(.element(newElement))
             dom.patchElementAttributes(node.domReference!, with: newElement.attributes, replacing: element.attributes)
             dom.patchEventListeners(node.domReference!, with: newElement.listerners, replacing: element.listerners, sink: node.getOrMakeEventSync(dom))
@@ -227,7 +215,6 @@ final class Reconciler<DOMInteractor: DOMInteracting> {
 }
 
 extension Reconciler {
-    @MainActor
     final class Node {
         enum Value {
             case root
@@ -242,7 +229,8 @@ extension Reconciler {
         private(set) var depthInTree: Int = 0
         private(set) var eventSink: DOMInteractor.EventSink?
 
-        private(set) weak var parent: Node? // problem with embedded?
+        // TODO: no weak in embedded, figure out retain cycles
+        private(set) var parent: Node?
 
         init(value: Value, domReference: DOMReference? = nil) {
             self.value = value
@@ -256,6 +244,7 @@ extension Reconciler {
 
         func replaceChildren(_ newValue: [Node]) {
             // TODO: unmounting, checks
+
             children = newValue
             for child in children {
                 child.parent = self
@@ -272,8 +261,7 @@ extension Reconciler {
                 return sink
             } else {
                 print("creating new event sink for \(value)")
-                let sink = dom.makeEventSink { [weak self] type, event in
-                    guard let self = self else { return }
+                let sink = dom.makeEventSink { [self] type, event in
                     self.handleEvent(type, event: event)
                 }
                 eventSink = sink
@@ -308,7 +296,7 @@ extension Reconciler {
             if domReference != nil {
                 return self
             } else {
-                precondition(parent != nil, "Not allowed on node without parent \(value)")
+                precondition(parent != nil, "Not allowed on node without parent")
                 return parent!.owningDOMReferenceNode()
             }
         }

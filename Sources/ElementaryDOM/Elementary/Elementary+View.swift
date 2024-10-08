@@ -1,11 +1,10 @@
 import Elementary
 
 // TODO: maybe this should not derive from HTML at all
-// TODO: think about how the square the @MainActor thing with server side usage
+// TODO: think about how the square the  thing with server side usage
 // TODO: consuming sending Self... are we sure about this?
 // TODO: maybe the _renderView should "reconcile" itself directly into a generic reconciler type instread of returning a _RenderedView (possible saving some allocations/currency types)
 public protocol View: HTML where Content: View {
-    @MainActor
     static func _renderView(_ view: consuming sending Self, context: consuming _ViewRenderingContext) -> _RenderedView
 }
 
@@ -17,7 +16,6 @@ public extension View where Content == Never {
 
 extension Never: View {}
 
-@MainActor
 public struct _ViewRenderingContext {
     var eventListeners: _DomEventListenerStorage = .init()
     var attributes: _AttributeStorage
@@ -28,7 +26,6 @@ public struct _ViewRenderingContext {
 }
 
 public extension View {
-    @MainActor
     static func _renderView(_ view: consuming sending Self, context: consuming _ViewRenderingContext) -> _RenderedView {
         return .init(
             value: .function(.from(view, context: context))
@@ -37,7 +34,6 @@ public extension View {
 }
 
 extension HTMLElement: View where Content: View {
-    @MainActor
     public static func _renderView(_ view: consuming sending Self, context: consuming _ViewRenderingContext) -> _RenderedView {
         var attributes = view._attributes
         attributes.append(context.attributes)
@@ -75,8 +71,16 @@ extension HTMLText: View {
     }
 }
 
+extension EmptyHTML: View {
+    public static func _renderView(_: consuming Self, context _: consuming _ViewRenderingContext) -> _RenderedView {
+        return .init(
+            value: .nothing
+        )
+    }
+}
+
+@_unavailableInEmbedded
 extension _HTMLTuple: View where repeat each Child: View {
-    @MainActor
     public static func _renderView(_ view: consuming sending Self, context: consuming _ViewRenderingContext) -> _RenderedView {
         var renderedChildren: [_RenderedView] = []
         // renderedChildren.reserveCapacity(view.value.count)
@@ -94,7 +98,6 @@ extension _HTMLTuple: View where repeat each Child: View {
 }
 
 extension Optional: View where Wrapped: View {
-    @MainActor
     public static func _renderView(_ view: consuming sending Self, context: consuming _ViewRenderingContext) -> _RenderedView {
         switch view {
         case let .some(view):
@@ -108,7 +111,6 @@ extension Optional: View where Wrapped: View {
 }
 
 extension _HTMLConditional: View where TrueContent: View, FalseContent: View {
-    @MainActor
     public static func _renderView(_ view: consuming sending Self, context: consuming _ViewRenderingContext) -> _RenderedView {
         switch view.value {
         case let .trueContent(content):
@@ -120,7 +122,6 @@ extension _HTMLConditional: View where TrueContent: View, FalseContent: View {
 }
 
 extension _HTMLArray: View where Element: View {
-    @MainActor
     public static func _renderView(_ view: consuming sending Self, context: consuming _ViewRenderingContext) -> _RenderedView {
         var renderedChildren: [_RenderedView] = []
         renderedChildren.reserveCapacity(view.value.count)

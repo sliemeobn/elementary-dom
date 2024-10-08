@@ -2,7 +2,7 @@ import Elementary
 
 protocol DOMInteracting {
     associatedtype Node
-    associatedtype Event
+    associatedtype Event: AnyObject
     associatedtype EventSink
 
     var root: Node { get }
@@ -15,4 +15,6 @@ protocol DOMInteracting {
     func patchEventListeners(_ node: Node, with listers: _DomEventListenerStorage, replacing: _DomEventListenerStorage, sink: @autoclosure () -> EventSink)
     func patchText(_ node: Node, with text: String, replacing: String)
     func replaceChildren(_ children: [Node], in parent: Node)
+
+    func requestAnimationFrame(_ callback: @escaping (Double) -> Void)
 }
