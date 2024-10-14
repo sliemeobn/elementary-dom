@@ -79,28 +79,15 @@ final class JSKitDOMInteractor: DOMInteracting {
             print("removing listener \(event)")
             _ = node.removeEventListener!(event.jsValue, sink().jsValue)
         }
-        // let diff = new.difference(from: old)
-
-        // for change in diff {
-        //     switch change {
-        //     case let .insert(offset: _, element: event, associatedWith: _):
-        //         print("adding listener \(event)")
-        //         _ = node.addEventListener!(event, sink())
-        //     case let .remove(offset: _, element: event, associatedWith: _):
-        //         print("removing listener \(event)")
-        //         _ = node.removeEventListener!(event, sink())
-        //     }
-        // }
     }
 
     func patchText(_ node: Node, with text: String, replacing: String) {
         guard !text.utf8Equals(replacing) else { return }
-        // print("patching text \(replacing) -> \(text)")
-        _ = node.textContent = .string(text)
+        _ = node.textContent = text.jsValue
     }
 
     func replaceChildren(_ children: [Node], in parent: Node) {
-        // print("setting \(children.count) children in \(parent)")
+        print("setting \(children.count) children in \(parent)")
         let function = parent.replaceChildren.function!
         function.callAsFunction(
             this: parent,

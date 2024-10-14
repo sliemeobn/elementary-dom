@@ -21,7 +21,7 @@ public struct _ViewRenderingContext {
     var attributes: _AttributeStorage
 
     public static var empty: Self {
-        .init(attributes: .init())
+        .init(attributes: .none)
     }
 }
 
@@ -79,7 +79,7 @@ extension EmptyHTML: View {
     }
 }
 
-@_unavailableInEmbedded
+#if !hasFeature(Embedded)
 extension _HTMLTuple: View where repeat each Child: View {
     public static func _renderView(_ view: consuming sending Self, context: consuming _ViewRenderingContext) -> _RenderedView {
         var renderedChildren: [_RenderedView] = []
@@ -96,6 +96,7 @@ extension _HTMLTuple: View where repeat each Child: View {
         )
     }
 }
+#endif
 
 extension Optional: View where Wrapped: View {
     public static func _renderView(_ view: consuming sending Self, context: consuming _ViewRenderingContext) -> _RenderedView {

@@ -74,6 +74,7 @@ final class Reconciler<DOMInteractor: DOMInteracting> {
 
     func performUpdateRun(_ run: consuming UpdateRun) {
         while let next = run.popNextFunctionNode() {
+            print("running node on depth \(next.depthInTree)")
             runUpdatedFunctionNode(next, context: &run)
         }
 
@@ -111,8 +112,13 @@ final class Reconciler<DOMInteractor: DOMInteracting> {
         // handle lists special
         if case let .list(elements) = renderedElement.value {
             var newList = [Node]() // TODO: avoidable allocation
-            var hasChanged = false
-            for (index, newValue) in elements.flattened().enumerated() {
+            let renderedViews = elements.flattened()
+
+            // things definitely have changed if the number of children is different
+            // otherwise, the loop will detect if nothing changed
+            var hasChanged = parent.children.count != renderedViews.count
+
+            for (index, newValue) in renderedViews.enumerated() {
                 // TODO: use identitiy and do proper collection diffing
                 if parent.children.count > index {
                     let existingNode = parent.children[index]

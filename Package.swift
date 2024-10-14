@@ -13,9 +13,8 @@ let package = Package(
         .library(name: "ElementaryDOM", targets: ["ElementaryDOM"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/swiftwasm/carton", from: "1.0.0"),
         .package(url: "https://github.com/sliemeobn/JavaScriptKit", branch: "swift-embedded"),
-        .package(url: "https://github.com/sliemeobn/elementary", branch: "experiment/elementary-dom"),
+        .package(url: "https://github.com/sliemeobn/elementary", branch: "main"),
     ],
     targets: [
         .target(
@@ -28,19 +27,5 @@ let package = Package(
                 ? [.unsafeFlags(["-Xfrontend", "-emit-empty-object-file"])]
                 : []
         ),
-        // .executableTarget(
-        //     name: "ExampleApp",
-        //     dependencies: [
-        //         .target(name: "ElementaryDOM"),
-        //         .product(name: "String16", package: "String16"),
-        //         .product(name: "JavaScriptKitEmbedded", package: "JavaScriptKit"),
-        //     ]
-        // ),
-        // .executableTarget(
-        //     name: "TestApp",
-        //     dependencies: [
-        //         .product(name: "JavaScriptKit", package: "JavaScriptKit"),
-        //     ]
-        // ),
     ]
 )

@@ -2,12 +2,6 @@
 
 Developed with dev snapshot of swift and matching wasm SDK.
 
-```sh
-# DEVELOPMENT-SNAPSHOT-2024-09-17-a
-# run carton dev
-swift package --disable-sandbox --swift-sdk DEVELOPMENT-SNAPSHOT-2024-09-20-a-wasm32-unknown-wasi carton-dev
-```
-
 ## Things to figure out
 
 - isolation and @MainActor stuff for reusable types (server-side-rendering and client apps)
