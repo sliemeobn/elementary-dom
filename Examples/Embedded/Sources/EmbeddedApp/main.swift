@@ -1,6 +1,10 @@
 import ElementaryDOM
 import JavaScriptKit
 
+_ = JSObject.global.console.log("Hello from Embedded Swift")
+
+print("Hello from Embedded Swift")
+
 App().mount(in: JSObject.global.document.body.object!)
 
 let state = State()

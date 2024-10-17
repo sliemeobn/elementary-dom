@@ -1,10 +1,9 @@
-
 // swift-tools-version: 5.10
 import Foundation
 import PackageDescription
 
 let shouldBuildForEmbedded =
-    ProcessInfo.processInfo.environment["EXPERIMENTAL_EMBEDDED_WASM"].flatMap(Bool.init) ?? false
+    ProcessInfo.processInfo.environment["JAVASCRIPTKIT_EXPERIMENTAL_EMBEDDED_WASM"].flatMap(Bool.init) ?? false
 
 let package = Package(
     name: "Test",
@@ -13,7 +12,7 @@ let package = Package(
         .library(name: "ElementaryDOM", targets: ["ElementaryDOM"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/sliemeobn/JavaScriptKit", branch: "swift-embedded"),
+        .package(url: "https://github.com/swiftwasm/JavaScriptKit", branch: "main"),
         .package(url: "https://github.com/sliemeobn/elementary", branch: "main"),
     ],
     targets: [
