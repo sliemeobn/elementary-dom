@@ -31,11 +31,11 @@ jobs:
       - name: Build
         working-directory: Examples/Embedded
         run: ./build.sh
-      # - name: Optimize Wasm
-      #   uses: NiklasEi/wasm-opt-action@v2
-      #   with:
-      #     file: some/path/to/file.wasm
-      #     output: some/path/to/file.wasm
+      - name: Optimize Wasm
+        uses: NiklasEi/wasm-opt-action@v2
+        with:
+          file: Examples/Embedded/Public/app.wasm
+          output: Examples/Embedded/Public/app.wasm
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
