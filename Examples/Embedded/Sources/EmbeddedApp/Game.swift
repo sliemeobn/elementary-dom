@@ -40,7 +40,7 @@ struct Game {
 
                 if guesses[guessIndex].areAllLettersCorrect {
                     state = .won
-                } else if guessIndex == guesses.endIndex {
+                } else if guessIndex == guesses.endIndex - 1 {
                     state = .lost
                 }
             }
@@ -54,8 +54,8 @@ struct Guess {
         case entered
     }
 
-    var letters: [LetterGuess?]
-    var status: Status = .notEntered
+    private(set) var letters: [LetterGuess?]
+    private(set) var status: Status = .notEntered
 
     init(letterCount: Int = 5) {
         letters = (0 ..< letterCount).map { _ in nil }

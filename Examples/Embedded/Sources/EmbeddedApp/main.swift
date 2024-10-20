@@ -16,6 +16,10 @@ final class GameStore {
     func onKeyPressed(_ key: EnteredKey) {
         game.handleKey(key)
     }
+
+    func onRestart() {
+        game = Game()
+    }
 }
 
 let store = GameStore()
@@ -26,7 +30,8 @@ struct App: View {
     var content: some View {
         GameView(
             game: store.game,
-            onKeyPressed: store.onKeyPressed
+            onKeyPressed: store.onKeyPressed,
+            onRestart: store.onRestart
         )
     }
 }
