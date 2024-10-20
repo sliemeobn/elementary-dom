@@ -28,11 +28,11 @@ final class JSKitDOMInteractor: DOMInteracting {
     }
 
     func createText(_ text: String) -> Node {
-        document.createTextNode(text).object!
+        document.createTextNode(text.jsValue).object!
     }
 
     func createElement(_ element: String) -> Node {
-        document.createElement(element).object!
+        document.createElement(element.jsValue).object!
     }
 
     func patchElementAttributes(_ node: Node, with attributes: _AttributeStorage, replacing: _AttributeStorage) {
@@ -41,16 +41,16 @@ final class JSKitDOMInteractor: DOMInteracting {
 
         var previous = replacing.flattened().reversed()
         for attribute in attributes.flattened() {
-            let previousIndex = previous.firstIndex { $0.name == attribute.name }
+            let previousIndex = previous.firstIndex { $0.name.utf8Equals(attribute.name) }
             if let previousValue = previousIndex {
                 let oldValue = previous.remove(at: previousValue)
-                if oldValue.value != attribute.value {
-                    print("updating attribute \(attribute.name) from \(oldValue.value) to \(attribute.value)")
-                    _ = node.setAttribute!(attribute.name, attribute.value)
+                if !oldValue.value.utf8Equals(attribute.value) {
+                    print("updating attribute \(attribute.name) from \(oldValue.value ?? "") to \(attribute.value ?? "")")
+                    _ = node.setAttribute!(attribute.name.jsValue, attribute.value.jsValue)
                 }
             } else {
-                print("setting attribute \(attribute.name) to \(attribute.value)")
-                _ = node.setAttribute!(attribute.name, attribute.value)
+                print("setting attribute \(attribute.name) to \(attribute.value ?? "")")
+                _ = node.setAttribute!(attribute.name.jsValue, attribute.value.jsValue)
             }
         }
 
@@ -63,31 +63,42 @@ final class JSKitDOMInteractor: DOMInteracting {
     func patchEventListeners(_ node: Node, with listers: _DomEventListenerStorage, replacing: _DomEventListenerStorage, sink: @autoclosure () -> EventSink) {
         guard !(listers.listeners.isEmpty && replacing.listeners.isEmpty) else { return }
 
-        let new = listers.listeners.map(\.event)
-        let old = replacing.listeners.map(\.event)
-        let diff = new.difference(from: old)
+        var previous = replacing.listeners.map { $0.event }
 
-        for change in diff {
-            switch change {
-            case let .insert(offset: _, element: event, associatedWith: _):
+        for event in listers.listeners.map({ $0.event }) {
+            let previousIndex = previous.firstIndex { $0.utf8Equals(event) }
+            if let previousIndex {
+                previous.remove(at: previousIndex)
+            } else {
                 print("adding listener \(event)")
-                _ = node.addEventListener!(event, sink())
-            case let .remove(offset: _, element: event, associatedWith: _):
-                print("removing listener \(event)")
-                _ = node.removeEventListener!(event, sink())
+                _ = node.addEventListener!(event.jsValue, sink().jsValue)
             }
+        }
+
+        for event in previous {
+            print("removing listener \(event)")
+            _ = node.removeEventListener!(event.jsValue, sink().jsValue)
         }
     }
 
     func patchText(_ node: Node, with text: String, replacing: String) {
-        print("patching text \(replacing) -> \(text)")
-        guard text != replacing else { return }
-        _ = node.textContent = .string(text)
+        guard !text.utf8Equals(replacing) else { return }
+        _ = node.textContent = text.jsValue
     }
 
     func replaceChildren(_ children: [Node], in parent: Node) {
         print("setting \(children.count) children in \(parent)")
         let function = parent.replaceChildren.function!
-        function.callAsFunction(this: parent, arguments: children)
+        function.callAsFunction(
+            this: parent,
+            arguments: children.map { $0.jsValue }
+        )
+    }
+
+    func requestAnimationFrame(_ callback: @escaping (Double) -> Void) {
+        _ = JSObject.global.requestAnimationFrame!(JSClosure { args in
+            callback(args[0].number!)
+            return .undefined
+        }.jsValue)
     }
 }
