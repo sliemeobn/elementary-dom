@@ -4,7 +4,7 @@ Requires a recent DEVELOPMENT-SNAPSHOT toolchain. (tested with swift-DEVELOPMENT
 
 ```sh
 $ ./build.sh
-$ npx serve
+$ npx serve Public
 ```
 
 ```sh
