@@ -6,14 +6,14 @@ struct GameView: View {
     var onRestart: () -> Void
 
     var content: some View {
-        main(.class("flex flex-col items-center h-screen bg-black text-white")) {
+        main(.class("flex flex-col gap-5 items-center h-screen bg-black text-white")) {
             div(.class("flex gap-4 items-center pt-5")) {
                 SwiftLogo()
                 h1(.class("text-2xl uppercase tracking-wider font-serif")) { "Swiftle" }
                 SwiftLogo()
             }
 
-            div(.class("flex flex-col gap-1 font-mono py-5 relative")) {
+            div(.class("flex flex-col gap-1 font-mono relative")) {
                 for guess in game.guesses {
                     GuessView(guess: guess)
                 }
@@ -22,6 +22,19 @@ struct GameView: View {
             }
 
             KeyboardView(keyboard: game.keyboard, onKeyPressed: onKeyPressed)
+
+            footer {
+                p(.class("text-xs text-gray-400 text-center")) {
+                    "This is a proof of concept demo of an Embedded Swift Wasm app."
+                    br()
+                    "Find the source code in the "
+                    a(.href("https://github.com/sliemeobn/elementary-dom"),
+                      .class("text-orange-600 hover:underline"))
+                    {
+                        "elementary-dom github repository."
+                    }
+                }
+            }
         }
     }
 }
@@ -98,10 +111,11 @@ struct KeyboardLetterView: View {
                 guess.letter.value
             }
         }
-        .attributes(.class("bg-gray-400"), when: guess.status == .unknown)
-        .attributes(.class("bg-green-600"), when: guess.status == .correctPosition)
-        .attributes(.class("bg-yellow-600"), when: guess.status == .inWord)
-        .attributes(.class("bg-gray-600"), when: guess.status == .notInWord)
+        .enabledMobileActive()
+        .attributes(.class("bg-gray-400 active:bg-gray-300"), when: guess.status == .unknown)
+        .attributes(.class("bg-gray-600 active:bg-gray-500"), when: guess.status == .notInWord)
+        .attributes(.class("bg-yellow-600 active:bg-yellow-500"), when: guess.status == .inWord)
+        .attributes(.class("bg-green-600 active:bg-green-500"), when: guess.status == .correctPosition)
         .onClick { _ in
             onKeyPressed(.letter(guess.letter))
         }
@@ -115,7 +129,8 @@ struct EnterKeyView: View {
         button(.class("flex justify-center items-center w-12 h-10 p-2 rounded-sm")) {
             img(.src("enter.svg"))
         }
-        .attributes(.class("bg-gray-400"))
+        .enabledMobileActive()
+        .attributes(.class("bg-gray-400 active:bg-gray-300"))
         .onClick { _ in
             onKeyPressed(.enter)
         }
@@ -129,7 +144,8 @@ struct BackspaceKeyView: View {
         button(.class("flex justify-center items-center w-12 h-10 p-1 rounded-sm")) {
             img(.src("backspace.svg"))
         }
-        .attributes(.class("bg-gray-400"))
+        .enabledMobileActive()
+        .attributes(.class("bg-gray-400 active:bg-gray-300"))
         .onClick { _ in
             onKeyPressed(.backspace)
         }
@@ -143,7 +159,7 @@ struct GameEndOverlay: View {
     var content: some View {
         if game.state != .playing {
             div(.class("absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center")) {
-                div(.class("bg-gray-600 p-5 rounded-md flex flex-col gap-4 items-center w-full mx-2")) {
+                div(.class("bg-gray-600 p-5 rounded-md flex flex-col gap-4 items-center w-full mx-2 shadow-lg")) {
                     h1(.class("text-xl uppercase tracking-wider")) {
                         game.state == .won ? "Nice job!" : "Oh no!"
                     }
@@ -155,5 +171,11 @@ struct GameEndOverlay: View {
                 }
             }
         }
+    }
+}
+
+extension View where Tag == HTMLTag.button {
+    func enabledMobileActive() -> _AttributedElement<Self> {
+        attributes(.custom(name: "ontouchstart", value: ""))
     }
 }
