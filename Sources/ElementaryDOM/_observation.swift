@@ -1,4 +1,4 @@
-// this is just a super quick and fast patch to try out updated views, this needs a bit of work and thiking
+// this is just a super quick and fast patch to try out updated views, this needs a bit of work and thinking
 
 var closures: [() -> Void] = []
 

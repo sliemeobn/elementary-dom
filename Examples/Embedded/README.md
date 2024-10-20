@@ -6,3 +6,7 @@ Requires a recent DEVELOPMENT-SNAPSHOT toolchain. (tested with swift-DEVELOPMENT
 $ ./build.sh
 $ npx serve
 ```
+
+```sh
+$ ./watch.sh
+```

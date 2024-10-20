@@ -64,3 +64,22 @@ extension _HTMLTuple6: View where V0: View, V1: View, V2: View, V3: View, V4: Vi
         )
     }
 }
+
+#if !hasFeature(Embedded)
+extension _HTMLTuple: View where repeat each Child: View {
+    public static func _renderView(_ view: consuming sending Self, context: consuming _ViewRenderingContext) -> _RenderedView {
+        var renderedChildren: [_RenderedView] = []
+        // renderedChildren.reserveCapacity(view.value.count)
+
+        func addChild<C: View>(_ child: consuming sending C) {
+            renderedChildren.append(C._renderView(child, context: copy context))
+        }
+
+        repeat addChild(each view.value)
+
+        return .init(
+            value: .list(renderedChildren)
+        )
+    }
+}
+#endif
