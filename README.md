@@ -1,3 +1,7 @@
+# Reactive Wasm Web-Components with Embedded Swift 
+
+Check out the example app: https://sliemeobn.github.io/elementary-dom/
+
 ## Highly experimental, do not use.
 
 Developed with dev snapshot of swift and matching wasm SDK.
