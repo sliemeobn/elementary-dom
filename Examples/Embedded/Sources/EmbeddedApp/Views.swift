@@ -17,11 +17,12 @@ struct GameView: View {
                 for guess in game.guesses {
                     GuessView(guess: guess)
                 }
-
-                GameEndOverlay(game: game, onRestart: onRestart)
             }
 
-            KeyboardView(keyboard: game.keyboard, onKeyPressed: onKeyPressed)
+            div(.class("relative")) {
+                KeyboardView(keyboard: game.keyboard, onKeyPressed: onKeyPressed)
+                GameEndOverlay(game: game, onRestart: onRestart)
+            }
 
             footer {
                 p(.class("text-xs text-gray-400 text-center")) {
@@ -158,12 +159,12 @@ struct GameEndOverlay: View {
 
     var content: some View {
         if game.state != .playing {
-            div(.class("absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center")) {
-                div(.class("bg-gray-600 p-5 rounded-md flex flex-col gap-4 items-center w-full mx-2 shadow-lg")) {
-                    h1(.class("text-xl uppercase tracking-wider")) {
+            div(.class("absolute inset-0 bg-black bg-opacity-60 flex flex-col items-center")) {
+                div(.class("flex flex-col gap-2 items-center pt-2 font-bold")) {
+                    h1(.class("text-xl uppercase tracking-wider shadow-lg")) {
                         game.state == .won ? "Nice job!" : "Oh no!"
                     }
-                    button(.class("bg-orange-500 p-2 rounded-md w-full")) {
+                    button(.class("bg-orange-500 py-2 px-6 rounded-md shadow-lg")) {
                         "Restart"
                     }.onClick { _ in
                         onRestart()
