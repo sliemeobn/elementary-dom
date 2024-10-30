@@ -1,6 +1,7 @@
-import ElementaryDOM
+import Reactivity
 
-struct Game {
+@Reactive
+final class Game {
     enum State {
         case playing
         case won
@@ -18,7 +19,7 @@ struct Game {
         guesses = (0 ..< 6).map { _ in Guess() }
     }
 
-    mutating func handleKey(_ key: EnteredKey) {
+    func handleKey(_ key: EnteredKey) {
         guard state == .playing else {
             return
         }
@@ -149,8 +150,9 @@ struct ValidLetter {
     }
 }
 
-struct Keyboard {
-    var letters: [LetterGuess]
+@Reactive
+final class Keyboard {
+    private(set) var letters: [LetterGuess]
 
     var topRow: ArraySlice<LetterGuess> { letters[0 ..< 10] }
     var middleRow: ArraySlice<LetterGuess> { letters[10 ..< 19] }
@@ -165,7 +167,7 @@ struct Keyboard {
         ].map { LetterGuess(letter: ValidLetter($0)!) }
     }
 
-    mutating func applyValidatedGuess(_ guess: Guess) {
+    func applyValidatedGuess(_ guess: Guess) {
         for letter in guess.letters {
             guard let index = letters.firstIndex(where: { $0.letter.asciiValue == letter?.letter.asciiValue }) else {
                 preconditionFailure()

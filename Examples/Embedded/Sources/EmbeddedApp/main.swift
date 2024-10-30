@@ -1,13 +1,9 @@
 import ElementaryDOM
 import JavaScriptKit
 
-// this would be an @Observable
+@Reactive
 final class GameStore {
-    private(set) var game: Game {
-        willSet {
-            _future_change_tracking_manual_for_now()
-        }
-    }
+    private(set) var game: Game
 
     init() {
         game = Game()
