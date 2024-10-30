@@ -6,7 +6,7 @@ Check out the example app: https://sliemeobn.github.io/elementary-dom/
 
 ## Highly experimental, do not use.
 
-Developed with dev snapshot of swift and matching wasm SDK.
+Developed with a recent snapshot of swift. No WASM/WASI SDK required when built for Embedded (see [Example](Examples/Embedded))
 
 ## Things to figure out
 
@@ -26,11 +26,3 @@ This package is generally licensed as [Apache 2](LICENSE).
 
 The `Rectivity` module is inspired by the Swift stdlib's `Observation` framework, and code in `ReactivityMacros` is directly derived from it ([source](https://github.com/swiftlang/swift/tree/main/lib/Macros/Sources/ObservationMacros)).
 Find a copy of the Swift.org open source project license [here](LICENSE-swift_org.md).
-
-## Command Graveyard
-
-```
-swift build --swift-sdk DEVELOPMENT-SNAPSHOT-2024-09-20-a-wasm32-unknown-wasi -Xswiftc -static-stdlib -c release -Xswiftc -wmo -Xswiftc -Xclang-linker -Xswiftc -mexec-model=reactor -Xlinker --export-if-defined=__main_argc_argv
-
-python3 -m http.server -d TestPage
-```
