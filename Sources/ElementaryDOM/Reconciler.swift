@@ -90,7 +90,8 @@ final class Reconciler<DOMInteractor: DOMInteracting> {
             fatalError("Expected function")
         }
 
-        let value = withObservationTracking {
+        // TODO: expose cancellation mechanism and keep track of it
+        let value = withReactiveTracking {
             function.getContent(state)
         } onChange: { [self] in
             print("change triggered")
