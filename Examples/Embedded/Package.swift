@@ -14,7 +14,7 @@ let package = Package(
     dependencies: [
         .package(name: "ElementaryDOM", path: "../../"),
         .package(url: "https://github.com/swiftwasm/swift-dlmalloc", from: "0.1.0"),
-        .package(url: "https://github.com/sliemeobn/JavaScriptKit", branch: "embedded/build-flags"),
+        .package(url: "https://github.com/swiftwasm/JavaScriptKit", branch: "main"),
     ],
     targets: [
         .executableTarget(

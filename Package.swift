@@ -11,7 +11,7 @@ let package = Package(
         .library(name: "ElementaryDOM", targets: ["ElementaryDOM", "Reactivity"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/sliemeobn/JavaScriptKit", branch: "embedded/build-flags"),
+        .package(url: "https://github.com/swiftwasm/JavaScriptKit", branch: "main"),
         .package(url: "https://github.com/sliemeobn/elementary", branch: "main"),
         .package(url: "https://github.com/swiftlang/swift-syntax", "600.0.0" ..< "601.0.0-prerelease"),
     ],
