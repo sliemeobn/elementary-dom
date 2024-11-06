@@ -173,6 +173,8 @@ final class Reconciler<DOMInteractor: DOMInteracting> {
             _ = function
             node.updateValue(.function(newFunction, state))
             context.registerFunctionForUpdate(node)
+        case let (.lifecycle, .lifecycle(_, content)):
+            reconcile(parent: node, withContent: content, context: &context)
         case (_, .list(_)):
             preconditionFailure("List must be flattened before reconciling")
         default:
@@ -201,10 +203,14 @@ final class Reconciler<DOMInteractor: DOMInteracting> {
                 nodes.append(contentsOf: mount(element, context: &context))
             }
         case let .function(function):
-            let state = function.createInitialState?()
+            let state = function.initializeState?()
             let node = Node(value: .function(function, state))
             nodes.append(node)
             context.registerFunctionForUpdate(node)
+        case let .lifecycle(hook, content):
+            let node = Node(value: .lifecycle(hook))
+            node.replaceChildren(mount(content, context: &context))
+            nodes.append(node)
         case .nothing:
             ()
         }
@@ -226,8 +232,10 @@ extension Reconciler {
         enum Value {
             case root
             case text(String)
-            case element(DomElement)
-            case function(RenderFunction, ManagedState?)
+            case element(_DomElement)
+            case function(_RenderFunction, _ManagedState?)
+            case lifecycle(_LifecycleHook)
+            case __unmounted
         }
 
         private(set) var value: Value
@@ -235,9 +243,9 @@ extension Reconciler {
         private(set) var children: [Node] // TODO: avoidable allocation, think about using sibling pattern
         private(set) var depthInTree: Int = 0
         private(set) var eventSink: DOMInteractor.EventSink?
-
-        // TODO: no weak in embedded, figure out retain cycles
         private(set) var parent: Node?
+
+        private var unmountAction: (() -> Void)?
 
         init(value: Value, domReference: DOMReference? = nil) {
             self.value = value
@@ -250,13 +258,23 @@ extension Reconciler {
         }
 
         func replaceChildren(_ newValue: [Node]) {
-            // TODO: unmounting, checks
+            // TODO: makes this faster
+
+            for child in newValue {
+                if child.parent == nil {
+                    child.mount(in: self)
+                } else if child.parent! !== self {
+                    preconditionFailure("Child already has a parent")
+                }
+            }
+
+            for existing in children {
+                if !newValue.contains(where: { $0 === existing }) {
+                    existing.unmount()
+                }
+            }
 
             children = newValue
-            for child in children {
-                child.parent = self
-                child.depthInTree = depthInTree + 1
-            }
         }
 
         func updateValue(_ value: Value) {
@@ -305,6 +323,50 @@ extension Reconciler {
             } else {
                 precondition(parent != nil, "Not allowed on node without parent")
                 return parent!.owningDOMReferenceNode()
+            }
+        }
+
+        private func mount(in parent: Node) {
+            precondition(self.parent == nil, "Mounting node that is already mounted")
+            self.parent = parent
+            depthInTree = parent.depthInTree + 1
+
+            guard case let .lifecycle(hook) = value else { return }
+            switch hook {
+            case let .onMount(onMount):
+                onMount()
+            case let .onUnmount(onUnmount):
+                unmountAction = onUnmount
+            case let .task(task):
+                // #if canImport(_Concurrency)
+                #if !hasFeature(Embedded)
+                // TODO: figure out if Task will ever be available in embedded for wasm
+                let task = Task { await task() }
+                unmountAction = task.cancel
+                #else
+                fatalError("Task lifecycle hook not supported without _Concurrency")
+                #endif
+            case let .onMountReturningCancelFunction(function):
+                unmountAction = function()
+            case .__none:
+                preconditionFailure("__none lifecycle hook on mount")
+            }
+
+            value = .lifecycle(.__none)
+        }
+
+        private func unmount() {
+            for child in children {
+                child.unmount()
+            }
+
+            parent = nil
+            domReference = nil
+            value = .__unmounted
+
+            if let action = unmountAction {
+                action()
+                unmountAction = nil
             }
         }
     }

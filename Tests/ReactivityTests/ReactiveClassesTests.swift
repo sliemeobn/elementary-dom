@@ -5,7 +5,7 @@ import Testing
 @Suite
 struct ReactiveClassesTests {
     @Test
-    func trackesChanges() {
+    func tracksChanges() {
         let foo = Foo()
         let tracker = ChangeTracker()
 

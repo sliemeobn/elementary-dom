@@ -1,4 +1,4 @@
-// swift-tools-version:5.10
+// swift-tools-version:6.0
 import PackageDescription
 
 let shouldBuildForEmbedded =
@@ -10,7 +10,7 @@ let extraDependencies: [Target.Dependency] = shouldBuildForEmbedded
 
 let package = Package(
     name: "Embedded",
-    platforms: [.macOS(.v14)],
+    platforms: [.macOS(.v15)],
     dependencies: [
         .package(name: "ElementaryDOM", path: "../../"),
         .package(url: "https://github.com/swiftwasm/swift-dlmalloc", from: "0.1.0"),
@@ -24,21 +24,22 @@ let package = Package(
                 .product(name: "JavaScriptKit", package: "JavaScriptKit"),
             ] + extraDependencies,
             cSettings: [.unsafeFlags(["-fdeclspec"])],
-            swiftSettings: [
+            swiftSettings: shouldBuildForEmbedded ? [
                 .enableExperimentalFeature("Embedded"),
                 .enableExperimentalFeature("Extern"),
                 .unsafeFlags([
                     "-Xfrontend", "-gnone",
                     "-Xfrontend", "-disable-stack-protector",
                 ]),
-            ],
-            linkerSettings: [
+            ] : nil,
+            linkerSettings: shouldBuildForEmbedded ? [
                 .unsafeFlags([
                     "-Xclang-linker", "-nostdlib",
                     "-Xlinker", "--no-entry",
                     "-Xlinker", "--export-if-defined=__main_argc_argv",
                 ]),
-            ]
+            ] : nil
         ),
-    ]
+    ],
+    swiftLanguageModes: [.v5]
 )

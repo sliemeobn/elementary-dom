@@ -21,6 +21,7 @@ let package = Package(
             dependencies: [
                 .product(name: "Elementary", package: "elementary"),
                 .product(name: "JavaScriptKit", package: "JavaScriptKit"),
+                .target(name: "ElementaryDOMMacros"),
                 .target(name: "Reactivity"),
             ],
             cSettings: shouldBuildForEmbedded ? [
@@ -35,6 +36,15 @@ let package = Package(
                 ]
                 : [.swiftLanguageMode(.v5)]
         ),
+        .macro(name: "ElementaryDOMMacros", dependencies: [
+            .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
+            .product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
+        ]),
+        .testTarget(
+            name: "ElementaryDOMTests",
+            dependencies: ["ElementaryDOM"]
+        ),
+        /// --- REACTIVITY ---
         .target(
             name: "Reactivity",
             dependencies: ["ReactivityMacros"],

@@ -1,9 +1,16 @@
 import ElementaryDOM
 
-struct GameView: View {
-    var game: Game
-    var onKeyPressed: (EnteredKey) -> Void
-    var onRestart: () -> Void
+@View
+struct GameView {
+    @State var game = Game()
+
+    func onKeyPressed(_ key: EnteredKey) {
+        game.handleKey(key)
+    }
+
+    func onRestart() {
+        game = Game()
+    }
 
     var content: some View {
         main(.class("flex flex-col gap-5 items-center h-screen bg-black text-white")) {
@@ -36,6 +43,9 @@ struct GameView: View {
                     }
                 }
             }
+        }.receive(GlobalDocument.onKeyDown) { event in
+            guard let key = EnteredKey(event) else { return }
+            onKeyPressed(key)
         }
     }
 }
@@ -178,5 +188,20 @@ struct GameEndOverlay: View {
 extension View where Tag == HTMLTag.button {
     func enabledMobileActive() -> _AttributedElement<Self> {
         attributes(.custom(name: "ontouchstart", value: ""))
+    }
+}
+
+extension EnteredKey {
+    init?(_ event: KeyboardEvent) {
+        let key = event.key
+        if let validLetter = ValidLetter(key) {
+            self = .letter(validLetter)
+        } else if key.utf8Equals("Backspace") {
+            self = .backspace
+        } else if key.utf8Equals("Enter") {
+            self = .enter
+        } else {
+            return nil
+        }
     }
 }

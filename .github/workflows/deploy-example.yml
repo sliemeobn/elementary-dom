@@ -29,19 +29,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Build
-        working-directory: Examples/Embedded
+        working-directory: Examples/Swiftle
         run: ./build.sh
       - name: Optimize Wasm
         uses: NiklasEi/wasm-opt-action@v2
         with:
-          file: Examples/Embedded/Public/app.wasm
-          output: Examples/Embedded/Public/app.wasm
+          file: Examples/Swiftle/Public/app.wasm
+          output: Examples/Swiftle/Public/app.wasm
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: "Examples/Embedded/Public"
+          path: "Examples/Swiftle/Public"
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
