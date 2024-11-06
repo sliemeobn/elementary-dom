@@ -39,7 +39,7 @@ extension HTMLElement: View where Content: View {
         attributes.append(context.attributes)
 
         return .init(
-            value: .element(DomElement(
+            value: .element(_DomElement(
                 tagName: Tag.name,
                 attributes: attributes,
                 listerners: context.eventListeners
@@ -54,7 +54,7 @@ extension HTMLVoidElement: View {
         attributes.append(context.attributes)
 
         return .init(
-            value: .element(DomElement(
+            value: .element(_DomElement(
                 tagName: Tag.name,
                 attributes: attributes,
                 listerners: context.eventListeners

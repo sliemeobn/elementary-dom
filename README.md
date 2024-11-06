@@ -6,7 +6,7 @@ Check out the example app: https://sliemeobn.github.io/elementary-dom/
 
 ## Highly experimental, do not use.
 
-Developed with a recent snapshot of swift. No WASM/WASI SDK required when built for Embedded (see [Example](Examples/Embedded))
+Developed with a recent snapshot of swift. No WASM/WASI SDK required when built for Embedded (see [Examples](Examples))
 
 ## Things to figure out
 

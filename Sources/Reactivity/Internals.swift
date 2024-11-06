@@ -28,7 +28,7 @@ final class MutexBox<State>: Sendable {
         self.state = Mutex(state)
     }
 
-    func withLock<Result>(_ body: (inout sending State) -> sending Result) -> sending Result {
+    func withLock<Result>(_ body: sending (inout sending State) -> sending Result) -> sending Result {
         return state.withLock(body)
     }
 

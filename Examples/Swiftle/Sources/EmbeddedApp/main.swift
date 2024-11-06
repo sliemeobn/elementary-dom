@@ -18,10 +18,9 @@ final class GameStore {
     }
 }
 
-let store = GameStore()
-
-struct App: View {
-    // game should be a @State property
+@View
+struct App {
+    @State var store = GameStore()
 
     var content: some View {
         GameView(
@@ -34,8 +33,8 @@ struct App: View {
 
 App().mount(in: JSObject.global.document.body.object!)
 
-// this should probably go in an "onMounted" closure or similar
-Document.onKeyDown { event in
-    guard let key = EnteredKey(event) else { return }
-    store.onKeyPressed(key)
-}
+// // this should probably go in an "onMounted" closure or similar
+// Document.onKeyDown { event in
+//     guard let key = EnteredKey(event) else { return }
+//     store.onKeyPressed(key)
+// }

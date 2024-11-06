@@ -201,7 +201,7 @@ final class Reconciler<DOMInteractor: DOMInteracting> {
                 nodes.append(contentsOf: mount(element, context: &context))
             }
         case let .function(function):
-            let state = function.createInitialState?()
+            let state = function.initializeState?()
             let node = Node(value: .function(function, state))
             nodes.append(node)
             context.registerFunctionForUpdate(node)
@@ -226,8 +226,8 @@ extension Reconciler {
         enum Value {
             case root
             case text(String)
-            case element(DomElement)
-            case function(RenderFunction, ManagedState?)
+            case element(_DomElement)
+            case function(_RenderFunction, _ManagedState?)
         }
 
         private(set) var value: Value
