@@ -7,6 +7,18 @@
   </head>
 
   <body style="background-color: black">
-    <script src="./index.js" type="module"></script>
+    <script type="module">
+      const [response, jsk] = await Promise.all([
+        fetch(`app.wasm`),
+        import(`./javascript-kit/index.mjs`),
+      ]);
+
+      const swift = new jsk.SwiftRuntime();
+      const { instance } = await WebAssembly.instantiateStreaming(response, {
+        javascript_kit: swift.wasmImports,
+      });
+      swift.setInstance(instance);
+      swift.main();
+    </script>
   </body>
 </html>
