@@ -49,6 +49,22 @@ public struct MouseEvent: DOMEvent {
     }
 }
 
+public struct InputEvent: DOMEvent {
+    var rawEvent: JSObject
+
+    public init?(_ rawEvent: JSObject) {
+        self.rawEvent = rawEvent
+    }
+
+    public var data: String? {
+        rawEvent.data.string
+    }
+
+    public var targetValue: String? {
+        rawEvent.target.value.string
+    }
+}
+
 public extension View {
     func onKeyDown(_ handler: @escaping (consuming KeyboardEvent) -> Void) -> _EventHandlingView<Self> {
         on("keydown", handler: KeyboardEvent.makeHandler(handler))
@@ -56,5 +72,9 @@ public extension View {
 
     func onClick(_ handler: @escaping (consuming MouseEvent) -> Void) -> _EventHandlingView<Self> {
         on("click", handler: MouseEvent.makeHandler(handler))
+    }
+
+    func onInput(_ handler: @escaping (consuming InputEvent) -> Void) -> _EventHandlingView<Self> {
+        on("input", handler: InputEvent.makeHandler(handler))
     }
 }

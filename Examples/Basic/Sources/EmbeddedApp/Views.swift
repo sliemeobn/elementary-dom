@@ -1,9 +1,14 @@
 import ElementaryDOM
 
+extension EnvironmentValues {
+    @Entry var myText = ""
+}
+
 @View
 struct App {
     @State var counters: [Int] = [1]
     @State var nextCounterName = 1
+    @State var data = SomeData()
 
     var content: some View {
         for (index, counter) in counters.enumerated() {
@@ -21,6 +26,12 @@ struct App {
                 nextCounterName += 1
                 counters.append(nextCounterName)
             }
+        hr()
+        TextField(value: Binding(get: { data.name }, set: { data.name = $0 }))
+        div {
+            p { "Via Binding: \(data.name)" }
+            p { TestView() }
+        }.environment(#Key(\.myText), data.name)
     }
 }
 
@@ -42,5 +53,32 @@ struct Counter {
         .onUnmount {
             print("Counter \(count) dismounted")
         }
+    }
+}
+
+@View
+struct TextField {
+    @Binding var value: String
+
+    var content: some View {
+        input(.type(.text), .value("Hello"))
+            .onInput { event in
+                value = event.targetValue ?? ""
+            }
+    }
+}
+
+@Reactive
+final class SomeData {
+    var name: String = ""
+    var age: Int = 0
+}
+
+@View
+struct TestView {
+    @Environment(#Key(\.myText)) var key
+
+    var content: some View {
+        span { "Via Environment: \(key)" }
     }
 }

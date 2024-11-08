@@ -19,17 +19,31 @@ extension ViewMacro: ExtensionMacro {
 
         let needsView = protocols.contains { $0.trimmed.description == "View" }
         let needsStatefulView = protocols.contains { $0.trimmed.description == "_StatefulView" }
+        let members = declaration.memberBlock.members.compactMap { $0.decl.as(VariableDeclSyntax.self) }
 
         // add View conformance if not already present
         if needsView {
-            let decl: DeclSyntax = "extension \(raw: type.trimmedDescription): View { }"
+            // add loading environment properties
+            let environmentLoads = members
+                .filter { $0.isEnvironmentProperty }
+                .map { variable -> DeclSyntax in
+                    let name = variable.trimmedIdentifier!.text
+                    return "view._\(raw: name).__load(from: context)"
+                }
+
+            let decl: DeclSyntax = """
+            extension \(raw: type.trimmedDescription): View {
+                static func __applyContext(_ context: borrowing _ViewRenderingContext, to view: inout Self) {
+                    \(raw: environmentLoads.map { $0.description }.joined(separator: "\n"))
+                }
+            }
+            """
             result.append(decl.cast(ExtensionDeclSyntax.self))
+        } else {
+            // TODO: diagnostic "remove View conformance"
         }
 
-        let stateMembers = declaration.memberBlock.members.compactMap { member -> VariableDeclSyntax? in
-            guard let variableDecl = member.decl.as(VariableDeclSyntax.self), variableDecl.isStateProperty else { return nil }
-            return variableDecl
-        }
+        let stateMembers = members.filter { $0.isStateProperty }
 
         // add _StatefulView conformance if any @State member is declared
         if needsStatefulView, !stateMembers.isEmpty {
@@ -45,14 +59,14 @@ extension ViewMacro: ExtensionMacro {
 
             let decl: DeclSyntax = """
             extension \(raw: type.trimmedDescription): _StatefulView {
-                static func _initializeState(from view: borrowing Self) -> _ViewStateStorage {
+                static func __initializeState(from view: borrowing Self) -> _ViewStateStorage {
                     let storage = _ViewStateStorage()
                     storage.reserveCapacity(\(raw: stateMembers.count))
                     \(raw: initCalls.map { $0.description }.joined(separator: "\n"))
                     return storage
                 }
 
-                static func _restoreState(_ storage: _ViewStateStorage, in view: inout Self) {
+                static func __restoreState(_ storage: _ViewStateStorage, in view: inout Self) {
                     \(raw: restoreCalls.map { $0.description }.joined(separator: "\n"))
                 }
             }
@@ -96,8 +110,15 @@ extension VariableDeclSyntax {
     }
 
     var isStateProperty: Bool {
-        let hasStateAttribute = attributes.contains { a in a.as(AttributeSyntax.self)?.trimmedName == "State" }
-        return isVar && hasStateAttribute
+        return isVar && hasAttribute(named: "State")
+    }
+
+    var isEnvironmentProperty: Bool {
+        return isVar && hasAttribute(named: "Environment")
+    }
+
+    func hasAttribute(named name: String) -> Bool {
+        attributes.contains { a in a.as(AttributeSyntax.self)?.trimmedName == name }
     }
 }
 

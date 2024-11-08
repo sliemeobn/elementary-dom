@@ -8,10 +8,6 @@ struct GameView {
         game.handleKey(key)
     }
 
-    func onRestart() {
-        game = Game()
-    }
-
     var content: some View {
         main(.class("flex flex-col gap-5 items-center h-screen bg-black text-white")) {
             div(.class("flex gap-4 items-center pt-5")) {
@@ -28,7 +24,7 @@ struct GameView {
 
             div(.class("relative")) {
                 KeyboardView(keyboard: game.keyboard, onKeyPressed: onKeyPressed)
-                GameEndOverlay(game: game, onRestart: onRestart)
+                GameEndOverlay(game: $game)
             }
 
             footer {
@@ -50,13 +46,15 @@ struct GameView {
     }
 }
 
-struct SwiftLogo: View {
+@View
+struct SwiftLogo {
     var content: some View {
         img(.src("swift-bird.svg"), .class("h-10"))
     }
 }
 
-struct GuessView: View {
+@View
+struct GuessView {
     var guess: Guess
 
     var content: some View {
@@ -68,7 +66,8 @@ struct GuessView: View {
     }
 }
 
-struct LetterView: View {
+@View
+struct LetterView {
     var guess: LetterGuess?
 
     var content: some View {
@@ -85,7 +84,8 @@ struct LetterView: View {
     }
 }
 
-struct KeyboardView: View {
+@View
+struct KeyboardView {
     var keyboard: Keyboard
     var onKeyPressed: (EnteredKey) -> Void
 
@@ -112,7 +112,8 @@ struct KeyboardView: View {
     }
 }
 
-struct KeyboardLetterView: View {
+@View
+struct KeyboardLetterView {
     var guess: LetterGuess
     var onKeyPressed: (EnteredKey) -> Void
 
@@ -133,7 +134,8 @@ struct KeyboardLetterView: View {
     }
 }
 
-struct EnterKeyView: View {
+@View
+struct EnterKeyView {
     var onKeyPressed: (EnteredKey) -> Void
 
     var content: some View {
@@ -148,7 +150,8 @@ struct EnterKeyView: View {
     }
 }
 
-struct BackspaceKeyView: View {
+@View
+struct BackspaceKeyView {
     var onKeyPressed: (EnteredKey) -> Void
 
     var content: some View {
@@ -163,9 +166,9 @@ struct BackspaceKeyView: View {
     }
 }
 
-struct GameEndOverlay: View {
-    var game: Game
-    var onRestart: () -> Void
+@View
+struct GameEndOverlay {
+    @Binding var game: Game
 
     var content: some View {
         if game.state != .playing {
@@ -177,7 +180,7 @@ struct GameEndOverlay: View {
                     button(.class("bg-orange-500 py-2 px-6 rounded-md shadow-lg")) {
                         "Restart"
                     }.onClick { _ in
-                        onRestart()
+                        game = Game()
                     }
                 }
             }

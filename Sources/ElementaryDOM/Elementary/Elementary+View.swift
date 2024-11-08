@@ -6,6 +6,12 @@ import Elementary
 // TODO: maybe the _renderView should "reconcile" itself directly into a generic reconciler type instread of returning a _RenderedView (possible saving some allocations/currency types)
 public protocol View: HTML where Content: View {
     static func _renderView(_ view: consuming sending Self, context: consuming _ViewRenderingContext) -> _RenderedView
+    static func __applyContext(_ context: borrowing _ViewRenderingContext, to view: inout Self)
+}
+
+public protocol _StatefulView: View {
+    static func __initializeState(from view: borrowing Self) -> _ViewStateStorage
+    static func __restoreState(_ storage: _ViewStateStorage, in view: inout Self)
 }
 
 public extension View where Content == Never {
@@ -18,32 +24,37 @@ extension Never: View {}
 
 public struct _ViewRenderingContext {
     var eventListeners: _DomEventListenerStorage = .init()
-    var attributes: _AttributeStorage
+    var attributes: _AttributeStorage = .none
+    var environment: EnvironmentValues = .init()
+
+    mutating func takeAttributes() -> _AttributeStorage {
+        let attributes = self.attributes
+        self.attributes = .none
+        return attributes
+    }
+
+    mutating func takeListeners() -> _DomEventListenerStorage {
+        let listeners = eventListeners
+        eventListeners = .init()
+        return listeners
+    }
 
     public static var empty: Self {
-        .init(attributes: .none)
-    }
-}
-
-public extension View {
-    static func _renderView(_ view: consuming sending Self, context: consuming _ViewRenderingContext) -> _RenderedView {
-        return .init(
-            value: .function(.from(view, context: context))
-        )
+        .init()
     }
 }
 
 extension HTMLElement: View where Content: View {
     public static func _renderView(_ view: consuming sending Self, context: consuming _ViewRenderingContext) -> _RenderedView {
         var attributes = view._attributes
-        attributes.append(context.attributes)
+        attributes.append(context.takeAttributes())
 
         return .init(
             value: .element(_DomElement(
                 tagName: Tag.name,
                 attributes: attributes,
-                listerners: context.eventListeners
-            ), Content._renderView(view.content, context: .empty))
+                listerners: context.takeListeners()
+            ), Content._renderView(view.content, context: context))
         )
     }
 }
@@ -51,13 +62,13 @@ extension HTMLElement: View where Content: View {
 extension HTMLVoidElement: View {
     public static func _renderView(_ view: consuming Self, context: consuming _ViewRenderingContext) -> _RenderedView {
         var attributes = view._attributes
-        attributes.append(context.attributes)
+        attributes.append(context.takeAttributes())
 
         return .init(
             value: .element(_DomElement(
                 tagName: Tag.name,
                 attributes: attributes,
-                listerners: context.eventListeners
+                listerners: context.takeListeners()
             ), .init(value: .nothing))
         )
     }
@@ -130,5 +141,12 @@ extension _AttributedElement: View where Content: View {
         context.attributes = view.attributes
 
         return Content._renderView(view.content, context: context)
+    }
+}
+
+public extension View {
+    static func __applyContext(_ context: borrowing _ViewRenderingContext, to view: inout Self) {
+        print("ERROR: Unsupported view type \(Self.self) encountered. Please make sure to use @View on all custom views.")
+        fatalError("Unsuppored View type enountered. Please make sure to use @View on all custom views.")
     }
 }
