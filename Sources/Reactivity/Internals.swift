@@ -5,7 +5,8 @@ enum _ThreadLocal {
     nonisolated(unsafe) static var value: UnsafeMutableRawPointer?
 }
 
-#if hasFeature(Embedded)
+// TODO: Mutex causes swift compiler crash on github CI - figure out why
+#if hasFeature(Embedded) || os(Linux)
 // TODO: figure this out
 final class MutexBox<State>: @unchecked Sendable {
     private var state: State
