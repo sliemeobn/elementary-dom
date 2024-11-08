@@ -1,0 +1,30 @@
+name: Build Embedded Wasm
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "**.swift"
+      - "**.yml"
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        image: ["swiftlang/swift:nightly-main"]
+
+    container:
+      image: ${{ matrix.image }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build
+        run: |
+          JAVASCRIPTKIT_EXPERIMENTAL_EMBEDDED_WASM=true \
+            swift build --triple wasm32-unknown-none-wasm
