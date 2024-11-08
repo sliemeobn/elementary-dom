@@ -16,7 +16,7 @@ jobs:
     timeout-minutes: 15
     strategy:
       matrix:
-        image: ["swift:6.0"]
+        image: ["swift:6.0.1"]
 
     container:
       image: ${{ matrix.image }}
