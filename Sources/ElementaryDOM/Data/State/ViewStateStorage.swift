@@ -1,17 +1,9 @@
 import Reactivity
 
 public final class _ViewStateStorage: ReactiveObject {
-    final class Box<V> {
-        var value: V
-
-        init(_ value: V) {
-            self.value = value
-        }
-    }
-
     // TODO: maybe we can store AnyObjects directly instread of double-boxing them
     private var reactivityRegistrar: ReactivityRegistrar = .init()
-    private var values: [AnyObject] = []
+    private var values: [StoredValue] = []
 
     public init() {}
 
@@ -21,23 +13,28 @@ public final class _ViewStateStorage: ReactiveObject {
 
     public func initializeValueStorage<V>(initialValue: V, index: Int) {
         precondition(index == values.count, "State storage must be initialized in order")
-        values.append(Box(initialValue))
+        values.append(StoredValue(initialValue))
+    }
+
+    public func initializeValueStorage<V: AnyObject>(initialValue: V, index: Int) {
+        precondition(index == values.count, "State storage must be initialized in order")
+        values.append(StoredValue(initialValue))
     }
 
     public subscript<V>(_ index: Int, as type: V.Type = V.self) -> V {
         get {
             reactivityRegistrar.access(PropertyID(index))
-            return (values[index] as! Box<V>).value
+            return values[index][]
         }
         set {
             reactivityRegistrar.willSet(PropertyID(index))
-            (values[index] as! Box<V>).value = newValue
+            values[index][] = newValue
             reactivityRegistrar.didSet(PropertyID(index))
         }
         _modify {
             reactivityRegistrar.access(PropertyID(index))
             reactivityRegistrar.willSet(PropertyID(index))
-            yield &((values[index] as! Box<V>).value)
+            yield &values[index][]
             reactivityRegistrar.didSet(PropertyID(index))
         }
     }

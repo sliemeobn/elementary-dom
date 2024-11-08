@@ -6,10 +6,10 @@ struct ViewMacroTests {
     @Test
     func testViewMacro() {
         let view = MyView(number: 2)
-        let storage = MyView._initializeState(from: view)
+        let storage = MyView.__initializeState(from: view)
 
         var view2 = MyView()
-        MyView._restoreState(storage, in: &view2)
+        MyView.__restoreState(storage, in: &view2)
         #expect(view2.number == 2)
     }
 

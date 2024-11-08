@@ -20,10 +20,7 @@ public struct State<V> {
 
     public var projectedValue: Binding<V> {
         guard let accessor else { fatalError("State.projectedValue called outside of content") }
-        return Binding(
-            get: { accessor.value },
-            set: { accessor.value = $0 }
-        )
+        return Binding(accessor: accessor)
     }
 
     public init(wrappedValue: V) {
@@ -36,6 +33,12 @@ public extension State {
         accessor = storage.accessor(for: index, as: V.self)
     }
 
+    func __initializeState(storage: _ViewStateStorage, index: Int) {
+        storage.initializeValueStorage(initialValue: initialValue, index: index)
+    }
+}
+
+public extension State where V: AnyObject {
     func __initializeState(storage: _ViewStateStorage, index: Int) {
         storage.initializeValueStorage(initialValue: initialValue, index: index)
     }
