@@ -1,8 +1,9 @@
 import Reactivity
 
-public final class _ViewStateStorage: ReactiveObject {
+@Reactive
+public final class _ViewStateStorage {
     // TODO: maybe we can store AnyObjects directly instread of double-boxing them
-    private var reactivityRegistrar: ReactivityRegistrar = .init()
+    @ReactiveIgnored
     private var values: [StoredValue] = []
 
     public init() {}
@@ -23,19 +24,19 @@ public final class _ViewStateStorage: ReactiveObject {
 
     public subscript<V>(_ index: Int, as type: V.Type = V.self) -> V {
         get {
-            reactivityRegistrar.access(PropertyID(index))
+            _$reactivity.access(PropertyID(index))
             return values[index][]
         }
         set {
-            reactivityRegistrar.willSet(PropertyID(index))
+            _$reactivity.willSet(PropertyID(index))
             values[index][] = newValue
-            reactivityRegistrar.didSet(PropertyID(index))
+            _$reactivity.didSet(PropertyID(index))
         }
         _modify {
-            reactivityRegistrar.access(PropertyID(index))
-            reactivityRegistrar.willSet(PropertyID(index))
+            _$reactivity.access(PropertyID(index))
+            _$reactivity.willSet(PropertyID(index))
             yield &values[index][]
-            reactivityRegistrar.didSet(PropertyID(index))
+            _$reactivity.didSet(PropertyID(index))
         }
     }
 }

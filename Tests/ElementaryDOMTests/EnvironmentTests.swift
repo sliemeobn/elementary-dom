@@ -31,6 +31,28 @@ struct EnvionmentTests {
     }
 
     @Test
+    func accessesWithReactiveObjectTypeID() {
+        var v = EnvironmentValues()
+        let o = TestObject()
+        v[TestObject.environmentKey] = o
+        #expect(v[TestObject.environmentKey] === o)
+    }
+
+    @Test
+    func accessesWithObjectReader() {
+        var v = EnvironmentValues()
+        let o = TestObject()
+        let reader = ObjectStorageReader(TestObject.self)
+        let optionalReader = ObjectStorageReader(TestObject?.self)
+
+        #expect(optionalReader.read(v.values) === nil)
+
+        v[TestObject.environmentKey] = o
+        #expect(reader.read(v.values) === o)
+        // #expect(optionalReader.read(v.values) === o)
+    }
+
+    @Test
     func loadsValueInPropertyWrapper() {
         let e1 = Environment(#Key(\.bar))
         var e2 = Environment(#Key(\.bar))
@@ -48,7 +70,25 @@ struct EnvionmentTests {
     }
 
     @Test
-    func loadValuesInView() {
+    func loadsObjectInPropertyWrapper() {
+        var e1 = Environment(TestObject.self)
+        var e2 = Environment(TestObject?.self)
+
+        var v = EnvironmentValues()
+        let o = TestObject()
+        v[TestObject.environmentKey] = o
+
+        #expect(e2.wrappedValue === nil)
+
+        e1.__load(from: v)
+        e2.__load(from: v)
+
+        #expect(e1.wrappedValue === o)
+        #expect(e2.wrappedValue === o)
+    }
+
+    @Test
+    func loadsValueInView() {
         var context = _ViewRenderingContext()
 
         var view = TestView()
@@ -75,4 +115,9 @@ private struct TestView {
     var content: some View {
         "Hello"
     }
+}
+
+@Reactive
+private class TestObject {
+    var number = 42
 }

@@ -2,68 +2,56 @@
 public struct Environment<V> {
     enum Storage {
         case value(V)
-        case accessor(_StorageKey<EnvironmentValues, V>)
+        case valueKey(EnvironmentValues._Key<V>)
+        case objectReader(ObjectStorageReader<V>)
     }
 
     var storage: Storage
 
-    public init(_ accessor: _StorageKey<EnvironmentValues, V>) {
-        storage = .accessor(accessor)
+    public init(_ accessor: EnvironmentValues._Key<V>) {
+        storage = .valueKey(accessor)
+    }
+
+    init(_ objectReader: ObjectStorageReader<V>) {
+        storage = .objectReader(objectReader)
     }
 
     public var wrappedValue: V {
         switch storage {
         case let .value(value):
-            return value
-        case let .accessor(accessor):
-            return accessor.defaultValue()
+            value
+        case let .valueKey(accessor):
+            accessor.defaultValue
+        case let .objectReader(reader):
+            reader.read([:])
         }
     }
 
-    public mutating func __load(from context: _ViewRenderingContext) {
+    public mutating func __load(from context: borrowing _ViewRenderingContext) {
         __load(from: context.environment)
     }
 
     mutating func __load(from values: borrowing EnvironmentValues) {
         switch storage {
-        case let .accessor(accessor):
-            storage = .value(values[accessor])
+        case let .valueKey(key):
+            storage = .value(values[key])
+        case let .objectReader(reader):
+            storage = .value(reader.read(values.values))
         default:
             fatalError("Cannot load environment value twice")
         }
     }
 }
 
-extension EnvironmentValues: _ValueStorage {
-    public subscript<Value>(key: _StorageKey<EnvironmentValues, Value>) -> Value {
+public struct EnvironmentValues: _ValueStorage {
+    var values: [PropertyID: StoredValue] = [:]
+
+    public subscript<Value>(key: _Key<Value>) -> Value {
         get {
-            if let value = values[key.propertyID] {
-                return value[]
-            } else {
-                return key.defaultValue()
-            }
+            values[key.propertyID]?[as: Value.self] ?? key.defaultValue
         }
         set {
             values[key.propertyID] = StoredValue(newValue)
         }
     }
-}
-
-public protocol _ValueStorage {
-    typealias _Key<Value> = _StorageKey<Self, Value>
-    subscript<Value>(key: _Key<Value>) -> Value { get set }
-}
-
-public struct _StorageKey<Storage: _ValueStorage, Value>: Sendable {
-    let propertyID: PropertyID
-    let defaultValue: @Sendable () -> sending Value
-
-    public init(_ propertyID: PropertyID, defaultValue: @autoclosure @Sendable @escaping () -> sending Value) {
-        self.propertyID = propertyID
-        self.defaultValue = defaultValue
-    }
-}
-
-public struct EnvironmentValues {
-    var values: [PropertyID: StoredValue] = [:]
 }
