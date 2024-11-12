@@ -5,6 +5,10 @@ public macro View() = #externalMacro(module: "ElementaryDOMMacros", type: "ViewM
 @freestanding(expression)
 public macro Key<Value>(_: KeyPath<EnvironmentValues, Value>) -> EnvironmentValues._Key<Value> = #externalMacro(module: "ElementaryDOMMacros", type: "EnvironmentKeyMacro")
 
+// NOTE: I wanted to use an inout expression, but that currently does not compile :(
+@freestanding(expression)
+public macro Binding<Value>(_ valueExpression: Value) -> Binding<Value> = #externalMacro(module: "ElementaryDOMMacros", type: "BindingMacro")
+
 // @freestanding(expression)
 // public macro Key<Store: _ValueStorage, Value>(_: KeyPath<Store, Value>) -> Store._Key<Value> = #externalMacro(module: "ElementaryDOMMacros", type: "KeyMacro2")
 

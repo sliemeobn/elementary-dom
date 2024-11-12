@@ -11,7 +11,7 @@ struct App {
     @State var data = SomeData()
 
     var content: some View {
-        TextField(value: Binding(get: { data.name }, set: { data.name = $0 }))
+        TextField(value: #Binding(data.name))
         div {
             p { "Via Binding: \(data.name)" }
             p { TestValueView() }
