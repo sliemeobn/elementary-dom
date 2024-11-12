@@ -252,8 +252,12 @@ extension ReactiveMacro: ExtensionMacro {
             return []
         }
 
+        let typeIdentifier = context.makeUniqueName(type.trimmedDescription)
+
         let decl: DeclSyntax = """
-        extension \(raw: type.trimmedDescription): \(raw: qualifiedConformanceName) {}
+        extension \(raw: type.trimmedDescription): \(raw: qualifiedConformanceName) {
+            public static let _$typeID = PropertyID("\(typeIdentifier)")
+        }
         """
         let ext = decl.cast(ExtensionDeclSyntax.self)
 

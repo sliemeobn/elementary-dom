@@ -7,5 +7,6 @@ struct MacrosPlugin: CompilerPlugin {
         ViewMacro.self,
         EntryMacro.self,
         EnvironmentKeyMacro.self,
+        BindingMacro.self,
     ]
 }

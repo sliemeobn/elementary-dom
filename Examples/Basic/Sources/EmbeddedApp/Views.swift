@@ -11,6 +11,17 @@ struct App {
     @State var data = SomeData()
 
     var content: some View {
+        TextField(value: #Binding(data.name))
+        div {
+            p { "Via Binding: \(data.name)" }
+            p { TestValueView() }
+            p { TestObjectView() }
+        }
+        .environment(#Key(\.myText), data.name)
+        .environment(data)
+
+        hr()
+
         for (index, counter) in counters.enumerated() {
             h3 { "Counter \(counter)" }
             Counter(count: counter)
@@ -26,12 +37,6 @@ struct App {
                 nextCounterName += 1
                 counters.append(nextCounterName)
             }
-        hr()
-        TextField(value: Binding(get: { data.name }, set: { data.name = $0 }))
-        div {
-            p { "Via Binding: \(data.name)" }
-            p { TestView() }
-        }.environment(#Key(\.myText), data.name)
     }
 }
 
@@ -61,7 +66,8 @@ struct TextField {
     @Binding var value: String
 
     var content: some View {
-        input(.type(.text), .value("Hello"))
+        // TODO: make proper two-way binding for DOM elements
+        input(.type(.text))
             .onInput { event in
                 value = event.targetValue ?? ""
             }
@@ -75,10 +81,23 @@ final class SomeData {
 }
 
 @View
-struct TestView {
+struct TestValueView {
     @Environment(#Key(\.myText)) var key
 
     var content: some View {
-        span { "Via Environment: \(key)" }
+        span { "Via environment value: \(key)" }
+    }
+}
+
+@View
+struct TestObjectView {
+    @Environment<SomeData>() var data
+    // @Environment<SomeData?>() var optionalData
+
+    var content: some View {
+        span { "Via environment object: \(data.name)" }
+        // TODO: figure out how to make optional environment object work in embedded
+        // br()
+        // span { "Via optional environment object: \(optionalData?.name ?? "")" }
     }
 }

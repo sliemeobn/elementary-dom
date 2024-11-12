@@ -1,6 +1,6 @@
-@attached(member, names: named(_$id), named(_$reactivity))
+@attached(member, names: named(_$reactivity))
 @attached(memberAttribute)
-@attached(extension, conformances: ReactiveObject)
+@attached(extension, conformances: ReactiveObject, names: named(_$typeID))
 public macro Reactive() = #externalMacro(module: "ReactivityMacros", type: "ReactiveMacro")
 
 @attached(accessor, names: named(init), named(get), named(set), named(_modify))
