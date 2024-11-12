@@ -71,8 +71,8 @@ struct EnvionmentTests {
 
     @Test
     func loadsObjectInPropertyWrapper() {
-        var e1 = Environment(TestObject.self)
-        var e2 = Environment(TestObject?.self)
+        var e1 = Environment<TestObject>()
+        var e2 = Environment<TestObject?>()
 
         var v = EnvironmentValues()
         let o = TestObject()

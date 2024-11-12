@@ -9,7 +9,10 @@ public extension Environment {
         self.init(ObjectStorageReader(V.self))
     }
 
-    init<O: ReactiveObject>(_: V.Type = V.self) where V == O? {
+    // NOTE: in embedded for some reason this causes a compiler crash around the (actually unused) StoredValue<Optional<O>> type
+    // ¯\_(ツ)_/¯ - try again with a newer toolchain in the future
+    @_unavailableInEmbedded
+    init<O: ReactiveObject>(_: O.Type = O.self) where V == O? {
         self.init(ObjectStorageReader(V.self))
     }
 }
