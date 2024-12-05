@@ -78,7 +78,6 @@ final class Reconciler<DOMInteractor: DOMInteracting> {
             runUpdatedFunctionNode(next, context: &run)
         }
 
-        // deduplicate
         for node in run.nodesWithChangedChildren {
             guard let reference = node.domReference else { fatalError("DOM Children update requested for a non-dom node") }
             dom.replaceChildren(node.getChildReferenceList(), in: reference)
@@ -102,56 +101,19 @@ final class Reconciler<DOMInteractor: DOMInteracting> {
     }
 
     func reconcile(parent: Node, withContent renderedElement: _RenderedView, context: inout UpdateRun) {
-        guard !parent.children.isEmpty else {
-            parent.replaceChildren(mount(renderedElement, context: &context))
-            if !parent.children.isEmpty {
-                context.registerNodeForChildrenUpdate(parent)
-            }
-            return
+        var hasPatched = false
+
+        if parent.children.isEmpty {
+            // this is is expected on first time function runs or the root node
+        } else if parent.children.count == 1 {
+            hasPatched = tryPatchSingleNode(parent.children[0], renderedElement, context: &context)
+        } else {
+            fatalError("Unexpected case: Node with multiple children in reconciliation, should only be allowed for list nodes")
         }
 
-        // handle lists special
-        if case let .list(elements) = renderedElement.value {
-            var newList = [Node]() // TODO: avoidable allocation
-            let renderedViews = elements.flattened()
-
-            // things definitely have changed if the number of children is different
-            // otherwise, the loop will detect if nothing changed
-            var hasChanged = parent.children.count != renderedViews.count
-
-            for (index, newValue) in renderedViews.enumerated() {
-                // TODO: use identitiy and do proper collection diffing
-                if parent.children.count > index {
-                    let existingNode = parent.children[index]
-                    if !tryPatchSingleNode(existingNode, newValue, context: &context) {
-                        hasChanged = true
-                        newList.append(contentsOf: mount(newValue, context: &context))
-                    } else {
-                        newList.append(existingNode)
-                    }
-                } else {
-                    hasChanged = true
-                    newList.append(contentsOf: mount(newValue, context: &context))
-                }
-            }
-
-            if hasChanged {
-                parent.replaceChildren(newList)
-                context.registerNodeForChildrenUpdate(parent)
-            }
-        } else {
-            var hasPatched = false
-            if parent.children.count == 1 {
-                let child = parent.children[0]
-                if tryPatchSingleNode(child, renderedElement, context: &context) {
-                    hasPatched = true
-                }
-            }
-
-            if !hasPatched {
-                parent.replaceChildren(mount(renderedElement, context: &context))
-                context.registerNodeForChildrenUpdate(parent)
-            }
+        if !hasPatched {
+            parent.replaceChild(mount(renderedElement, context: &context))
+            context.registerNodeForChildrenUpdate(parent)
         }
     }
 
@@ -169,61 +131,110 @@ final class Reconciler<DOMInteractor: DOMInteracting> {
 
             reconcile(parent: node, withContent: content, context: &context)
         case let (.function(function, state), .function(newFunction)):
-            // TODO: check of identity
+            // TODO: check of function type? should not be possible to change
             _ = function
             node.updateValue(.function(newFunction, state))
             context.registerFunctionForUpdate(node)
         case let (.lifecycle, .lifecycle(_, content)):
             reconcile(parent: node, withContent: content, context: &context)
-        case (_, .list(_)):
-            preconditionFailure("List must be flattened before reconciling")
+        case let (.keyed(key), .keyed(newKey, newContent)):
+            if key != newKey {
+                // this is the only "expected" case outisde of lists where things need to be replaced
+                return false
+            }
+            reconcile(parent: node, withContent: newContent, context: &context)
+        case let (.staticList, .staticList(elements)):
+            // this is a bit scary, but static lists can neither change their count not their types
+            // so a skipped empty view on mount will stay an empty view, so the indexes will line up again
+            var index = 0
+            for element in elements where !element.isEmpty {
+                guard tryPatchSingleNode(node.children[index], element, context: &context) else {
+                    fatalError("Invalid type change detected in static list")
+                }
+                index += 1
+            }
+        case let (.dynamicList(keys), .dynamicList(elements)):
+            let (newKeys, elements) = elements.extractKeyList()
+
+            if keys == newKeys {
+                // fast-pass no change, just patch each child
+                for index in node.children.indices {
+                    guard tryPatchSingleNode(node.children[index], elements[index], context: &context) else {
+                        print("ERROR: Invalid type change detected in dynamic list")
+                        fatalError("Invalid type change detected in dynamic list")
+                    }
+                }
+            } else {
+                var newChildren = [Node]()
+                newChildren.reserveCapacity(newKeys.count)
+
+                for (index, key) in newKeys.enumerated() {
+                    // TODO: use collection diffing and infer moves for this
+                    if let oldIndex = keys.firstIndex(of: key) {
+                        let existingNode = node.children[oldIndex]
+                        newChildren.append(existingNode)
+                        guard tryPatchSingleNode(existingNode, elements[index], context: &context) else {
+                            print("ERROR: Invalid type change detected in dynamic list")
+                            fatalError("Invalid type change detected in dynamic list")
+                        }
+                    } else {
+                        if let node = mount(elements[index], context: &context) {
+                            newChildren.append(node)
+                        }
+                    }
+                }
+
+                node.updateValue(.dynamicList(newKeys))
+                node.replaceChildren(newChildren)
+                context.registerNodeForChildrenUpdate(node)
+            }
         default:
-            // print("could not patch \(node.value) with \(element.value)")
-            return false
+            print("ERROR: Unexpected change in view structure. \(node.depthInTree) \(element)")
+            // TODO: this is a bit harsh, but we should be able to recover from this and just return false?
+            fatalError("Unexpected change in view structure")
         }
         return true
     }
 
-    func mount(_ renderedElement: _RenderedView, context: inout UpdateRun) -> [Node] {
-        var nodes: [Node] = [] // TODO: avoidable allocation
-
+    func mount(_ renderedElement: _RenderedView, context: inout UpdateRun) -> Node? {
         switch renderedElement.value {
+        case .nothing:
+            return nil
         case let .text(text):
-            nodes.append(Node(value: .text(text), domReference: dom.createText(text)))
+            return Node(value: .text(text), domReference: dom.createText(text))
         case let .element(element, content):
             let domNode = dom.createElement(element.tagName)
             let node = Node(value: .element(element), domReference: domNode)
             dom.patchElementAttributes(domNode, with: element.attributes, replacing: .none)
             dom.patchEventListeners(domNode, with: element.listerners, replacing: .none, sink: node.getOrMakeEventSync(dom))
 
-            node.replaceChildren(mount(content, context: &context))
-            nodes.append(node)
-        case let .list(elements):
-            for element in elements {
-                nodes.append(contentsOf: mount(element, context: &context))
+            node.replaceChild(mount(content, context: &context))
+            let childRefs = node.getChildReferenceList()
+            if !childRefs.isEmpty {
+                dom.replaceChildren(childRefs, in: domNode)
             }
+
+            return node
         case let .function(function):
             let state = function.initializeState?()
             let node = Node(value: .function(function, state))
-            nodes.append(node)
             context.registerFunctionForUpdate(node)
+            return node
         case let .lifecycle(hook, content):
-            let node = Node(value: .lifecycle(hook))
-            node.replaceChildren(mount(content, context: &context))
-            nodes.append(node)
-        case .nothing:
-            ()
+            let node = Node(value: .lifecycle(hook), child: mount(content, context: &context))
+            return node
+        case let .staticList(elements):
+            let node = Node(value: .staticList)
+            node.replaceChildren(elements.compactMap { mount($0, context: &context) })
+            return node
+        case let .dynamicList(elements):
+            let (keys, elements) = elements.extractKeyList()
+            let node = Node(value: .dynamicList(keys))
+            node.replaceChildren(elements.compactMap { mount($0, context: &context) })
+            return node
+        case let .keyed(key, element):
+            return Node(value: .keyed(key), child: mount(element, context: &context))
         }
-
-        for node in nodes {
-            guard let reference = node.domReference else { continue }
-            let childRefs = node.getChildReferenceList()
-            if !childRefs.isEmpty {
-                dom.replaceChildren(childRefs, in: reference)
-            }
-        }
-
-        return nodes
     }
 }
 
@@ -235,6 +246,9 @@ extension Reconciler {
             case element(_DomElement)
             case function(_RenderFunction, _ManagedState?)
             case lifecycle(_LifecycleHook)
+            case staticList
+            case dynamicList([_RenderedView.Key])
+            case keyed(_RenderedView.Key)
             case __unmounted
         }
 
@@ -253,24 +267,34 @@ extension Reconciler {
             children = []
         }
 
+        init(value: Value, child: Node?) {
+            self.value = value
+            domReference = nil
+            children = child.map { [$0] } ?? []
+        }
+
         static func root(domNode: DOMReference) -> Node {
             Node(value: .root, domReference: domNode)
         }
 
-        func replaceChildren(_ newValue: [Node]) {
-            // TODO: makes this faster
-
-            for child in newValue {
-                if child.parent == nil {
-                    child.mount(in: self)
-                } else if child.parent! !== self {
-                    preconditionFailure("Child already has a parent")
-                }
+        func replaceChild(_ newValue: Node?) {
+            // TODO: optimize for single child case
+            if let newValue = newValue {
+                replaceChildren([newValue])
+            } else {
+                replaceChildren([])
             }
+        }
 
-            for existing in children {
-                if !newValue.contains(where: { $0 === existing }) {
-                    existing.unmount()
+        func replaceChildren(_ newValue: [Node]) {
+            let diff = newValue.difference(from: children, by: ===)
+
+            for change in diff {
+                switch change {
+                case let .remove(offset, _, _):
+                    children[offset].unmount()
+                case let .insert(_, element, _):
+                    element.mount(in: self)
                 }
             }
 
@@ -356,12 +380,15 @@ extension Reconciler {
         }
 
         private func unmount() {
+            print("unmounting node")
             for child in children {
                 child.unmount()
             }
 
+            // careful here, retain cycles galore
             parent = nil
             domReference = nil
+            eventSink = nil
             value = .__unmounted
 
             if let action = unmountAction {
@@ -372,18 +399,33 @@ extension Reconciler {
     }
 }
 
+private extension _RenderedView {
+    var isEmpty: Bool {
+        switch value {
+        case .nothing:
+            return true
+        default:
+            return false
+        }
+    }
+}
+
 private extension [_RenderedView] {
-    // TODO: ideally we could avoid all the list allocations, if views would more directly "append" their stuff into a reconciler
-    consuming func flattened() -> [_RenderedView] {
-        flatMap { element in
+    consuming func extractKeyList() -> ([_RenderedView.Key], [_RenderedView]) {
+        var keys = [_RenderedView.Key]()
+        var elements = [_RenderedView]()
+
+        for (index, element) in enumerated() {
             switch element.value {
-            case let .list(children):
-                return children.flattened()
-            case .nothing:
-                return []
+            case let .keyed(.explicit(key), content):
+                keys.append(.explicit(key))
+                elements.append(content)
             default:
-                return [element]
+                keys.append(.structure(index))
+                elements.append(element)
             }
         }
+
+        return (keys, elements)
     }
 }

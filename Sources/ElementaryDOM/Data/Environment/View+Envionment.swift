@@ -14,7 +14,7 @@ public struct _EnvironmentView<V, Wrapped: View>: View {
     let key: EnvironmentValues._Key<V>
     let value: V
 
-    public static func _renderView(_ view: consuming sending Self, context: consuming _ViewRenderingContext) -> _RenderedView {
+    public static func _renderView(_ view: consuming Self, context: consuming _ViewRenderingContext) -> _RenderedView {
         context.environment[view.key] = view.value
         return Wrapped._renderView(view.wrapped, context: context)
     }

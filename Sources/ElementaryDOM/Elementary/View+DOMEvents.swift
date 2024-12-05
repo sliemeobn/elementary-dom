@@ -11,7 +11,7 @@ public struct _EventHandlingView<Wrapped: View>: View {
     let wrapped: Wrapped
     let listener: DOMEventListener
 
-    public static func _renderView(_ view: consuming sending Self, context: consuming _ViewRenderingContext) -> _RenderedView {
+    public static func _renderView(_ view: consuming Self, context: consuming _ViewRenderingContext) -> _RenderedView {
         context.eventListeners.listeners.append(view.listener)
         return Wrapped._renderView(view.wrapped, context: context)
     }

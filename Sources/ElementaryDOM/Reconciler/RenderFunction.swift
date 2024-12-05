@@ -35,14 +35,14 @@ extension _RenderFunction {
 // NOTE: using the correct render function depends on complie-time overload resolution
 // it is a bit fragile and won't scale to many more cases, but for now it feels like a good compromise
 public extension View {
-    static func _renderView(_ view: consuming sending Self, context: consuming _ViewRenderingContext) -> _RenderedView {
+    static func _renderView(_ view: consuming Self, context: consuming _ViewRenderingContext) -> _RenderedView {
         __applyContext(context, to: &view)
         return .init(value: .function(.from(view, context: context)))
     }
 }
 
 public extension View where Self: _StatefulView {
-    static func _renderView(_ view: consuming sending Self, context: consuming _ViewRenderingContext) -> _RenderedView {
+    static func _renderView(_ view: consuming Self, context: consuming _ViewRenderingContext) -> _RenderedView {
         __applyContext(context, to: &view)
         return .init(value: .function(.from(view, context: context)))
     }

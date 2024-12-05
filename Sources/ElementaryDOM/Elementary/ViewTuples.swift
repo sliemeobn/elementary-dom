@@ -1,9 +1,9 @@
 import Elementary
 
 extension _HTMLTuple2: View where V0: View, V1: View {
-    public static func _renderView(_ view: consuming sending Self, context: consuming _ViewRenderingContext) -> _RenderedView {
+    public static func _renderView(_ view: consuming Self, context: consuming _ViewRenderingContext) -> _RenderedView {
         return .init(
-            value: .list([
+            value: .staticList([
                 V0._renderView(view.v0, context: copy context),
                 V1._renderView(view.v1, context: copy context),
             ])
@@ -12,9 +12,9 @@ extension _HTMLTuple2: View where V0: View, V1: View {
 }
 
 extension _HTMLTuple3: View where V0: View, V1: View, V2: View {
-    public static func _renderView(_ view: consuming sending Self, context: consuming _ViewRenderingContext) -> _RenderedView {
+    public static func _renderView(_ view: consuming Self, context: consuming _ViewRenderingContext) -> _RenderedView {
         return .init(
-            value: .list([
+            value: .staticList([
                 V0._renderView(view.v0, context: copy context),
                 V1._renderView(view.v1, context: copy context),
                 V2._renderView(view.v2, context: copy context),
@@ -24,9 +24,9 @@ extension _HTMLTuple3: View where V0: View, V1: View, V2: View {
 }
 
 extension _HTMLTuple4: View where V0: View, V1: View, V2: View, V3: View {
-    public static func _renderView(_ view: consuming sending Self, context: consuming _ViewRenderingContext) -> _RenderedView {
+    public static func _renderView(_ view: consuming Self, context: consuming _ViewRenderingContext) -> _RenderedView {
         return .init(
-            value: .list([
+            value: .staticList([
                 V0._renderView(view.v0, context: copy context),
                 V1._renderView(view.v1, context: copy context),
                 V2._renderView(view.v2, context: copy context),
@@ -37,9 +37,9 @@ extension _HTMLTuple4: View where V0: View, V1: View, V2: View, V3: View {
 }
 
 extension _HTMLTuple5: View where V0: View, V1: View, V2: View, V3: View, V4: View {
-    public static func _renderView(_ view: consuming sending Self, context: consuming _ViewRenderingContext) -> _RenderedView {
+    public static func _renderView(_ view: consuming Self, context: consuming _ViewRenderingContext) -> _RenderedView {
         return .init(
-            value: .list([
+            value: .staticList([
                 V0._renderView(view.v0, context: copy context),
                 V1._renderView(view.v1, context: copy context),
                 V2._renderView(view.v2, context: copy context),
@@ -51,9 +51,9 @@ extension _HTMLTuple5: View where V0: View, V1: View, V2: View, V3: View, V4: Vi
 }
 
 extension _HTMLTuple6: View where V0: View, V1: View, V2: View, V3: View, V4: View, V5: View {
-    public static func _renderView(_ view: consuming sending Self, context: consuming _ViewRenderingContext) -> _RenderedView {
+    public static func _renderView(_ view: consuming Self, context: consuming _ViewRenderingContext) -> _RenderedView {
         return .init(
-            value: .list([
+            value: .staticList([
                 V0._renderView(view.v0, context: copy context),
                 V1._renderView(view.v1, context: copy context),
                 V2._renderView(view.v2, context: copy context),
@@ -67,7 +67,7 @@ extension _HTMLTuple6: View where V0: View, V1: View, V2: View, V3: View, V4: Vi
 
 #if !hasFeature(Embedded)
 extension _HTMLTuple: View where repeat each Child: View {
-    public static func _renderView(_ view: consuming sending Self, context: consuming _ViewRenderingContext) -> _RenderedView {
+    public static func _renderView(_ view: consuming Self, context: consuming _ViewRenderingContext) -> _RenderedView {
         var renderedChildren: [_RenderedView] = []
         // renderedChildren.reserveCapacity(view.value.count)
 
@@ -78,7 +78,7 @@ extension _HTMLTuple: View where repeat each Child: View {
         repeat addChild(each view.value)
 
         return .init(
-            value: .list(renderedChildren)
+            value: .staticList(renderedChildren)
         )
     }
 }
