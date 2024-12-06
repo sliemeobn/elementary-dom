@@ -21,7 +21,7 @@ public struct _LifecycleEventView<Wrapped: View>: View {
     let wrapped: Wrapped
     let listener: _LifecycleHook
 
-    public static func _renderView(_ view: consuming sending Self, context: consuming _ViewRenderingContext) -> _RenderedView {
+    public static func _renderView(_ view: consuming Self, context: consuming _ViewRenderingContext) -> _RenderedView {
         return .init(value:
             .lifecycle(view.listener, Wrapped._renderView(view.wrapped, context: context))
         )

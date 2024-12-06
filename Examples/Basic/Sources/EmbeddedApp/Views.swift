@@ -22,15 +22,18 @@ struct App {
 
         hr()
 
+        // TODO: port ForEach, make keyed overloads
         for (index, counter) in counters.enumerated() {
-            h3 { "Counter \(counter)" }
-            Counter(count: counter)
-            br()
-            button { "Remove counter" }
-                .onClick { _ in
-                    counters.remove(at: index)
-                }
-            hr()
+            div {
+                h3 { "Counter \(counter)" }
+                Counter(count: counter)
+                br()
+                button { "Remove counter" }
+                    .onClick { _ in
+                        counters.remove(at: index)
+                    }
+                hr()
+            }.key(String(counter))
         }
         button { "Add counter" }
             .onClick { _ in

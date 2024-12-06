@@ -5,7 +5,7 @@ import Elementary
 // TODO: consuming sending Self... are we sure about this?
 // TODO: maybe the _renderView should "reconcile" itself directly into a generic reconciler type instread of returning a _RenderedView (possible saving some allocations/currency types)
 public protocol View: HTML where Content: View {
-    static func _renderView(_ view: consuming sending Self, context: consuming _ViewRenderingContext) -> _RenderedView
+    static func _renderView(_ view: consuming Self, context: consuming _ViewRenderingContext) -> _RenderedView
     static func __applyContext(_ context: borrowing _ViewRenderingContext, to view: inout Self)
 }
 
@@ -45,7 +45,7 @@ public struct _ViewRenderingContext {
 }
 
 extension HTMLElement: View where Content: View {
-    public static func _renderView(_ view: consuming sending Self, context: consuming _ViewRenderingContext) -> _RenderedView {
+    public static func _renderView(_ view: consuming Self, context: consuming _ViewRenderingContext) -> _RenderedView {
         var attributes = view._attributes
         attributes.append(context.takeAttributes())
 
@@ -91,51 +91,41 @@ extension EmptyHTML: View {
 }
 
 extension Optional: View where Wrapped: View {
-    public static func _renderView(_ view: consuming sending Self, context: consuming _ViewRenderingContext) -> _RenderedView {
+    public static func _renderView(_ view: consuming Self, context: consuming _ViewRenderingContext) -> _RenderedView {
         switch view {
         case let .some(view):
-            return Wrapped._renderView(view, context: context)
+            return .init(value: .keyed(.trueKey, Wrapped._renderView(view, context: context)))
         case .none:
-            return .init(
-                value: .nothing
-            )
+            return .init(value: .keyed(.falseKey, .init(value: .nothing)))
         }
     }
 }
 
 extension _HTMLConditional: View where TrueContent: View, FalseContent: View {
-    public static func _renderView(_ view: consuming sending Self, context: consuming _ViewRenderingContext) -> _RenderedView {
+    public static func _renderView(_ view: consuming Self, context: consuming _ViewRenderingContext) -> _RenderedView {
+        // TODO: think about collapsing structure keys better switch folding
         switch view.value {
         case let .trueContent(content):
-            TrueContent._renderView(content, context: context)
+            .init(value: .keyed(.trueKey, TrueContent._renderView(content, context: context)))
         case let .falseContent(content):
-            FalseContent._renderView(content, context: context)
+            .init(value: .keyed(.falseKey, FalseContent._renderView(content, context: context)))
         }
     }
 }
 
 extension _HTMLArray: View where Element: View {
-    public static func _renderView(_ view: consuming sending Self, context: consuming _ViewRenderingContext) -> _RenderedView {
-        var renderedChildren: [_RenderedView] = []
-        renderedChildren.reserveCapacity(view.value.count)
-
-        func addChild<C: View>(_ child: consuming sending C) {
-            renderedChildren.append(C._renderView(child, context: copy context))
-        }
-
-        // map does not work because of sending things, but the whole sending thing might go away once MainActor stuff is figured out
-        for child in view.value {
-            addChild(child)
-        }
-
+    public static func _renderView(_ view: consuming Self, context: consuming _ViewRenderingContext) -> _RenderedView {
+        // FIXME: this feels awkward
         return .init(
-            value: .list(renderedChildren)
+            value: .dynamicList(
+                view.value.map { Element._renderView($0, context: copy context) }
+            )
         )
     }
 }
 
 extension _AttributedElement: View where Content: View {
-    public static func _renderView(_ view: consuming sending Self, context: consuming _ViewRenderingContext) -> _RenderedView {
+    public static func _renderView(_ view: consuming Self, context: consuming _ViewRenderingContext) -> _RenderedView {
         // TODO: make prepent from elementary available
         view.attributes.append(context.attributes)
         context.attributes = view.attributes
