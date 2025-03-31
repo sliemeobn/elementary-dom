@@ -10,7 +10,7 @@
     <script type="module">
       const [response, jsk] = await Promise.all([
         fetch(`app.wasm`),
-        import(`./javascript-kit/index.mjs`),
+        import(`./javascript-kit/runtime.js`),
       ]);
 
       const swift = new jsk.SwiftRuntime();

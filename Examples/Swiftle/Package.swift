@@ -4,7 +4,8 @@ import PackageDescription
 let shouldBuildForEmbedded =
     Context.environment["JAVASCRIPTKIT_EXPERIMENTAL_EMBEDDED_WASM"].flatMap(Bool.init) ?? false
 
-let extraDependencies: [Target.Dependency] = shouldBuildForEmbedded
+let extraDependencies: [Target.Dependency] =
+    shouldBuildForEmbedded
     ? [.product(name: "dlmalloc", package: "swift-dlmalloc")]
     : []
 
@@ -24,22 +25,24 @@ let package = Package(
                 .product(name: "JavaScriptKit", package: "JavaScriptKit"),
             ] + extraDependencies,
             cSettings: [.unsafeFlags(["-fdeclspec"])],
-            swiftSettings: shouldBuildForEmbedded ? [
-                .enableExperimentalFeature("Embedded"),
-                .enableExperimentalFeature("Extern"),
-                .unsafeFlags([
-                    "-Xfrontend", "-gnone",
-                    "-Xfrontend", "-disable-stack-protector",
-                ]),
-            ] : nil,
-            linkerSettings: shouldBuildForEmbedded ? [
-                .unsafeFlags([
-                    "-Xclang-linker", "-nostdlib",
-                    "-Xlinker", "--no-entry",
-                    "-Xlinker", "--export-if-defined=__main_argc_argv",
-                ]),
-            ] : nil
-        ),
+            swiftSettings: shouldBuildForEmbedded
+                ? [
+                    .enableExperimentalFeature("Embedded"),
+                    .enableExperimentalFeature("Extern"),
+                    .unsafeFlags([
+                        "-Xfrontend", "-gnone",
+                        "-Xfrontend", "-disable-stack-protector",
+                    ]),
+                ] : nil,
+            linkerSettings: true
+                ? [
+                    .unsafeFlags([
+                        "-Xclang-linker", "-nostdlib",
+                        "-Xlinker", "--no-entry",
+                        "-Xlinker", "--export-if-defined=__main_argc_argv",
+                    ])
+                ] : nil
+        )
     ],
     swiftLanguageModes: [.v5]
 )
