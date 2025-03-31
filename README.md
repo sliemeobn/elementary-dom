@@ -10,7 +10,7 @@ Developed with a recent snapshot of swift. No WASM/WASI SDK required when built 
 
 ## Things to figure out
 
-- identity system and list-diffing
+- ~~identity system and list-diffing~~
 - ~~lifecycle events and proper "unmounting" (currently node are just "dropped")~~
 - ~~@State system~~
 - ~~typed event handlers~~
@@ -27,6 +27,7 @@ Developed with a recent snapshot of swift. No WASM/WASI SDK required when built 
 
 ### Embedded Swift for WASM waitlist
 
+- simple build with SwiftPM (wasm-ld)
 - \_Concurrency module (Task)
 - Synchronization (Mutex)
 - Codable (we probably need another way to JSON-ify things)
