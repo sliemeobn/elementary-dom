@@ -25,6 +25,5 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build
-        run: |
-          JAVASCRIPTKIT_EXPERIMENTAL_EMBEDDED_WASM=true \
-            swift build --triple wasm32-unknown-none-wasm
+        working-directory: Examples/Swiftle
+        run: ./build.sh

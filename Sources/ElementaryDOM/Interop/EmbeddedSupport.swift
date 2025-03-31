@@ -1,13 +1,3 @@
-#if hasFeature(Embedded)
-import JavaScriptKit
-
-let consoleLog = JSObject.global.console.log.function!
-
-func print(_ message: String) {
-    _ = consoleLog(message)
-}
-#endif
-
 extension String {
     // TODO: there is probably a better way...
     @inline(__always)
@@ -21,7 +11,7 @@ extension String? {
         switch (self, other) {
         case (.none, .none):
             return true
-        case let (.some(lhs), .some(rhs)):
+        case (.some(let lhs), .some(let rhs)):
             return lhs.utf8Equals(rhs)
         default:
             return false
