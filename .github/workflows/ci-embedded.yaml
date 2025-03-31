@@ -25,7 +25,5 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build
-        run: |
-          swift build --toolset BuildSupport/embedded-toolset.json \
-            --triple wasm32-unknown-none-wasm \
-            -c release
+        working-directory: Examples/Swiftle
+        run: ./build.sh
