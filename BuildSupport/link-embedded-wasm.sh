@@ -37,7 +37,7 @@ filtered_object_files() {
 
 wasm-ld \
     --no-entry --export-if-defined=__main_argc_argv --export-if-defined=__main_argc_argv \
-    --strip-all -Os \
+    --strip-all -O2 \
     -L"$WASI_SDK" \
     -lc \
     $(filtered_object_files <$OBJECT_FILE_LIST) \
