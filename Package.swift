@@ -38,7 +38,7 @@ let package = Package(
         /// --- REACTIVITY ---
         .target(
             name: "Reactivity",
-            dependencies: ["ReactivityMacros"],
+            dependencies: ["ReactivityMacros"]
         ),
         .macro(
             name: "ReactivityMacros",
