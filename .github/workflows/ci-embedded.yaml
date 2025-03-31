@@ -26,5 +26,6 @@ jobs:
 
       - name: Build
         run: |
-          JAVASCRIPTKIT_EXPERIMENTAL_EMBEDDED_WASM=true \
-            swift build --triple wasm32-unknown-none-wasm
+          swift build --toolset BuildSupport/embedded-toolset.json \
+            --triple wasm32-unknown-none-wasm \
+            -c release

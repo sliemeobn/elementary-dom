@@ -2,9 +2,6 @@
 import CompilerPluginSupport
 import PackageDescription
 
-let shouldBuildForEmbedded =
-    Context.environment["JAVASCRIPTKIT_EXPERIMENTAL_EMBEDDED_WASM"].flatMap(Bool.init) ?? false
-
 let package = Package(
     name: "Test",
     platforms: [.macOS(.v15)],
@@ -26,18 +23,7 @@ let package = Package(
                 .target(name: "ElementaryDOMMacros"),
                 .target(name: "Reactivity"),
             ],
-            cSettings: shouldBuildForEmbedded
-                ? [
-                    .unsafeFlags(["-fdeclspec"])
-                ] : nil,
-            swiftSettings: shouldBuildForEmbedded
-                ? [
-                    .swiftLanguageMode(.v5),
-                    .enableExperimentalFeature("Embedded"),
-                    .enableExperimentalFeature("Extern"),
-                    .unsafeFlags(["-Xfrontend", "-emit-empty-object-file"]),
-                ]
-                : [.swiftLanguageMode(.v5)]
+            swiftSettings: [.swiftLanguageMode(.v5)]
         ),
         .macro(
             name: "ElementaryDOMMacros",
@@ -53,14 +39,6 @@ let package = Package(
         .target(
             name: "Reactivity",
             dependencies: ["ReactivityMacros"],
-            cSettings: shouldBuildForEmbedded ? [.unsafeFlags(["-fdeclspec"])] : nil,
-            swiftSettings: shouldBuildForEmbedded
-                ? [
-                    .enableExperimentalFeature("Embedded"),
-                    .enableExperimentalFeature("Extern"),
-                    .unsafeFlags(["-Xfrontend", "-emit-empty-object-file"]),
-                ]
-                : []
         ),
         .macro(
             name: "ReactivityMacros",

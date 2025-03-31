@@ -10,7 +10,7 @@
       "-###"
     ]
   },
-  "linker": {
-    "extraCLIOptions": ["--no-entry", "--export-if-defined=__main_argc_argv"]
+  "cCompiler": {
+    "extraCLIOptions": ["-fdeclspec"]
   }
 }
