@@ -23,19 +23,20 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-    container:
-      image: "swiftlang/swift:nightly-main"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - uses: vapor/swiftly-action@v0.2.0
+        with:
+          toolchain: main-snapshot-2024-12-22 #latest main snapshots have build regression
       - name: Build
         working-directory: Examples/Swiftle
         run: ./build.sh
-      - name: Optimize Wasm
-        uses: NiklasEi/wasm-opt-action@v2
-        with:
-          file: Examples/Swiftle/Public/app.wasm
-          output: Examples/Swiftle/Public/app.wasm
+      # - name: Optimize Wasm
+      #   uses: NiklasEi/wasm-opt-action@v2
+      #   with:
+      #     file: Examples/Swiftle/Public/app.wasm
+      #     output: Examples/Swiftle/Public/app.wasm
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
