@@ -2,8 +2,10 @@
 BUILD_FOLDER=$1
 PRODUCT_NAME=$2
 
+set -e
+
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
-WASI_SDK=WASI_LIB_DIR=$SCRIPT_DIR/wasi-libc
+WASI_SDK=$SCRIPT_DIR/wasi-libc
 
 if [ -z "$BUILD_FOLDER" ] || [ -z "$PRODUCT_NAME" ]; then
     echo "Usage: $0 <build_folder> <product_name> <wasi_lib_path>"
