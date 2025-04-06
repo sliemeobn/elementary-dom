@@ -6,6 +6,7 @@ let package = Package(
     platforms: [.macOS(.v15)],
     dependencies: [
         .package(name: "ElementaryDOM", path: "../../"),
+        .package(url: "https://github.com/swiftwasm/JavaScriptKit.git", from: "0.26.1"),
     ],
     targets: [
         .executableTarget(
