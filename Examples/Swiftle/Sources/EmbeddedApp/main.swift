@@ -8,4 +8,4 @@ struct App {
     }
 }
 
-App().mount(in: JSObject.global.document.body.object!)
+App().mount(in: .body)

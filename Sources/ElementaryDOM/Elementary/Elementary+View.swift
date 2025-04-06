@@ -1,8 +1,7 @@
 import Elementary
 
 // TODO: maybe this should not derive from HTML at all
-// TODO: think about how the square the  thing with server side usage
-// TODO: consuming sending Self... are we sure about this?
+// TODO: think about how the square MainActor-isolation with server side usage
 // TODO: maybe the _renderView should "reconcile" itself directly into a generic reconciler type instread of returning a _RenderedView (possible saving some allocations/currency types)
 public protocol View: HTML where Content: View {
     static func _renderView(_ view: consuming Self, context: consuming _ViewRenderingContext) -> _RenderedView
@@ -119,6 +118,41 @@ extension _HTMLArray: View where Element: View {
         return .init(
             value: .dynamicList(
                 view.value.map { Element._renderView($0, context: copy context) }
+            )
+        )
+    }
+}
+
+extension ForEach: View where Content: View, Data: Collection {
+    public init<C>(
+        _ data: Data,
+        @HTMLBuilder content: @escaping @Sendable (Data.Element) -> C
+    ) where Data.Element: Identifiable, Data.Element.ID: LosslessStringConvertible,
+        Content == _KeyedView<C>
+    {
+        self.init(data, content: {
+            content($0).key($0.id)
+        })
+    }
+
+    public init<C, ID: LosslessStringConvertible>(
+        _ data: Data,
+        key: @escaping @Sendable (Data.Element) -> ID,
+        @HTMLBuilder content: @escaping @Sendable (Data.Element) -> C
+    ) where Content == _KeyedView<C> {
+        self.init(data, content: {
+            content($0).key(key($0))
+        })
+    }
+
+    public static func _renderView(_ view: consuming Self, context: consuming _ViewRenderingContext) -> _RenderedView {
+        return .init(
+            value: .dynamicList(
+                view._data.map {
+                    Content._renderView(
+                        view._contentBuilder($0), context: copy context
+                    )
+                }
             )
         )
     }

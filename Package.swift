@@ -6,13 +6,12 @@ let package = Package(
     name: "Test",
     platforms: [.macOS(.v15)],
     products: [
-        .library(name: "ElementaryDOM", targets: ["ElementaryDOM", "Reactivity"])
+        .library(name: "ElementaryDOM", targets: ["ElementaryDOM", "Reactivity"]),
     ],
     dependencies: [
         .package(url: "https://github.com/swiftwasm/JavaScriptKit", .upToNextMinor(from: "0.26.1")),
-        .package(url: "https://github.com/sliemeobn/elementary", from: "0.5.0"),
-        .package(
-            url: "https://github.com/swiftlang/swift-syntax", "600.0.0"..<"601.0.0-prerelease"),
+        .package(url: "https://github.com/sliemeobn/elementary", from: "0.5.1"),
+        .package(url: "https://github.com/swiftlang/swift-syntax", "600.0.0" ..< "601.0.0-prerelease"),
     ],
     targets: [
         .target(
@@ -30,7 +29,8 @@ let package = Package(
             dependencies: [
                 .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
                 .product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
-            ]),
+            ]
+        ),
         .testTarget(
             name: "ElementaryDOMTests",
             dependencies: ["ElementaryDOM"]
