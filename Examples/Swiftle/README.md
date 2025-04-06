@@ -2,7 +2,7 @@
 
 Requires a recent main-snapshot toolchain (tested with main-snapshot-2024-12-22.)
 
-> ⚠️ More recent toolchains do not work due to a compiler regression.
+> ⚠️ More recent toolchains do not work due to a [compiler regression.](https://github.com/swiftlang/swift/issues/80430)
 
 Do not use a SwiftWasm toolchain or a SwiftWasm SDK.
 

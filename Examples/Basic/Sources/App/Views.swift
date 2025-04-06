@@ -22,19 +22,19 @@ struct App {
 
         hr()
 
-        // TODO: port ForEach, make keyed overloads
-        for (index, counter) in counters.enumerated() {
+        ForEach(counters, key: { String($0) }) { counter in
             div {
                 h3 { "Counter \(counter)" }
                 Counter(count: counter)
                 br()
                 button { "Remove counter" }
                     .onClick { _ in
-                        counters.remove(at: index)
+                        counters.removeAll { $0 == counter }
                     }
                 hr()
-            }.key(String(counter))
+            }
         }
+
         button { "Add counter" }
             .onClick { _ in
                 nextCounterName += 1

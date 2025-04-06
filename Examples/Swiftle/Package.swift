@@ -6,16 +6,14 @@ let package = Package(
     platforms: [.macOS(.v15)],
     dependencies: [
         .package(name: "ElementaryDOM", path: "../../"),
-        .package(url: "https://github.com/swiftwasm/JavaScriptKit", .upToNextMinor(from: "0.26.1")),
     ],
     targets: [
         .executableTarget(
             name: "EmbeddedApp",
             dependencies: [
                 .product(name: "ElementaryDOM", package: "ElementaryDOM"),
-                .product(name: "JavaScriptKit", package: "JavaScriptKit"),
             ]
-        )
+        ),
     ],
     swiftLanguageModes: [.v5]
 )

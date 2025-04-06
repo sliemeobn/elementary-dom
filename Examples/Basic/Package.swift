@@ -2,20 +2,19 @@
 import PackageDescription
 
 let package = Package(
-    name: "Embedded",
+    name: "BasicExample",
     platforms: [.macOS(.v15)],
     dependencies: [
         .package(name: "ElementaryDOM", path: "../../"),
-        .package(url: "https://github.com/swiftwasm/JavaScriptKit", from: "0.26.1"),
+        .package(url: "https://github.com/swiftwasm/JavaScriptKit.git", from: "0.26.1"),
     ],
     targets: [
         .executableTarget(
-            name: "EmbeddedApp",
+            name: "App",
             dependencies: [
                 .product(name: "ElementaryDOM", package: "ElementaryDOM"),
-                .product(name: "JavaScriptKit", package: "JavaScriptKit"),
             ]
-        )
+        ),
     ],
     swiftLanguageModes: [.v5]
 )

@@ -1,4 +1,4 @@
-APP_NAME=EmbeddedApp
+APP_NAME=App
 TRIPPLE=wasm32-unknown-none-wasm
 
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
