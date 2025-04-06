@@ -1,4 +1,4 @@
-name: CI
+name: Build Example (WASI)
 
 on:
   push:
@@ -16,7 +16,7 @@ jobs:
     timeout-minutes: 15
     strategy:
       matrix:
-        image: ["swift:6.0", "swift:6.1"]
+        image: ["swift:6.1"]
 
     container:
       image: ${{ matrix.image }}
@@ -24,8 +24,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build
-        run: swift build --build-tests
+      - uses: swiftwasm/setup-swiftwasm@v2
 
-      - name: Run Tests
-        run: swift test
+      - name: Build
+        working-directory: Examples/Basic
+        run: ./build-wasi.sh

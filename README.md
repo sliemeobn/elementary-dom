@@ -2,7 +2,7 @@
 
 Based on [Elementary.](https://github.com/sliemeobn/elementary)
 
-Check out the example app: https://sliemeobn.github.io/elementary-dom/
+Check out the "Swiftle" demo app: https://sliemeobn.github.io/elementary-dom/
 
 ## Highly experimental, do not use.
 

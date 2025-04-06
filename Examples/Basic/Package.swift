@@ -2,7 +2,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "Embedded",
+    name: "BasicExample",
     platforms: [.macOS(.v15)],
     dependencies: [
         .package(name: "ElementaryDOM", path: "../../"),
@@ -10,7 +10,7 @@ let package = Package(
     ],
     targets: [
         .executableTarget(
-            name: "EmbeddedApp",
+            name: "App",
             dependencies: [
                 .product(name: "ElementaryDOM", package: "ElementaryDOM"),
             ]

@@ -1,5 +1,4 @@
 import ElementaryDOM
-import JavaScriptKit
 
 @View
 struct App {

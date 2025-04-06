@@ -11,7 +11,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/swiftwasm/JavaScriptKit", .upToNextMinor(from: "0.26.1")),
         .package(url: "https://github.com/sliemeobn/elementary", from: "0.5.1"),
-        .package(url: "https://github.com/swiftlang/swift-syntax", "600.0.0" ..< "601.0.0-prerelease"),
+        .package(url: "https://github.com/swiftlang/swift-syntax", "600.0.0" ..< "602.0.0-prerelease"),
     ],
     targets: [
         .target(
