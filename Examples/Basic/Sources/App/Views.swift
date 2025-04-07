@@ -54,12 +54,13 @@ struct Counter {
             span { " \(count) " }
             button { "+" }
                 .onClick { _ in count += 1 }
+
         }
         .onMount {
-            print("Counter \(count) mounted")
+            print("Counter with count \(count) mounted")
         }
         .onUnmount {
-            print("Counter \(count) dismounted")
+            print("Counter with count \(count) unmounted")
         }
     }
 }
