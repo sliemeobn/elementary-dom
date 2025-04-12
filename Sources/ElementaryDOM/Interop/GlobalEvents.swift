@@ -95,5 +95,5 @@ struct AnimationFrameEventSource: EventSource {
 }
 
 public struct AnimationFrameEvent {
-    let timestamp: Double
+    public let timestamp: Double
 }
