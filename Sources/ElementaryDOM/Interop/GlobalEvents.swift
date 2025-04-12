@@ -73,12 +73,12 @@ struct AnimationFrameEventSource: EventSource {
         var rafID: JSValue?
         var closure: JSClosure?
 
-        closure = JSClosure { _ in
+        closure = JSClosure { value in
             guard let closure else {
                 return .undefined
             }
             rafID = AnimationFrameEventSource._requestAnimationFrame(closure)
-            callback(AnimationFrameEvent(timestamp: JSObject.global.performance.now().number!))
+            callback(AnimationFrameEvent(timestamp: value[0].number!))
             return .undefined
         }
 
