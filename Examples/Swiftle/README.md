@@ -1,8 +1,6 @@
 # Embedded example
 
-Requires a recent main-snapshot toolchain (tested with main-snapshot-2024-12-22.)
-
-> ⚠️ More recent toolchains do not work due to a [compiler regression.](https://github.com/swiftlang/swift/issues/80430)
+Requires a recent main-snapshot toolchain (tested with main-snapshot-2025-04-03.)
 
 Do not use a SwiftWasm toolchain or a SwiftWasm SDK.
 

@@ -26,9 +26,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - uses: vapor/swiftly-action@v0.2.0
-        with:
-          toolchain: main-snapshot-2024-12-22 #latest main snapshots have build regression
       - name: Build
         working-directory: Examples/Swiftle
         run: ./build.sh
