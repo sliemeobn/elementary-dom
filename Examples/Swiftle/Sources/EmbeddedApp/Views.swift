@@ -35,7 +35,9 @@ struct GameView {
             }
 
             Paragraph(
-                .color(.gray400), .fontFamily(.sansSerif), .textAlign(.center),
+                .color(.gray400),
+                .fontFamily(.sansSerif),
+                .textAlign(.center),
                 .fontSize(.xs)
             ) {
                 "This is a proof of concept demo of an Embedded Swift Wasm app."
@@ -83,9 +85,7 @@ struct LetterView {
 
     var content: some View {
         Block(.width(10), .height(10), .display(.flex)) {
-            Paragraph(
-                .margin(.auto), .textAlign(.center)
-            ) {
+            Paragraph(.margin(.auto)) {
                 guess?.letter.value ?? ""
             }
         }
@@ -157,8 +157,12 @@ struct EnterKeyView {
             )
         }
         .style(
-            .width(12), .height(10), .padding(2), .borderRadius(0.5),
-            .display(.flex), .alignItems(.center),
+            .width(12),
+            .height(10),
+            .padding(2),
+            .borderRadius(0.5),
+            .display(.flex),
+            .alignItems(.center),
             .background(.gray400)
         )
         .style(when: .active, .background(.gray300))
@@ -180,8 +184,12 @@ struct BackspaceKeyView {
             )
         }
         .style(
-            .width(12), .height(10), .padding(1), .borderRadius(0.5),
-            .display(.flex), .alignItems(.center),
+            .width(12),
+            .height(10),
+            .padding(1),
+            .borderRadius(0.5),
+            .display(.flex),
+            .alignItems(.center),
             .background(.gray400)
         )
         .style(when: .active, .background(.gray300))
@@ -199,12 +207,14 @@ struct GameEndOverlay {
     var content: some View {
         if game.state != .playing {
             Block(
-                .position(.absolute), .inset(0), .background(.black60a),
-                .padding(t: 4), .fontWeight(.semiBold)
+                .position(.absolute),
+                .inset(0),
+                .background(.black60a),
+                .padding(t: 4),
+                .fontWeight(.semiBold)
             ) {
                 FlexColumn(align: .center, gap: 2) {
-                    Paragraph(.fontSize(.xl), .letterSpacing(.em(0.1)), .textTransform("uppercase"))
-                    {
+                    Paragraph(.fontSize(.xl), .letterSpacing(.em(0.1)), .textTransform("uppercase")) {
                         game.state == .won ? "Nice job!" : "Oh no!"
                     }
                     button {
