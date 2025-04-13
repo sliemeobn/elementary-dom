@@ -23,6 +23,6 @@ Requires a recent main snapshot. (but no WASM SDK)
 
 ```sh
 # Tested with main-snapshot-2025-03-28
-./build-wasi.sh
+./build-embedded.sh
 npx serve Public
 ```
