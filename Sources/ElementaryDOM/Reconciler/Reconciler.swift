@@ -87,7 +87,8 @@ final class Reconciler<DOMInteractor: DOMInteracting> {
 
     func runUpdatedFunctionNode(_ node: Node, context: inout UpdateRun) {
         guard case .function(let function, let state) = node.value else {
-            fatalError("Expected function")
+            printError("Expected function node, got \(node.value)")
+            fatalError("Expected function node")
         }
 
         // TODO: expose cancellation mechanism and keep track of it
@@ -101,7 +102,9 @@ final class Reconciler<DOMInteractor: DOMInteracting> {
     }
 
     func reconcile(
-        parent: Node, withContent renderedElement: _RenderedView, context: inout UpdateRun
+        parent: Node,
+        withContent renderedElement: _RenderedView,
+        context: inout UpdateRun
     ) {
         var hasPatched = false
 
@@ -121,7 +124,11 @@ final class Reconciler<DOMInteractor: DOMInteracting> {
         }
     }
 
-    func tryPatchSingleNode(_ node: Node, _ element: _RenderedView, context: inout UpdateRun)
+    func tryPatchSingleNode(
+        _ node: Node,
+        _ element: _RenderedView,
+        context: inout UpdateRun
+    )
         -> Bool
     {
         switch (node.value, element.value) {
@@ -134,10 +141,16 @@ final class Reconciler<DOMInteractor: DOMInteracting> {
         where element.tagName.utf8Equals(newElement.tagName):
             node.updateValue(.element(newElement))
             dom.patchElementAttributes(
-                node.domReference!, with: newElement.attributes, replacing: element.attributes)
+                node.domReference!,
+                with: newElement.attributes,
+                replacing: element.attributes
+            )
             dom.patchEventListeners(
-                node.domReference!, with: newElement.listerners, replacing: element.listerners,
-                sink: node.getOrMakeEventSync(dom))
+                node.domReference!,
+                with: newElement.listerners,
+                replacing: element.listerners,
+                sink: node.getOrMakeEventSync(dom)
+            )
 
             reconcile(parent: node, withContent: content, context: &context)
         case (.function(let function, let state), .function(let newFunction)):
@@ -157,11 +170,22 @@ final class Reconciler<DOMInteractor: DOMInteracting> {
             // this is a bit scary, but static lists can neither change their count not their types
             // so a skipped empty view on mount will stay an empty view, so the indexes will line up again
             var index = 0
+            var hasChanged = false
             for element in elements where !element.isEmpty {
-                guard tryPatchSingleNode(node.children[index], element, context: &context) else {
-                    fatalError("Invalid type change detected in static list")
+                if !tryPatchSingleNode(node.children[index], element, context: &context) {
+                    guard let newNode = makeNode(element, context: &context) else {
+                        printError("Failed to create new node for static list for index \(index), element: \(element)")
+                        fatalError("Failed to create new node for static list")
+                    }
+                    node.replaceChild(at: index, with: newNode)
+                    hasChanged = true
                 }
+
                 index += 1
+            }
+
+            if hasChanged {
+                context.registerNodeForChildrenUpdate(node)
             }
         case (.dynamicList(let keys), .dynamicList(let elements)):
             let (newKeys, elements) = elements.extractKeyList()
@@ -172,7 +196,7 @@ final class Reconciler<DOMInteractor: DOMInteracting> {
                     guard
                         tryPatchSingleNode(node.children[index], elements[index], context: &context)
                     else {
-                        print("ERROR: Invalid type change detected in dynamic list")
+                        printError("Invalid type change detected in dynamic list")
                         fatalError("Invalid type change detected in dynamic list")
                     }
                 }
@@ -187,7 +211,7 @@ final class Reconciler<DOMInteractor: DOMInteracting> {
                         newChildren.append(existingNode)
                         guard tryPatchSingleNode(existingNode, elements[index], context: &context)
                         else {
-                            print("ERROR: Invalid type change detected in dynamic list")
+                            printError("Invalid type change detected in dynamic list")
                             fatalError("Invalid type change detected in dynamic list")
                         }
                     } else {
@@ -202,7 +226,7 @@ final class Reconciler<DOMInteractor: DOMInteracting> {
                 context.registerNodeForChildrenUpdate(node)
             }
         default:
-            print("ERROR: Unexpected change in view structure. \(node.depthInTree) \(element)")
+            printError("Unexpected change in view structure. \(node.depthInTree) \(element)")
             // TODO: this is a bit harsh, but we should be able to recover from this and just return false?
             fatalError("Unexpected change in view structure")
         }
@@ -218,14 +242,18 @@ final class Reconciler<DOMInteractor: DOMInteracting> {
         case .element(let element, let content):
             let domNode = dom.createElement(element.tagName)
             let node = Node(
-                value: .element(element), domReference: domNode,
+                value: .element(element),
+                domReference: domNode,
                 child: makeNode(content, context: &context)
             )
 
             dom.patchElementAttributes(domNode, with: element.attributes, replacing: .none)
             dom.patchEventListeners(
-                domNode, with: element.listerners, replacing: .none,
-                sink: node.getOrMakeEventSync(dom))
+                domNode,
+                with: element.listerners,
+                replacing: .none,
+                sink: node.getOrMakeEventSync(dom)
+            )
 
             let childRefs = node.getChildReferenceList()
             if !childRefs.isEmpty {
@@ -319,6 +347,12 @@ extension Reconciler {
             children = newValue
         }
 
+        func replaceChild(at index: Int, with newValue: Node) {
+            children[index].unmount()
+            children[index] = newValue
+            newValue.mount(in: self)
+        }
+
         func updateValue(_ value: Value) {
             self.value = value
         }
@@ -341,7 +375,7 @@ extension Reconciler {
                 // TODO: how the hell do we type this?
                 element.listerners.handleEvent(name, event as AnyObject)
             default:
-                print("ERROR: Event handling not supported for \(value)")
+                printError("Event handling not supported for \(value)")
             }
         }
 
@@ -382,11 +416,11 @@ extension Reconciler {
                 case .task(let task):
                     // #if canImport(_Concurrency)
                     #if !hasFeature(Embedded)
-                        // TODO: figure out if Task will ever be available in embedded for wasm
-                        let task = Task { await task() }
-                        unmountAction = task.cancel
+                    // TODO: figure out if Task will ever be available in embedded for wasm
+                    let task = Task { await task() }
+                    unmountAction = task.cancel
                     #else
-                        fatalError("Task lifecycle hook not supported without _Concurrency")
+                    fatalError("Task lifecycle hook not supported without _Concurrency")
                     #endif
                 case .onMountReturningCancelFunction(let function):
                     unmountAction = function()
@@ -451,4 +485,8 @@ extension [_RenderedView] {
 
         return (keys, elements)
     }
+}
+
+func printError(_ message: String) {
+    print("ELEMENTARY ERROR: \(message)")
 }

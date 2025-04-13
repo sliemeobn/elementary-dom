@@ -22,6 +22,17 @@ struct App {
 
         hr()
 
+        switch counters.count {
+        case 0:
+            p { "No counters" }
+        case 1:
+            p { "One counter" }
+        default:
+            p { "Multiple counters" }
+        }
+
+        hr()
+
         ForEach(counters, key: { String($0) }) { counter in
             div {
                 h3 { "Counter \(counter)" }
