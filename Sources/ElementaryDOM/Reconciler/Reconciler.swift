@@ -47,7 +47,23 @@ final class Reconciler<DOMInteractor: DOMInteracting> {
         }
 
         mutating func popNextFunctionNode() -> Node? {
-            functionsToRun.popLast()
+            var popped = functionsToRun.popLast()
+            while let next = popped {
+                switch next.value {
+                case .function:
+                    return next
+                case .__unmounted:
+                    // NOTE: this depends on proper "cancellation" of observation/reactivity, not sure if this is 100% preventable
+                    // TODO: figure out if this is actually ok and remove the warning
+                    printWarning(
+                        "Skipping unmounted node in update run: \(next.depthInTree). Not sure yet it this can be prevented 100%"
+                    )
+                    popped = functionsToRun.popLast()
+                default:
+                    fatalError("Unexpected node value in update run: \(next.value)")
+                }
+            }
+            return nil
         }
 
         mutating func registerFunctionForUpdate(_ node: Node) {
@@ -489,4 +505,8 @@ extension [_RenderedView] {
 
 func printError(_ message: String) {
     print("ELEMENTARY ERROR: \(message)")
+}
+
+func printWarning(_ message: String) {
+    print("ELEMENTARY WARNING: \(message)")
 }
