@@ -24,7 +24,8 @@ final class JSKitDOMInteractor: DOMInteracting {
 
                 handler(type, event)
                 return .undefined
-            })
+            }
+        )
     }
 
     func createText(_ text: String) -> Node {
@@ -36,7 +37,9 @@ final class JSKitDOMInteractor: DOMInteracting {
     }
 
     func patchElementAttributes(
-        _ node: Node, with attributes: _AttributeStorage, replacing: _AttributeStorage
+        _ node: Node,
+        with attributes: _AttributeStorage,
+        replacing: _AttributeStorage
     ) {
         // fast pass
         guard attributes != .none || replacing != .none else { return }
@@ -47,25 +50,27 @@ final class JSKitDOMInteractor: DOMInteracting {
             if let previousValue = previousIndex {
                 let oldValue = previous.remove(at: previousValue)
                 if !oldValue.value.utf8Equals(attribute.value) {
-                    _printDebug(
+                    logTrace(
                         "updating attribute \(attribute.name) from \(oldValue.value ?? "") to \(attribute.value ?? "")"
                     )
                     _ = node.setAttribute!(attribute.name.jsValue, attribute.value.jsValue)
                 }
             } else {
-                _printDebug("setting attribute \(attribute.name) to \(attribute.value ?? "")")
+                logTrace("setting attribute \(attribute.name) to \(attribute.value ?? "")")
                 _ = node.setAttribute!(attribute.name.jsValue, attribute.value.jsValue)
             }
         }
 
         for attribute in previous {
-            _printDebug("removing attribute \(attribute.name)")
+            logTrace("removing attribute \(attribute.name)")
             _ = node.removeAttribute!(attribute.name)
         }
     }
 
     func patchEventListeners(
-        _ node: Node, with listers: _DomEventListenerStorage, replacing: _DomEventListenerStorage,
+        _ node: Node,
+        with listers: _DomEventListenerStorage,
+        replacing: _DomEventListenerStorage,
         sink: @autoclosure () -> EventSink
     ) {
         guard !(listers.listeners.isEmpty && replacing.listeners.isEmpty) else { return }
@@ -77,13 +82,13 @@ final class JSKitDOMInteractor: DOMInteracting {
             if let previousIndex {
                 previous.remove(at: previousIndex)
             } else {
-                _printDebug("adding listener \(event)")
+                logTrace("adding listener \(event)")
                 _ = node.addEventListener!(event.jsValue, sink().jsValue)
             }
         }
 
         for event in previous {
-            _printDebug("removing listener \(event)")
+            logTrace("removing listener \(event)")
             _ = node.removeEventListener!(event.jsValue, sink().jsValue)
         }
     }
@@ -94,7 +99,7 @@ final class JSKitDOMInteractor: DOMInteracting {
     }
 
     func replaceChildren(_ children: [Node], in parent: Node) {
-        _printDebug("setting \(children.count) children in \(parent)")
+        logTrace("setting \(children.count) children in \(parent)")
         let function = parent.replaceChildren.function!
         function.callAsFunction(
             this: parent,
@@ -107,13 +112,7 @@ final class JSKitDOMInteractor: DOMInteracting {
             JSClosure { args in
                 callback(args[0].number!)
                 return .undefined
-            }.jsValue)
-    }
-
-    private func _printDebug(_ message: @autoclosure () -> String) {
-        // TODO: make this conditional somehow
-        if false {
-            print(message())
-        }
+            }.jsValue
+        )
     }
 }
