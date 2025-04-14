@@ -12,7 +12,12 @@ protocol DOMInteracting {
     func createText(_ text: String) -> Node
     func createElement(_ element: String) -> Node
     func patchElementAttributes(_ node: Node, with attributes: _AttributeStorage, replacing: _AttributeStorage)
-    func patchEventListeners(_ node: Node, with listers: _DomEventListenerStorage, replacing: _DomEventListenerStorage, sink: @autoclosure () -> EventSink)
+    func patchEventListeners(
+        _ node: Node,
+        with listers: _DomEventListenerStorage,
+        replacing: _DomEventListenerStorage,
+        sink: @autoclosure () -> EventSink
+    )
     func patchText(_ node: Node, with text: String, replacing: String)
     func replaceChildren(_ children: [Node], in parent: Node)
 

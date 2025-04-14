@@ -24,7 +24,8 @@ extension ViewMacro: ExtensionMacro {
         // add View conformance if not already present
         if needsView {
             // add loading environment properties
-            let environmentLoads = members
+            let environmentLoads =
+                members
                 .filter { $0.isEnvironmentProperty }
                 .map { variable -> DeclSyntax in
                     let name = variable.trimmedIdentifier!.text
@@ -32,12 +33,12 @@ extension ViewMacro: ExtensionMacro {
                 }
 
             let decl: DeclSyntax = """
-            extension \(raw: type.trimmedDescription): View {
-                static func __applyContext(_ context: borrowing _ViewRenderingContext, to view: inout Self) {
-                    \(raw: environmentLoads.map { $0.description }.joined(separator: "\n"))
+                extension \(raw: type.trimmedDescription): View {
+                    static func __applyContext(_ context: borrowing _ViewRenderingContext, to view: inout Self) {
+                        \(raw: environmentLoads.map { $0.description }.joined(separator: "\n"))
+                    }
                 }
-            }
-            """
+                """
             result.append(decl.cast(ExtensionDeclSyntax.self))
         } else {
             // TODO: diagnostic "remove View conformance"
@@ -58,19 +59,19 @@ extension ViewMacro: ExtensionMacro {
             }
 
             let decl: DeclSyntax = """
-            extension \(raw: type.trimmedDescription): _StatefulView {
-                static func __initializeState(from view: borrowing Self) -> _ViewStateStorage {
-                    let storage = _ViewStateStorage()
-                    storage.reserveCapacity(\(raw: stateMembers.count))
-                    \(raw: initCalls.map { $0.description }.joined(separator: "\n"))
-                    return storage
-                }
+                extension \(raw: type.trimmedDescription): _StatefulView {
+                    static func __initializeState(from view: borrowing Self) -> _ViewStateStorage {
+                        let storage = _ViewStateStorage()
+                        storage.reserveCapacity(\(raw: stateMembers.count))
+                        \(raw: initCalls.map { $0.description }.joined(separator: "\n"))
+                        return storage
+                    }
 
-                static func __restoreState(_ storage: _ViewStateStorage, in view: inout Self) {
-                    \(raw: restoreCalls.map { $0.description }.joined(separator: "\n"))
+                    static func __restoreState(_ storage: _ViewStateStorage, in view: inout Self) {
+                        \(raw: restoreCalls.map { $0.description }.joined(separator: "\n"))
+                    }
                 }
-            }
-            """
+                """
 
             result.append(decl.cast(ExtensionDeclSyntax.self))
         }
@@ -110,11 +111,11 @@ extension VariableDeclSyntax {
     }
 
     var isStateProperty: Bool {
-        return isVar && hasAttribute(named: "State")
+        isVar && hasAttribute(named: "State")
     }
 
     var isEnvironmentProperty: Bool {
-        return isVar && hasAttribute(named: "Environment")
+        isVar && hasAttribute(named: "Environment")
     }
 
     func hasAttribute(named name: String) -> Bool {

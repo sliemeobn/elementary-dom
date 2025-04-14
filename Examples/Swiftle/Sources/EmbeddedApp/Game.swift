@@ -16,7 +16,7 @@ final class Game {
 
     init(solution: String = "SWIFT") {
         self.solution = solution.utf8
-        guesses = (0 ..< 6).map { _ in Guess() }
+        guesses = (0..<6).map { _ in Guess() }
     }
 
     func handleKey(_ key: EnteredKey) {
@@ -59,7 +59,7 @@ struct Guess {
     private(set) var status: Status = .notEntered
 
     init(letterCount: Int = 5) {
-        letters = (0 ..< letterCount).map { _ in nil }
+        letters = (0..<letterCount).map { _ in nil }
     }
 
     var areAllLettersEntered: Bool {
@@ -154,9 +154,9 @@ struct ValidLetter {
 final class Keyboard {
     private(set) var letters: [LetterGuess]
 
-    var topRow: ArraySlice<LetterGuess> { letters[0 ..< 10] }
-    var middleRow: ArraySlice<LetterGuess> { letters[10 ..< 19] }
-    var bottomRow: ArraySlice<LetterGuess> { letters[19 ..< 26] }
+    var topRow: ArraySlice<LetterGuess> { letters[0..<10] }
+    var middleRow: ArraySlice<LetterGuess> { letters[10..<19] }
+    var bottomRow: ArraySlice<LetterGuess> { letters[19..<26] }
 
     init() {
         // QWERTY layout

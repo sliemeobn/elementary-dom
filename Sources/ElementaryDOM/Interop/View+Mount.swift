@@ -9,11 +9,11 @@ public struct MountingContainer: Sendable {
     let value: Value
 
     public static var body: MountingContainer {
-        return MountingContainer(value: .body)
+        MountingContainer(value: .body)
     }
 
     public static func cssSelector(_ selector: String) -> MountingContainer {
-        return MountingContainer(value: .cssSelector(selector))
+        MountingContainer(value: .cssSelector(selector))
     }
 
     fileprivate func findDOMNode() -> JSObject? {

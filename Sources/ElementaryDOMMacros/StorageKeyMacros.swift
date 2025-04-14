@@ -14,8 +14,8 @@ extension EntryMacro: AccessorMacro {
         in context: some MacroExpansionContext
     ) throws -> [AccessorDeclSyntax] {
         guard let property = declaration.as(VariableDeclSyntax.self),
-              property.isValidEntry,
-              let identifier = property.trimmedIdentifier
+            property.isValidEntry,
+            let identifier = property.trimmedIdentifier
         else {
             return []
         }
@@ -36,10 +36,10 @@ extension EntryMacro: PeerMacro {
         in context: some MacroExpansionContext
     ) throws -> [DeclSyntax] {
         guard let property = declaration.as(VariableDeclSyntax.self),
-              property.isValidEntry,
-              let identifier = property.trimmedIdentifier,
-              let binding = property.bindings.first,
-              let initializer = binding.initializer
+            property.isValidEntry,
+            let identifier = property.trimmedIdentifier,
+            let binding = property.bindings.first,
+            let initializer = binding.initializer
         else {
             return []
         }
@@ -95,7 +95,7 @@ enum AnyKeyMacro {
 private extension VariableDeclSyntax {
     var isValidEntry: Bool {
         // TODO: check some stuff
-        return true
+        true
     }
 }
 

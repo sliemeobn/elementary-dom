@@ -49,11 +49,14 @@ extension HTMLElement: View where Content: View {
         attributes.append(context.takeAttributes())
 
         return .init(
-            value: .element(_DomElement(
-                tagName: Tag.name,
-                attributes: attributes,
-                listerners: context.takeListeners()
-            ), Content._renderView(view.content, context: context))
+            value: .element(
+                _DomElement(
+                    tagName: Tag.name,
+                    attributes: attributes,
+                    listerners: context.takeListeners()
+                ),
+                Content._renderView(view.content, context: context)
+            )
         )
     }
 }
@@ -64,18 +67,21 @@ extension HTMLVoidElement: View {
         attributes.append(context.takeAttributes())
 
         return .init(
-            value: .element(_DomElement(
-                tagName: Tag.name,
-                attributes: attributes,
-                listerners: context.takeListeners()
-            ), .init(value: .nothing))
+            value: .element(
+                _DomElement(
+                    tagName: Tag.name,
+                    attributes: attributes,
+                    listerners: context.takeListeners()
+                ),
+                .init(value: .nothing)
+            )
         )
     }
 }
 
 extension HTMLText: View {
     public static func _renderView(_ view: consuming Self, context _: consuming _ViewRenderingContext) -> _RenderedView {
-        return .init(
+        .init(
             value: .text(view.text)
         )
     }
@@ -83,7 +89,7 @@ extension HTMLText: View {
 
 extension EmptyHTML: View {
     public static func _renderView(_: consuming Self, context _: consuming _ViewRenderingContext) -> _RenderedView {
-        return .init(
+        .init(
             value: .nothing
         )
     }
@@ -115,7 +121,7 @@ extension _HTMLConditional: View where TrueContent: View, FalseContent: View {
 extension _HTMLArray: View where Element: View {
     public static func _renderView(_ view: consuming Self, context: consuming _ViewRenderingContext) -> _RenderedView {
         // FIXME: this feels awkward
-        return .init(
+        .init(
             value: .dynamicList(
                 view.value.map { Element._renderView($0, context: copy context) }
             )
@@ -127,12 +133,18 @@ extension ForEach: View where Content: View, Data: Collection {
     public init<C>(
         _ data: Data,
         @HTMLBuilder content: @escaping @Sendable (Data.Element) -> C
-    ) where Data.Element: Identifiable, Data.Element.ID: LosslessStringConvertible,
+    )
+    where
+        Data.Element: Identifiable,
+        Data.Element.ID: LosslessStringConvertible,
         Content == _KeyedView<C>
     {
-        self.init(data, content: {
-            content($0).key($0.id)
-        })
+        self.init(
+            data,
+            content: {
+                content($0).key($0.id)
+            }
+        )
     }
 
     public init<C, ID: LosslessStringConvertible>(
@@ -140,17 +152,21 @@ extension ForEach: View where Content: View, Data: Collection {
         key: @escaping @Sendable (Data.Element) -> ID,
         @HTMLBuilder content: @escaping @Sendable (Data.Element) -> C
     ) where Content == _KeyedView<C> {
-        self.init(data, content: {
-            content($0).key(key($0))
-        })
+        self.init(
+            data,
+            content: {
+                content($0).key(key($0))
+            }
+        )
     }
 
     public static func _renderView(_ view: consuming Self, context: consuming _ViewRenderingContext) -> _RenderedView {
-        return .init(
+        .init(
             value: .dynamicList(
                 view._data.map {
                     Content._renderView(
-                        view._contentBuilder($0), context: copy context
+                        view._contentBuilder($0),
+                        context: copy context
                     )
                 }
             )

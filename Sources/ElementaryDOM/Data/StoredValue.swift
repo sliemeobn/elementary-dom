@@ -1,4 +1,3 @@
-
 struct StoredValue {
     private final class Box<V> {
         var value: V
@@ -16,7 +15,7 @@ struct StoredValue {
 
     subscript<T>(as type: T.Type = T.self) -> T {
         get {
-            return (storage as! Box<T>).value
+            (storage as! Box<T>).value
         }
         set {
             (storage as! Box<T>).value = newValue

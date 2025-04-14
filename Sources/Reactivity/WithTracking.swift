@@ -79,15 +79,19 @@ private func withAccessTracking<T>(_ block: () -> T) -> (T, ReactivePropertyAcce
 
 extension ReactiveTrackingSession {
     func trackWillSet(for accessList: consuming ReactivePropertyAccessList, _ observer: @Sendable @escaping (PropertyID) -> Void) {
-        add(subscriptions: accessList.entries.values.map { entry in
-            entry.tracker.registerTracking(for: entry.properties, willSet: observer)
-        })
+        add(
+            subscriptions: accessList.entries.values.map { entry in
+                entry.tracker.registerTracking(for: entry.properties, willSet: observer)
+            }
+        )
     }
 
     func trackDidSet(for accessList: consuming ReactivePropertyAccessList, _ observer: @Sendable @escaping (PropertyID) -> Void) {
-        add(subscriptions: accessList.entries.values.map { entry in
-            entry.tracker.registerTracking(for: entry.properties, didSet: observer)
-        })
+        add(
+            subscriptions: accessList.entries.values.map { entry in
+                entry.tracker.registerTracking(for: entry.properties, didSet: observer)
+            }
+        )
     }
 }
 

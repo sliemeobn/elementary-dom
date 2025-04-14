@@ -79,7 +79,7 @@ extension VariableDeclSyntax {
     }
 
     var isImmutable: Bool {
-        return bindingSpecifier.tokenKind == .keyword(.let)
+        bindingSpecifier.tokenKind == .keyword(.let)
     }
 
     func isEquivalent(to other: VariableDeclSyntax) -> Bool {
@@ -188,14 +188,16 @@ extension FunctionDeclSyntax {
     var signatureStandin: SignatureStandin {
         var parameters = [String]()
         for parameter in signature.parameterClause.parameters {
-            parameters.append(parameter.firstName.text + ":" + (parameter.type.genericSubstitution(genericParameterClause?.parameters) ?? ""))
+            parameters.append(
+                parameter.firstName.text + ":" + (parameter.type.genericSubstitution(genericParameterClause?.parameters) ?? "")
+            )
         }
         let returnType = signature.returnClause?.type.genericSubstitution(genericParameterClause?.parameters) ?? "Void"
         return SignatureStandin(isInstance: isInstance, identifier: name.text, parameters: parameters, returnType: returnType)
     }
 
     func isEquivalent(to other: FunctionDeclSyntax) -> Bool {
-        return signatureStandin == other.signatureStandin
+        signatureStandin == other.signatureStandin
     }
 }
 
@@ -255,18 +257,18 @@ extension DeclGroupSyntax {
     }
 
     var isClass: Bool {
-        return self.is(ClassDeclSyntax.self)
+        self.is(ClassDeclSyntax.self)
     }
 
     var isActor: Bool {
-        return self.is(ActorDeclSyntax.self)
+        self.is(ActorDeclSyntax.self)
     }
 
     var isEnum: Bool {
-        return self.is(EnumDeclSyntax.self)
+        self.is(EnumDeclSyntax.self)
     }
 
     var isStruct: Bool {
-        return self.is(StructDeclSyntax.self)
+        self.is(StructDeclSyntax.self)
     }
 }

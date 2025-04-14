@@ -9,11 +9,11 @@ struct ReactivityTracker: Sendable {
         var properties: Set<PropertyID>
 
         static func willSetTracking(of properties: Set<PropertyID>, closure: @Sendable @escaping (PropertyID) -> Void) -> Self {
-            return Self(kind: .willSet(closure), properties: properties)
+            Self(kind: .willSet(closure), properties: properties)
         }
 
         static func didSetTracking(of properties: Set<PropertyID>, closure: @Sendable @escaping (PropertyID) -> Void) -> Self {
-            return Self(kind: .didSet(closure), properties: properties)
+            Self(kind: .didSet(closure), properties: properties)
         }
 
         var willSetTracker: (@Sendable (PropertyID) -> Void)? {
@@ -101,7 +101,8 @@ struct ReactivityTracker: Sendable {
 
     var id: ObjectIdentifier { state.id }
 
-    func registerTracking(for properties: Set<PropertyID>, willSet observer: @Sendable @escaping (PropertyID) -> Void) -> SubscriptionToken {
+    func registerTracking(for properties: Set<PropertyID>, willSet observer: @Sendable @escaping (PropertyID) -> Void) -> SubscriptionToken
+    {
         let id = state.withLock { $0.registerSubscription(.willSetTracking(of: properties, closure: observer)) }
         return SubscriptionToken(id: id, tracker: self)
     }

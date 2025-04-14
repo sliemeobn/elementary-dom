@@ -1,4 +1,5 @@
 import Synchronization
+
 #if canImport(Foundation)
 import Foundation
 #endif
@@ -28,7 +29,7 @@ final class MutexBox<State>: @unchecked Sendable {
     }
 
     func withLock<Result>(_ body: (inout sending State) -> sending Result) -> sending Result {
-        return body(&state)
+        body(&state)
     }
 
     var id: ObjectIdentifier { ObjectIdentifier(self) }
@@ -42,7 +43,7 @@ final class MutexBox<State: ~Copyable>: Sendable {
     }
 
     func withLock<Result>(_ body: sending (inout sending State) -> sending Result) -> sending Result {
-        return state.withLock(body)
+        state.withLock(body)
     }
 
     var id: ObjectIdentifier { ObjectIdentifier(self) }

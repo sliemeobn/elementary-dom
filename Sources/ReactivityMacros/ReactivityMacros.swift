@@ -22,7 +22,7 @@ public enum ReactiveMacro {
 
     static let conformanceName = "ReactiveObject"
     static var qualifiedConformanceName: String {
-        return "\(moduleName).\(conformanceName)"
+        "\(moduleName).\(conformanceName)"
     }
 
     static var observableConformanceType: TypeSyntax {
@@ -31,7 +31,7 @@ public enum ReactiveMacro {
 
     static let registrarTypeName = "ReactivityRegistrar"
     static var qualifiedRegistrarTypeName: String {
-        return "\(moduleName).\(registrarTypeName)"
+        "\(moduleName).\(registrarTypeName)"
     }
 
     static let trackedMacroName = "ReactiveProperty"
@@ -40,10 +40,10 @@ public enum ReactiveMacro {
     static let registrarVariableName = "_$reactivity"
 
     static func registrarVariable(_: TokenSyntax) -> DeclSyntax {
-        return
-            """
-            @\(raw: ignoredMacroName) private let \(raw: registrarVariableName) = \(raw: qualifiedRegistrarTypeName)()
-            """
+
+        """
+        @\(raw: ignoredMacroName) private let \(raw: registrarVariableName) = \(raw: qualifiedRegistrarTypeName)()
+        """
     }
 
     static var ignoredAttribute: AttributeSyntax {
@@ -80,9 +80,15 @@ struct ObservationDiagnostic: DiagnosticMessage {
 }
 
 extension DiagnosticsError {
-    init<S: SyntaxProtocol>(syntax: S, message: String, domain: String = "Observation", id: ObservationDiagnostic.ID, severity: SwiftDiagnostics.DiagnosticSeverity = .error) {
+    init<S: SyntaxProtocol>(
+        syntax: S,
+        message: String,
+        domain: String = "Observation",
+        id: ObservationDiagnostic.ID,
+        severity: SwiftDiagnostics.DiagnosticSeverity = .error
+    ) {
         self.init(diagnostics: [
-            Diagnostic(node: Syntax(syntax), message: ObservationDiagnostic(message: message, domain: domain, id: id, severity: severity)),
+            Diagnostic(node: Syntax(syntax), message: ObservationDiagnostic(message: message, domain: domain, id: id, severity: severity))
         ])
     }
 }
@@ -90,23 +96,20 @@ extension DiagnosticsError {
 extension DeclModifierListSyntax {
     func privatePrefixed(_: String) -> DeclModifierListSyntax {
         let modifier = DeclModifierSyntax(name: "private", trailingTrivia: .space)
-        return [modifier] + filter {
-            switch $0.name.tokenKind {
-            case let .keyword(keyword):
-                switch keyword {
-                case .fileprivate: fallthrough
-                case .private: fallthrough
-                case .internal: fallthrough
-                case .package: fallthrough
-                case .public:
-                    return false
+        return [modifier]
+            + filter {
+                switch $0.name.tokenKind {
+                case let .keyword(keyword):
+                    switch keyword {
+                    case .fileprivate, .private, .internal, .package, .public:
+                        return false
+                    default:
+                        return true
+                    }
                 default:
                     return true
                 }
-            default:
-                return true
             }
-        }
     }
 
     init(keyword: Keyword) {
@@ -118,7 +121,12 @@ extension TokenSyntax {
     func privatePrefixed(_ prefix: String) -> TokenSyntax {
         switch tokenKind {
         case let .identifier(identifier):
-            return TokenSyntax(.identifier(prefix + identifier), leadingTrivia: leadingTrivia, trailingTrivia: trailingTrivia, presence: presence)
+            return TokenSyntax(
+                .identifier(prefix + identifier),
+                leadingTrivia: leadingTrivia,
+                trailingTrivia: trailingTrivia,
+                presence: presence
+            )
         default:
             return self
         }
@@ -128,7 +136,7 @@ extension TokenSyntax {
 extension PatternBindingListSyntax {
     func privatePrefixed(_ prefix: String) -> PatternBindingListSyntax {
         var bindings = map { $0 }
-        for index in 0 ..< bindings.count {
+        for index in 0..<bindings.count {
             let binding = bindings[index]
             if let identifier = binding.pattern.as(IdentifierPatternSyntax.self) {
                 bindings[index] = PatternBindingSyntax(
@@ -187,15 +195,27 @@ extension ReactiveMacro: MemberMacro {
 
         if declaration.isEnum {
             // enumerations cannot store properties
-            throw DiagnosticsError(syntax: node, message: "'@Reactive' cannot be applied to enumeration type '\(observableType.text)'", id: .invalidApplication)
+            throw DiagnosticsError(
+                syntax: node,
+                message: "'@Reactive' cannot be applied to enumeration type '\(observableType.text)'",
+                id: .invalidApplication
+            )
         }
         if declaration.isStruct {
             // structs are not yet supported; copying/mutation semantics tbd
-            throw DiagnosticsError(syntax: node, message: "'@Reactive' cannot be applied to struct type '\(observableType.text)'", id: .invalidApplication)
+            throw DiagnosticsError(
+                syntax: node,
+                message: "'@Reactive' cannot be applied to struct type '\(observableType.text)'",
+                id: .invalidApplication
+            )
         }
         if declaration.isActor {
             // actors cannot yet be supported for their isolation
-            throw DiagnosticsError(syntax: node, message: "'@Reactive' cannot be applied to actor type '\(observableType.text)'", id: .invalidApplication)
+            throw DiagnosticsError(
+                syntax: node,
+                message: "'@Reactive' cannot be applied to actor type '\(observableType.text)'",
+                id: .invalidApplication
+            )
         }
 
         var declarations = [DeclSyntax]()
@@ -220,20 +240,18 @@ extension ReactiveMacro: MemberAttributeMacro {
         in context: Context
     ) throws -> [AttributeSyntax] {
         guard let property = member.as(VariableDeclSyntax.self), property.isValidForObservation,
-              property.identifier != nil
+            property.identifier != nil
         else {
             return []
         }
 
         // dont apply to ignored properties or properties that are already flagged as tracked
-        if property.hasMacroApplication(ReactiveMacro.ignoredMacroName) ||
-            property.hasMacroApplication(ReactiveMacro.trackedMacroName)
-        {
+        if property.hasMacroApplication(ReactiveMacro.ignoredMacroName) || property.hasMacroApplication(ReactiveMacro.trackedMacroName) {
             return []
         }
 
         return [
-            AttributeSyntax(attributeName: IdentifierTypeSyntax(name: .identifier(ReactiveMacro.trackedMacroName))),
+            AttributeSyntax(attributeName: IdentifierTypeSyntax(name: .identifier(ReactiveMacro.trackedMacroName)))
         ]
     }
 }
@@ -255,10 +273,10 @@ extension ReactiveMacro: ExtensionMacro {
         let typeIdentifier = context.makeUniqueName(type.trimmedDescription)
 
         let decl: DeclSyntax = """
-        extension \(raw: type.trimmedDescription): \(raw: qualifiedConformanceName) {
-            public static let _$typeID = PropertyID("\(typeIdentifier)")
-        }
-        """
+            extension \(raw: type.trimmedDescription): \(raw: qualifiedConformanceName) {
+                public static let _$typeID = PropertyID("\(typeIdentifier)")
+            }
+            """
         let ext = decl.cast(ExtensionDeclSyntax.self)
 
         if let availability = declaration.attributes.availability {
@@ -279,8 +297,8 @@ public struct ReactivePropertyMacro: AccessorMacro {
         in context: Context
     ) throws -> [AccessorDeclSyntax] {
         guard let property = declaration.as(VariableDeclSyntax.self),
-              property.isValidForObservation,
-              let identifier = property.identifier?.trimmed
+            property.isValidForObservation,
+            let identifier = property.identifier?.trimmed
         else {
             return []
         }
@@ -338,14 +356,12 @@ extension ReactivePropertyMacro: PeerMacro {
         in context: Context
     ) throws -> [DeclSyntax] {
         guard let property = declaration.as(VariableDeclSyntax.self),
-              property.isValidForObservation
+            property.isValidForObservation
         else {
             return []
         }
 
-        if property.hasMacroApplication(ReactiveMacro.ignoredMacroName) ||
-            property.hasMacroApplication(ReactiveMacro.trackedMacroName)
-        {
+        if property.hasMacroApplication(ReactiveMacro.ignoredMacroName) || property.hasMacroApplication(ReactiveMacro.trackedMacroName) {
             return []
         }
 
@@ -368,6 +384,6 @@ public struct ReactiveIgnoredMacro: AccessorMacro {
         providingAccessorsOf declaration: Declaration,
         in context: Context
     ) throws -> [AccessorDeclSyntax] {
-        return []
+        []
     }
 }

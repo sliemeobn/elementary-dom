@@ -22,7 +22,7 @@ extension _RenderFunction {
     }
 
     static func from<V: _StatefulView>(_ view: sending V, context: consuming _ViewRenderingContext) -> _RenderFunction {
-        return .init(
+        .init(
             initializeState: { V.__initializeState(from: view) },
             getContent: { [context] state in
                 V.__restoreState(state as! _ViewStateStorage, in: &view)

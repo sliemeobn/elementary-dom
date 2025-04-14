@@ -1,5 +1,6 @@
-@testable import ElementaryDOM
 import Testing
+
+@testable import ElementaryDOM
 
 @Suite
 struct EnvionmentTests {

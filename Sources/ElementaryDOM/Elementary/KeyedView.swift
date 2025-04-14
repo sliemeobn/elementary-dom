@@ -3,7 +3,7 @@ public struct _KeyedView<Value: View>: View {
     var value: Value
 
     public static func _renderView(_ view: consuming Self, context: consuming _ViewRenderingContext) -> _RenderedView {
-        return .init(
+        .init(
             value: .keyed(.explicit(view.key), Value._renderView(view.value, context: context))
         )
     }
