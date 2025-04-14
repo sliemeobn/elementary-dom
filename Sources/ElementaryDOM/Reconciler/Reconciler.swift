@@ -127,7 +127,7 @@ final class Reconciler<DOMInteractor: DOMInteracting> {
         withContent renderedElement: _RenderedView,
         context: inout UpdateRun
     ) {
-        logTrace("reconciling \(parent.value) with content \(renderedElement.value)")
+        logTrace("reconciling parent node \(parent.value) with new content \(renderedElement.value)")
 
         switch (parent.children.count, renderedElement.isEmpty) {
         case (0, true):
@@ -157,7 +157,7 @@ final class Reconciler<DOMInteractor: DOMInteracting> {
         _ element: _RenderedView,
         context: inout UpdateRun
     ) {
-        //logTrace("tryPatchSingleNode \(node.value) \(element.value)")
+        logTrace("patchSingleNode \(node.value) \(element.value)")
         switch (node.value, element.value) {
         case (.text(let text), .text(let newText)):
             if !text.utf8Equals(newText) {

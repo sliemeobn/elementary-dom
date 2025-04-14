@@ -48,8 +48,8 @@ public struct _RenderedView {
             switch self {
             case .nothing: return "nothing"
             case .text(let text): return "text(\(text))"
-            case .function(let function): return "function(\(function))"
-            case .element(let element, _): return "element(\(element.tagName)"
+            case .function(_): return "function"
+            case .element(let element, _): return "element(\(element.tagName))"
             case .lifecycle(let hook, _): return "lifecycle(\(hook)"
             case .keyed(let key, _): return "keyed(\(key)"
             case .staticList(let list): return "staticList(count: \(list.count))"

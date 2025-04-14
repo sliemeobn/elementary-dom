@@ -22,14 +22,27 @@ struct App {
 
         hr()
 
-        switch counters.count {
-        case 0:
-            p { "No counters" }
-        case 1:
-            p { "One counter" }
-        default:
-            p { "Multiple counters" }
+        // TODE: replaceChildren does not keep animations and similar going....
+        // if counters.count > 1 {
+        //     span {}.attributes(.style(["display": "none"]))
+        // }
+
+        p {
+            switch counters.count {
+            case 0:
+                "No counters"
+            case 1:
+                "One counter"
+            default:
+                "Multiple counters"
+            }
         }
+        .attributes(
+            .style([
+                "transition": "all 1s",
+                "color": counters.count > 1 ? "red" : "blue",
+            ])
+        )
 
         div {
             hr()
