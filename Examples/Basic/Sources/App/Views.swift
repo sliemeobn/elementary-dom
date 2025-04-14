@@ -31,26 +31,28 @@ struct App {
             p { "Multiple counters" }
         }
 
-        hr()
+        div {
+            hr()
 
-        ForEach(counters, key: { String($0) }) { counter in
-            div {
-                h3 { "Counter \(counter)" }
-                Counter(count: counter)
-                br()
-                button { "Remove counter" }
-                    .onClick { _ in
-                        counters.removeAll { $0 == counter }
-                    }
-                hr()
+            ForEach(counters, key: { String($0) }) { counter in
+                div {
+                    h3 { "Counter \(counter)" }
+                    Counter(count: counter)
+                    br()
+                    button { "Remove counter" }
+                        .onClick { _ in
+                            counters.removeAll { $0 == counter }
+                        }
+                    hr()
+                }
             }
+
+            button { "Add counter" }
+                .onClick { _ in
+                    nextCounterName += 1
+                    counters.append(nextCounterName)
+                }
         }
-
-        button { "Add counter" }
-            .onClick { _ in
-                nextCounterName += 1
-                counters.append(nextCounterName)
-            }
     }
 }
 

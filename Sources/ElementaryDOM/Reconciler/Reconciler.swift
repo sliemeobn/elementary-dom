@@ -91,19 +91,18 @@ final class Reconciler<DOMInteractor: DOMInteracting> {
 
     func performUpdateRun(_ run: consuming UpdateRun) {
         logTrace("performUpdateRun started")
-        let duration = ContinuousClock().measure {
-            while let next = run.popNextFunctionNode() {
-                runUpdatedFunctionNode(next, context: &run)
-            }
 
-            for node in run.nodesWithChangedChildren {
-                guard let reference = node.domReference else {
-                    fatalError("DOM Children update requested for a non-dom node")
-                }
-                dom.replaceChildren(node.getChildReferenceList(), in: reference)
-            }
+        while let next = run.popNextFunctionNode() {
+            runUpdatedFunctionNode(next, context: &run)
         }
-        logTrace("performUpdateRun finished in \(duration)")
+
+        for node in run.nodesWithChangedChildren {
+            guard let reference = node.domReference else {
+                fatalError("DOM Children update requested for a non-dom node")
+            }
+            dom.replaceChildren(node.getChildReferenceList(), in: reference)
+        }
+        logTrace("performUpdateRun finished")
     }
 
     func runUpdatedFunctionNode(_ node: Node, context: inout UpdateRun) {
@@ -343,6 +342,8 @@ extension Reconciler {
         }
 
         func replaceChildren(_ newValue: [Node]) {
+            #if !hasFeature(Embedded)
+            // NOTE: no diffing available in embedded 6.1 - but it exists on main
             let diff = newValue.difference(from: children, by: ===)
 
             for change in diff {
@@ -355,6 +356,23 @@ extension Reconciler {
             }
 
             children = newValue
+            #else
+            // Find nodes to remove
+            for child in children {
+                if !newValue.contains(where: { $0 === child }) {
+                    child.unmount()
+                }
+            }
+
+            // Find nodes to add
+            for newChild in newValue {
+                if !children.contains(where: { $0 === newChild }) {
+                    newChild.mount(in: self)
+                }
+            }
+
+            children = newValue
+            #endif
         }
 
         func replaceChild(at index: Int, with newValue: Node) {

@@ -10,6 +10,7 @@ set -e
 
 swift build -c release --product $APP_NAME \
   --triple $TRIPPLE \
+  --enable-experimental-prebuilts \
   --toolset "$BUILDSUPPORT_DIR/embedded-toolset.json"
 
 "$BUILDSUPPORT_DIR/link-embedded-wasm.sh" "$BUILD_DIR" $APP_NAME
