@@ -16,6 +16,7 @@ Developed with a recent snapshot of swift. No WASM/WASI SDK required when built 
 - ~~typed event handlers~~
 - ~~@Environment system~~
 - ~~dependencies on versioned packages (ie: build without unsafe flags)~~
+- fix DOM not child-diffing to preserve animations/node (the current solution based on `replaceChildren` will not work it seems)
 - "model-bindings" for inputs (ie: bind a @Binding<String> to a textbox, or bind a @Binding<Bool> on a check box)
 - maybe conditionally support @Observable for non-embedded builds?
 - transitions and animations (CSS-based)
