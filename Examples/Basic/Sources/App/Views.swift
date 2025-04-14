@@ -22,24 +22,50 @@ struct App {
 
         hr()
 
-        ForEach(counters, key: { String($0) }) { counter in
-            div {
-                h3 { "Counter \(counter)" }
-                Counter(count: counter)
-                br()
-                button { "Remove counter" }
-                    .onClick { _ in
-                        counters.removeAll { $0 == counter }
-                    }
-                hr()
+        // TODE: replaceChildren does not keep animations and similar going....
+        // if counters.count > 1 {
+        //     span {}.attributes(.style(["display": "none"]))
+        // }
+
+        p {
+            switch counters.count {
+            case 0:
+                "No counters"
+            case 1:
+                "One counter"
+            default:
+                "Multiple counters"
             }
         }
+        .attributes(
+            .style([
+                "transition": "all 1s",
+                "color": counters.count > 1 ? "red" : "blue",
+            ])
+        )
 
-        button { "Add counter" }
-            .onClick { _ in
-                nextCounterName += 1
-                counters.append(nextCounterName)
+        div {
+            hr()
+
+            ForEach(counters, key: { String($0) }) { counter in
+                div {
+                    h3 { "Counter \(counter)" }
+                    Counter(count: counter)
+                    br()
+                    button { "Remove counter" }
+                        .onClick { _ in
+                            counters.removeAll { $0 == counter }
+                        }
+                    hr()
+                }
             }
+
+            button { "Add counter" }
+                .onClick { _ in
+                    nextCounterName += 1
+                    counters.append(nextCounterName)
+                }
+        }
     }
 }
 

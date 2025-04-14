@@ -16,7 +16,7 @@ jobs:
     timeout-minutes: 15
     strategy:
       matrix:
-        image: ["swiftlang/swift:nightly-main"]
+        image: ["swift:6.1"]
 
     container:
       image: ${{ matrix.image }}
@@ -24,6 +24,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build
+      - name: Build Swiftle
         working-directory: Examples/Swiftle
         run: ./build.sh
+
+      - name: Build Basic
+        working-directory: Examples/Basic
+        run: ./build-embedded.sh

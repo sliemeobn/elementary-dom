@@ -9,7 +9,7 @@ let package = Package(
         .library(name: "ElementaryDOM", targets: ["ElementaryDOM", "Reactivity"])
     ],
     dependencies: [
-        .package(url: "https://github.com/swiftwasm/JavaScriptKit", .upToNextMinor(from: "0.26.1")),
+        .package(url: "https://github.com/swiftwasm/JavaScriptKit", from: "0.27.0"),
         .package(url: "https://github.com/sliemeobn/elementary", from: "0.5.1"),
         .package(url: "https://github.com/swiftlang/swift-syntax", "600.0.0"..<"602.0.0-prerelease"),
     ],

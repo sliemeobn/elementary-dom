@@ -1,8 +1,8 @@
 import Elementary
 
 public struct _RenderedView {
-    public enum Key: Equatable, Hashable {
-        case structure(Int) // try to fold conditional chains and switches into this
+    public enum Key: Equatable, Hashable, CustomStringConvertible {
+        case structure(Int)  // try to fold conditional chains and switches into this
         case explicit(String)
 
         static var falseKey: Self { .structure(0) }
@@ -25,9 +25,16 @@ public struct _RenderedView {
                 key.withContiguousStorageIfAvailable { hasher.combine(bytes: UnsafeRawBufferPointer($0)) }
             }
         }
+
+        public var description: String {
+            switch self {
+            case let .structure(index): return "structure:(\(index))"
+            case let .explicit(key): return key
+            }
+        }
     }
 
-    public enum Value {
+    public enum Value: CustomStringConvertible {
         case nothing
         case text(String)
         case function(_RenderFunction)
@@ -36,6 +43,19 @@ public struct _RenderedView {
         indirect case keyed(Key, _RenderedView)
         case staticList([_RenderedView])
         case dynamicList([_RenderedView])
+
+        public var description: String {
+            switch self {
+            case .nothing: return "nothing"
+            case .text(let text): return "text(\(text))"
+            case .function(_): return "function"
+            case .element(let element, _): return "element(\(element.tagName))"
+            case .lifecycle(let hook, _): return "lifecycle(\(hook)"
+            case .keyed(let key, _): return "keyed(\(key)"
+            case .staticList(let list): return "staticList(count: \(list.count))"
+            case .dynamicList(let list): return "dynamicList(count: \(list.count))"
+            }
+        }
     }
 
     var value: Value
