@@ -61,10 +61,7 @@ public struct _ReconcilerBatch<DOMInteractor: _DOMInteracting>: ~Copyable {
     }
 
     mutating func registerNodeForChildrenUpdate(_ node: Node.Element) {
-        // let domOwner = node.owningDOMReferenceNode()
-        // if !nodesWithChangedChildren.contains(where: { $0 === node }) {
-        //     nodesWithChangedChildren.append(domOwner)
-        // }
+        nodesWithChangedChildren.append(node)
     }
 
     mutating func run() {
@@ -95,6 +92,7 @@ public struct _ReconcilerBatch<DOMInteractor: _DOMInteracting>: ~Copyable {
         }
 
         mutating func registerFunctionForUpdate(_ node: Node.Function) {
+            logTrace("registerFunctionForUpdate at depth \(node.depthInTree)")
             // sorted insert by depth in reverse order, avoiding duplicates
             var inserted = false
 
@@ -233,6 +231,8 @@ extension _ReconcilerNode {
         init(_ newValue: String, context: inout Reconciler) {
             self.value = newValue
             self.domNode = .init(kind: .added, reference: context.dom.createText(newValue))
+
+            context.registerNodeForChildrenUpdate(context.parentElement)
         }
 
         func patch(_ newValue: String, context: inout Reconciler) {
@@ -264,30 +264,48 @@ extension _ReconcilerNode {
 
         var eventSink: DOMInteractor.EventSink?
 
-        init(value: _DomElement, context: inout Reconciler, childFactory: (inout Reconciler) -> _ReconcilerNode) {
+        init(value: _DomElement, context: inout Reconciler, makeChild: (inout Reconciler) -> _ReconcilerNode) {
             let domReference = context.dom.createElement(value.tagName)
-
             self.domNode = .init(kind: .added, reference: domReference)
+
             self.value = value
             self._child = nil
 
-            //TODO: this is really not ideal, but we need to set the element as current parent
+            context.dom.patchElementAttributes(
+                domReference,
+                with: value.attributes,
+                replacing: .none
+            )
+
+            context.dom.patchEventListeners(
+                domReference,
+                with: value.listerners,
+                replacing: .none,
+                sink: getOrMakeEventSync(context.dom)
+            )
+
+            logTrace("created element \(value.tagName) in \(context.parentElement.value.tagName)")
+
+            let oldParent = context.parentElement
             context.parentElement = self
-            self._child = childFactory(&context)
+            self._child = makeChild(&context)
+            context.parentElement = oldParent
+
+            context.registerNodeForChildrenUpdate(self)
         }
 
-        init(root: DOMReference) {
+        init(root: DOMReference, makeReconciler: (Element) -> Reconciler, makeChild: (inout Reconciler) -> _ReconcilerNode) {
             self.domNode = .init(kind: .unchanged, reference: root)
-            self.value = .init(tagName: "", attributes: .none, listerners: .none)
+            self.value = .init(tagName: "<root>", attributes: .none, listerners: .none)
             self.eventSink = nil
             self._child = nil
-        }
 
-        func setChild(_ child: _ReconcilerNode) {
-            guard _child == nil else {
-                fatalError("child already set")
-            }
-            self._child = child
+            logTrace("created root element")
+
+            var reconciler = makeReconciler(self)
+            self._child = makeChild(&reconciler)
+            reconciler.registerNodeForChildrenUpdate(self)
+            reconciler.run()
         }
 
         func patch(_ newValue: _DomElement, context: inout Reconciler) {
@@ -312,6 +330,7 @@ extension _ReconcilerNode {
             if let sink = eventSink {
                 return sink
             } else {
+                logTrace("making event sink for element \(value.tagName)")
                 let sink = dom.makeEventSink { [self] type, event in
                     self.handleEvent(type, event: event)
                 }
@@ -321,6 +340,7 @@ extension _ReconcilerNode {
         }
 
         func handleEvent(_ name: String, event: DOMInteractor.Event) {
+            logTrace("handling event \(name) for element \(value.tagName)")
             value.listerners.handleEvent(name, event)
         }
     }
@@ -455,7 +475,7 @@ extension _ReconcilerNode {
             var leavingNodes = leavingChildren.entries.makeIterator()
             var nextLeavingNode = leavingNodes.next()
 
-            for index in 0...children.count {
+            for index in 0..<children.count {
                 guard let child = children[index] else {
                     fatalError("unexpected nil child on collection")
                 }
@@ -466,6 +486,11 @@ extension _ReconcilerNode {
                 }
 
                 child.collectChildNodes(&ops)
+            }
+
+            while let leavingNode = nextLeavingNode {
+                leavingNode.value.collectChildNodes(&ops)
+                nextLeavingNode = leavingNodes.next()
             }
         }
 

@@ -82,15 +82,11 @@ extension HTMLElement: View where Content: View {
         context: consuming _ViewRenderingContext,
         reconciler: inout _ReconcilerBatch<DOM>
     ) -> _ReconcilerNode<DOM> {
-        let value = makeValue(view, context: &context)
-
-        return .element(
-            _ReconcilerNode<DOM>.Element(
-                value: value,
+        .element(
+            .init(
+                value: makeValue(view, context: &context),
                 context: &reconciler,
-                childFactory: { [context] reconciler in
-                    Content._makeNode(view.content, context: context, reconciler: &reconciler)
-                }
+                makeChild: { [context] r in Content._makeNode(view.content, context: context, reconciler: &r) }
             )
         )
     }
@@ -145,12 +141,11 @@ extension HTMLVoidElement: View {
         context: consuming _ViewRenderingContext,
         reconciler: inout _ReconcilerBatch<DOM>
     ) -> _ReconcilerNode<DOM> {
-        let value = makeValue(view, context: &context)
-        return .element(
-            _ReconcilerNode<DOM>.Element(
-                value: value,
+        .element(
+            .init(
+                value: makeValue(view, context: &context),
                 context: &reconciler,
-                childFactory: { _ in .nothing }
+                makeChild: { _ in .nothing }
             )
         )
     }
