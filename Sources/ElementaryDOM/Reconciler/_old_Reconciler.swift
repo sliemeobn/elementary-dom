@@ -1,5 +1,5 @@
 // TODO: main-actor stuff very unclear at the moment, ideally not needed at all
-final class Reconciler<DOMInteractor: DOMInteracting> {
+final class Reconciler<DOMInteractor: _DOMInteracting> {
     typealias DOMReference = DOMInteractor.Node
 
     var dom: DOMInteractor
@@ -533,7 +533,7 @@ extension Reconciler.Node.Value: CustomStringConvertible {
 @inline(__always)
 func logTrace(_ message: @autoclosure () -> String) {
     #if DEBUG  // TODO: make this conditional somehow
-    if false {
+    if true {
         print(message())
     }
     #endif

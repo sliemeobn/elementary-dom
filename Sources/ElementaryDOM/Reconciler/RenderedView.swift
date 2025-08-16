@@ -96,3 +96,7 @@ public struct _DomElement {
     var attributes: _AttributeStorage
     var listerners: _DomEventListenerStorage
 }
+
+public struct _DomTranstionHooks {
+    
+}

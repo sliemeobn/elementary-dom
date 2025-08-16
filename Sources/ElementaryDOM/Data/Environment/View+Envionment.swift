@@ -18,4 +18,23 @@ public struct _EnvironmentView<V, Wrapped: View>: View {
         context.environment[view.key] = view.value
         return Wrapped._renderView(view.wrapped, context: context)
     }
+
+    public static func _makeNode<DOM>(
+        _ view: consuming Self,
+        context: consuming _ViewRenderingContext,
+        reconciler: inout _ReconcilerBatch<DOM>
+    ) -> _ReconcilerNode<DOM> {
+        context.environment[view.key] = view.value
+        return Wrapped._makeNode(view.wrapped, context: context, reconciler: &reconciler)
+    }
+
+    public static func _patchNode<DOM>(
+        _ view: consuming Self,
+        context: consuming _ViewRenderingContext,
+        node: borrowing _ReconcilerNode<DOM>,
+        reconciler: inout _ReconcilerBatch<DOM>
+    ) {
+        context.environment[view.key] = view.value
+        Wrapped._patchNode(view.wrapped, context: context, node: node, reconciler: &reconciler)
+    }
 }

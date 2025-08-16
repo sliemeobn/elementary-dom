@@ -1,0 +1,32 @@
+public enum _ViewKey: Equatable, Hashable, CustomStringConvertible {
+    case structure(Int)  // try to fold conditional chains and switches into this
+    case explicit(String)
+
+    static var falseKey: Self { .structure(0) }
+    static var trueKey: Self { .structure(1) }
+
+    public static func == (lhs: Self, rhs: Self) -> Bool {
+        switch (lhs, rhs) {
+        case let (.structure(l), .structure(r)): return l == r
+        case let (.explicit(l), .explicit(r)): return l.utf8Equals(r)
+        default: return false
+        }
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        switch self {
+        case let .structure(index):
+            hasher.combine(index)
+        case let .explicit(key):
+            // TODO: is this safe?
+            key.withContiguousStorageIfAvailable { hasher.combine(bytes: UnsafeRawBufferPointer($0)) }
+        }
+    }
+
+    public var description: String {
+        switch self {
+        case let .structure(index): return "structure:(\(index))"
+        case let .explicit(key): return key
+        }
+    }
+}

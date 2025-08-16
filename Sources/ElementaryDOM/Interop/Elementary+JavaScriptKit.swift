@@ -1,7 +1,7 @@
 import Elementary
 import JavaScriptKit
 
-final class JSKitDOMInteractor: DOMInteracting {
+final class JSKitDOMInteractor: _DOMInteracting {
     typealias Node = JSObject
     typealias Event = JSObject
     typealias EventSink = JSValue
@@ -36,61 +36,21 @@ final class JSKitDOMInteractor: DOMInteracting {
         document.createElement(element.jsValue).object!
     }
 
-    func patchElementAttributes(
-        _ node: Node,
-        with attributes: _AttributeStorage,
-        replacing: _AttributeStorage
-    ) {
-        // fast pass
-        guard attributes != .none || replacing != .none else { return }
-
-        var previous = replacing.flattened().reversed()
-        for attribute in attributes.flattened() {
-            let previousIndex = previous.firstIndex { $0.name.utf8Equals(attribute.name) }
-            if let previousValue = previousIndex {
-                let oldValue = previous.remove(at: previousValue)
-                if !oldValue.value.utf8Equals(attribute.value) {
-                    logTrace(
-                        "updating attribute \(attribute.name) from \(oldValue.value ?? "") to \(attribute.value ?? "")"
-                    )
-                    _ = node.setAttribute!(attribute.name.jsValue, attribute.value.jsValue)
-                }
-            } else {
-                logTrace("setting attribute \(attribute.name) to \(attribute.value ?? "")")
-                _ = node.setAttribute!(attribute.name.jsValue, attribute.value.jsValue)
-            }
-        }
-
-        for attribute in previous {
-            logTrace("removing attribute \(attribute.name)")
-            _ = node.removeAttribute!(attribute.name)
-        }
+    // Low-level DOM-like operations used by protocol extensions
+    func setAttribute(_ node: Node, name: String, value: String?) {
+        _ = node.setAttribute!(name.jsValue, value.jsValue)
     }
 
-    func patchEventListeners(
-        _ node: Node,
-        with listers: _DomEventListenerStorage,
-        replacing: _DomEventListenerStorage,
-        sink: @autoclosure () -> EventSink
-    ) {
-        guard !(listers.listeners.isEmpty && replacing.listeners.isEmpty) else { return }
+    func removeAttribute(_ node: Node, name: String) {
+        _ = node.removeAttribute!(name)
+    }
 
-        var previous = replacing.listeners.map { $0.event }
+    func addEventListener(_ node: Node, event: String, sink: EventSink) {
+        _ = node.addEventListener!(event.jsValue, sink)
+    }
 
-        for event in listers.listeners.map({ $0.event }) {
-            let previousIndex = previous.firstIndex { $0.utf8Equals(event) }
-            if let previousIndex {
-                previous.remove(at: previousIndex)
-            } else {
-                logTrace("adding listener \(event)")
-                _ = node.addEventListener!(event.jsValue, sink().jsValue)
-            }
-        }
-
-        for event in previous {
-            logTrace("removing listener \(event)")
-            _ = node.removeEventListener!(event.jsValue, sink().jsValue)
-        }
+    func removeEventListener(_ node: Node, event: String, sink: EventSink) {
+        _ = node.removeEventListener!(event.jsValue, sink)
     }
 
     func patchText(_ node: Node, with text: String, replacing: String) {
@@ -105,6 +65,18 @@ final class JSKitDOMInteractor: DOMInteracting {
             this: parent,
             arguments: children.map { $0.jsValue }
         )
+    }
+
+    func insertChild(_ child: Node, before sibling: Node?, in parent: Node) {
+        if let s = sibling {
+            _ = parent.insertBefore!(child, s)
+        } else {
+            _ = parent.appendChild!(child)
+        }
+    }
+
+    func removeChild(_ child: Node, from parent: Node) {
+        _ = parent.removeChild!(child)
     }
 
     func requestAnimationFrame(_ callback: @escaping (Double) -> Void) {
