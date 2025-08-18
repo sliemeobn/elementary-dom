@@ -39,7 +39,7 @@ final class App<DOMInteractor: DOM.Interactor> {
             .asLayoutContainer
     }
 
-    func scheduleFunction(_ function: any FunctionNode) {
+    func scheduleFunction(_ function: AnyFunctionNode) {
         if nextUpdateRun.isEmpty {
             //TODO: use next microtask instead of requestAnimationFrame
             dom.requestAnimationFrame { [self] _ in

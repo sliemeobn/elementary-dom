@@ -15,9 +15,15 @@ struct AnyLayoutContainer {
     let performLayout: (inout _ReconcilerBatch) -> Void
 }
 
+struct AnyFunctionNode {
+    let identifier: ObjectIdentifier
+    let depthInTree: Int
+    let runUpdate: (inout _ReconcilerBatch) -> Void
+}
+
 public struct _ReconcilerBatch: ~Copyable {
     let dom: any DOM.Interactor
-    let reportObservedChange: (any FunctionNode) -> Void
+    let reportObservedChange: (AnyFunctionNode) -> Void
 
     private(set) var nodesWithChangedChildren: [AnyLayoutContainer]
     // TODO: make this a "with" function
@@ -29,7 +35,7 @@ public struct _ReconcilerBatch: ~Copyable {
         dom: any DOM.Interactor,
         parentElement: AnyLayoutContainer,
         pendingFunctions: consuming PendingFunctionQueue,
-        reportObservedChange: @escaping (any FunctionNode) -> Void
+        reportObservedChange: @escaping (AnyFunctionNode) -> Void
     ) {
         self.dom = dom
         self.parentElement = parentElement
@@ -50,7 +56,7 @@ public struct _ReconcilerBatch: ~Copyable {
 
         // re-run functions
         while let next = pendingFunctions.popNextFunctionNode() {
-            next.runUpdate(reconciler: &self)
+            next.runUpdate(&self)
         }
 
         // TODO: collect this but move it out for extra pass handling
@@ -64,22 +70,22 @@ public struct _ReconcilerBatch: ~Copyable {
     }
 
     struct PendingFunctionQueue: ~Copyable {
-        private var functionsToRun: [any FunctionNode] = []
+        private var functionsToRun: [AnyFunctionNode] = []
 
         var isEmpty: Bool { functionsToRun.isEmpty }
 
-        mutating func popNextFunctionNode() -> (any FunctionNode)? {
+        mutating func popNextFunctionNode() -> (AnyFunctionNode)? {
             functionsToRun.popLast()
         }
 
-        mutating func registerFunctionForUpdate(_ node: any FunctionNode) {
+        mutating func registerFunctionForUpdate(_ node: AnyFunctionNode) {
             logTrace("registering function run \(node.identifier)")
             // sorted insert by depth in reverse order, avoiding duplicates
             var inserted = false
 
             for index in functionsToRun.indices {
                 let existingNode = functionsToRun[index]
-                if existingNode === node {
+                if existingNode.identifier == node.identifier {
                     inserted = true
                     break
                 }

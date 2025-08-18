@@ -1,12 +1,12 @@
 private extension AnyLayoutContainer {
-    init(_ element: Element<some MountedNode>) {
+    init(_ element: Element<some MountedNode & ~Copyable>) {
         self.identifier = element.identifier
         self.setDirty = element.setDirty
         self.performLayout = element.performChildrenPass
     }
 }
 
-public final class Element<ChildNode: MountedNode>: MountedNode {
+public final class Element<ChildNode: MountedNode>: MountedNode where ChildNode: ~Copyable {
     var domNode: ManagedDOMReference
     var value: _DomElement
     private var child: ChildNode!

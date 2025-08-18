@@ -1,4 +1,4 @@
-// FIXME:NONCOPYABLE all tuple nodes can be made ~Copyable once associatedtype is supported
+// FIXME:NONCOPYABLE tuples currently do not support ~Copyable
 public struct TupleNode<each N: MountedNode>: MountedNode {
     var value: (repeat each N)
 

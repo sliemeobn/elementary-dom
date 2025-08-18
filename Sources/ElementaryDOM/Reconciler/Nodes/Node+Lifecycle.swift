@@ -1,5 +1,5 @@
 // FIXME:NONCOPYABLE make ~Copyable once associatedtype is supported
-public final class Lifecycle<ChildNode: MountedNode>: MountedNode {
+public final class Lifecycle<ChildNode: MountedNode>: MountedNode where ChildNode: ~Copyable {
     var value: _LifecycleHook
     var child: ChildNode
 

@@ -1,3 +1,5 @@
+// FIXME:NONCOPYABLE this could be a ~Copyable struct once associatedtype is supported
+// will be fun to implement with a non-copyable array type of sorts
 public final class Dynamic<ChildNode: MountedNode>: MountedNode {
     var keys: [_ViewKey]
     private var children: [ChildNode?]
@@ -12,7 +14,7 @@ public final class Dynamic<ChildNode: MountedNode>: MountedNode {
 
         var entries: [Entry] = []
 
-        mutating func append(_ key: _ViewKey, atIndex index: Int, value: ChildNode) {
+        mutating func append(_ key: _ViewKey, atIndex index: Int, value: consuming ChildNode) {
             // insert in key order
             // Perform a sorted insert by key
             let newEntry = Entry(key: key, atIndex: index, value: value)

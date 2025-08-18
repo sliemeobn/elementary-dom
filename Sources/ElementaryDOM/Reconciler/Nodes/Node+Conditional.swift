@@ -1,5 +1,5 @@
-//TODO: implement this better
-public final class ConditionalNode<NodeA: MountedNode, NodeB: MountedNode>: MountedNode {
+// FIXME:NONCOPYABLE this should be ~Copyable once associatedtype is supported (//where NodeA: ~Copyable, NodeB: ~Copyable)
+public struct ConditionalNode<NodeA: MountedNode, NodeB: MountedNode>: MountedNode {
     var a: NodeA?
     var b: NodeB?
     var state: State
@@ -21,7 +21,7 @@ public final class ConditionalNode<NodeA: MountedNode, NodeB: MountedNode>: Moun
         self.state = .b
     }
 
-    func patchWithA(reconciler: inout _ReconcilerBatch, _ perform: (inout NodeA?, inout _ReconcilerBatch) -> Void) {
+    mutating func patchWithA(reconciler: inout _ReconcilerBatch, _ perform: (inout NodeA?, inout _ReconcilerBatch) -> Void) {
         switch state {
         case .a:
             perform(&a, &reconciler)
@@ -43,7 +43,7 @@ public final class ConditionalNode<NodeA: MountedNode, NodeB: MountedNode>: Moun
         }
     }
 
-    func patchWithB(reconciler: inout _ReconcilerBatch, _ perform: (inout NodeB?, inout _ReconcilerBatch) -> Void) {
+    mutating func patchWithB(reconciler: inout _ReconcilerBatch, _ perform: (inout NodeB?, inout _ReconcilerBatch) -> Void) {
         switch state {
         case .b:
             perform(&b, &reconciler)
@@ -66,12 +66,12 @@ public final class ConditionalNode<NodeA: MountedNode, NodeB: MountedNode>: Moun
         }
     }
 
-    public func runLayoutPass(_ ops: inout LayoutPass) {
+    public mutating func runLayoutPass(_ ops: inout LayoutPass) {
         a?.runLayoutPass(&ops)
         b?.runLayoutPass(&ops)
     }
 
-    public func startRemoval(reconciler: inout _ReconcilerBatch) {
+    public mutating func startRemoval(reconciler: inout _ReconcilerBatch) {
         a?.startRemoval(reconciler: &reconciler)
         b?.startRemoval(reconciler: &reconciler)
     }
