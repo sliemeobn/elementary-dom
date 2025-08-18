@@ -41,11 +41,11 @@ final class JSKitDOMInteractor: DOM.Interactor {
     }
 
     func createText(_ text: String) -> DOM.Node {
-        .init(document.createTextNode(text.jsValue).object!)
+        .init(document.createTextNode(text).object!)
     }
 
     func createElement(_ element: String) -> DOM.Node {
-        .init(document.createElement(element.jsValue).object!)
+        .init(document.createElement(element).object!)
     }
 
     // Low-level DOM-like operations used by protocol extensions
@@ -58,11 +58,11 @@ final class JSKitDOMInteractor: DOM.Interactor {
     }
 
     func addEventListener(_ node: DOM.Node, event: String, sink: DOM.EventSink) {
-        _ = node.jsObject.addEventListener!(event.jsValue, sink.jsClosure)
+        _ = node.jsObject.addEventListener!(event.jsValue, sink.jsClosure.jsValue)
     }
 
     func removeEventListener(_ node: DOM.Node, event: String, sink: DOM.EventSink) {
-        _ = node.jsObject.removeEventListener!(event.jsValue, sink.jsClosure)
+        _ = node.jsObject.removeEventListener!(event.jsValue, sink.jsClosure.jsValue)
     }
 
     func patchText(_ node: DOM.Node, with text: String, replacing: String) {
@@ -81,14 +81,14 @@ final class JSKitDOMInteractor: DOM.Interactor {
 
     func insertChild(_ child: DOM.Node, before sibling: DOM.Node?, in parent: DOM.Node) {
         if let s = sibling {
-            _ = parent.jsObject.insertBefore!(child.jsObject, s.jsObject)
+            _ = parent.jsObject.insertBefore!(child.jsObject.jsValue, s.jsObject.jsValue)
         } else {
-            _ = parent.jsObject.appendChild!(child.jsObject)
+            _ = parent.jsObject.appendChild!(child.jsObject.jsValue)
         }
     }
 
     func removeChild(_ child: DOM.Node, from parent: DOM.Node) {
-        _ = parent.jsObject.removeChild!(child.jsObject)
+        _ = parent.jsObject.removeChild!(child.jsObject.jsValue)
     }
 
     func requestAnimationFrame(_ callback: @escaping (Double) -> Void) {

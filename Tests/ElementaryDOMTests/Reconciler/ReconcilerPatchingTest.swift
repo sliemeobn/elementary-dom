@@ -7,7 +7,7 @@ struct ReconcilerPatchingTests {
         let state = ToggleState()
         let ops = patchOps(
             HTMLText("\(state.value)"),
-            toggle: { state.toggle() }
+            toggle: state.toggle
         )
 
         #expect(ops == [.patchText(node: "false", to: "true")])
@@ -21,13 +21,37 @@ struct ReconcilerPatchingTests {
                 p(.id("\(state.value)")) {}
                 a {}.attributes(.hidden, when: !state.value)
             },
-            toggle: { state.toggle() }
+            toggle: state.toggle
         )
 
         #expect(
             ops == [
                 .setAttr(node: "<p>", name: "id", value: "true"),
                 .removeAttr(node: "<a>", name: "hidden"),
+            ]
+        )
+    }
+
+    @Test func patchesOptionals() async throws {
+        let state = ToggleState()
+        let ops = patchOps(
+            div {
+                if state.value {
+                    p {}
+                }
+                a {}
+                if !state.value {
+                    br()
+                }
+            },
+            toggle: state.toggle
+        )
+
+        #expect(
+            ops == [
+                .createElement("p"),
+                .removeChild(parent: "<div>", child: "<br>"),
+                .addChild(parent: "<div>", child: "<p>", before: "<a>"),
             ]
         )
     }
@@ -39,20 +63,17 @@ struct ReconcilerPatchingTests {
                 if state.value {
                     p {}
                 } else {
-                }
-                a {}
-                if !state.value {
-                    br()
+                    a {}
                 }
             },
-            toggle: { state.toggle() }
+            toggle: state.toggle
         )
 
         #expect(
             ops == [
                 .createElement("p"),
-                .removeChild(parent: "<div>", child: "<br>"),
-                .addChild(parent: "<div>", child: "<p>", before: "<a>"),
+                .removeChild(parent: "<div>", child: "<a>"),
+                .addChild(parent: "<div>", child: "<p>"),
             ]
         )
     }
