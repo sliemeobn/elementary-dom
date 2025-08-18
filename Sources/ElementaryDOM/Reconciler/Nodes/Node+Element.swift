@@ -64,6 +64,7 @@ public final class Element<ChildNode: MountedNode>: MountedNode where ChildNode:
         self.domNode = .init(reference: root, status: .unchanged)
         self.value = .init(tagName: "<root>", attributes: .none, listerners: .none)
         self.eventSink = nil
+        self.asLayoutContainer = AnyLayoutContainer(self)
 
         logTrace("created root element")
 

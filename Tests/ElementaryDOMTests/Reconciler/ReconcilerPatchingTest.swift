@@ -5,10 +5,11 @@ struct ReconcilerPatchingTests {
     @Test
     func patchesText() {
         let state = ToggleState()
-        let ops = patchOps(
-            HTMLText("\(state.value)"),
-            toggle: state.toggle
-        )
+        let ops = patchOps {
+            HTMLText("\(state.value)")
+        } toggle: {
+            state.toggle()
+        }
 
         #expect(ops == [.patchText(node: "false", to: "true")])
     }
@@ -16,13 +17,14 @@ struct ReconcilerPatchingTests {
     @Test
     func patchesFragmentAndNodes() {
         let state = ToggleState()
-        let ops = patchOps(
+        let ops = patchOps {
             div {
                 p(.id("\(state.value)")) {}
                 a {}.attributes(.hidden, when: !state.value)
-            },
-            toggle: state.toggle
-        )
+            }
+        } toggle: {
+            state.toggle()
+        }
 
         #expect(
             ops == [
@@ -34,7 +36,7 @@ struct ReconcilerPatchingTests {
 
     @Test func patchesOptionals() async throws {
         let state = ToggleState()
-        let ops = patchOps(
+        let ops = patchOps {
             div {
                 if state.value {
                     p {}
@@ -43,9 +45,10 @@ struct ReconcilerPatchingTests {
                 if !state.value {
                     br()
                 }
-            },
-            toggle: state.toggle
-        )
+            }
+        } toggle: {
+            state.toggle()
+        }
 
         #expect(
             ops == [
@@ -58,22 +61,81 @@ struct ReconcilerPatchingTests {
 
     @Test func patchesConditionals() async throws {
         let state = ToggleState()
-        let ops = patchOps(
+        let ops = patchOps {
             div {
                 if state.value {
                     p {}
                 } else {
                     a {}
                 }
-            },
-            toggle: state.toggle
-        )
+            }
+        } toggle: {
+            state.toggle()
+        }
 
         #expect(
             ops == [
                 .createElement("p"),
                 .removeChild(parent: "<div>", child: "<a>"),
                 .addChild(parent: "<div>", child: "<p>"),
+            ]
+        )
+    }
+
+    @Test func patchesSwitch() async throws {
+        let state = CounterState()
+        let ops = patchOps {
+            div {}
+            switch state.number {
+            case 0:
+                p {}
+            case 1:
+                a {}
+            default:
+                br()
+            }
+            img()
+        } toggle: {
+            state.number += 1
+        }
+
+        #expect(
+            ops == [
+                .createElement("a"),
+                .addChild(parent: "<>", child: "<a>", before: "<img>"),
+                .removeChild(parent: "<>", child: "<p>"),
+            ]
+        )
+    }
+
+    @Test func patchesSwitchMultipleTimes() async throws {
+        let state = CounterState()
+        let dom = TestDOM()
+        dom.mount(
+            div {
+                switch state.number {
+                case 0:
+                    p {}
+                case 1:
+                    a {}
+                default:
+                    br()
+                }
+            }
+        )
+        state.number += 1
+        dom.runNextFrame()
+        dom.clearOps()
+
+        state.number += 1
+        dom.runNextFrame()
+
+        #expect(
+            dom.ops == [
+                .removeChild(parent: "<>", child: "<p>"),
+                .addChild(parent: "<>", child: "<a>"),
+                .removeChild(parent: "<>", child: "<a>"),
+                .addChild(parent: "<>", child: "<br>"),
             ]
         )
     }

@@ -243,13 +243,13 @@ extension TestDOM.NodeRef.Kind: Equatable {
     }
 }
 
-func mountOps(_ view: some View) -> [TestDOM.Op] {
+func mountOps(@HTMLBuilder _ view: () -> some View) -> [TestDOM.Op] {
     let dom = TestDOM()
-    dom.mount(view)
+    dom.mount(view())
     return dom.ops
 }
 
-func patchOps(_ view: @autoclosure @escaping () -> some View, toggle: () -> Void) -> [TestDOM.Op] {
+func patchOps(@HTMLBuilder _ view: @escaping () -> some View, toggle: () -> Void) -> [TestDOM.Op] {
     let dom = TestDOM()
     dom.mount(DeferredResolutionView { view() })
     dom.clearOps()

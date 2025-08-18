@@ -4,7 +4,7 @@ import Testing
 struct ReconcilerMountingTests {
     @Test
     func mountsAnElement() {
-        let ops = mountOps(div { "Hello" })
+        let ops = mountOps { div { "Hello" } }
 
         #expect(
             ops == [
@@ -18,7 +18,7 @@ struct ReconcilerMountingTests {
 
     @Test
     func setsAttributes() {
-        let ops = mountOps(img(.id("foo"), .src("bar")))
+        let ops = mountOps { img(.id("foo"), .src("bar")) }
 
         #expect(
             ops == [
@@ -32,7 +32,7 @@ struct ReconcilerMountingTests {
 
     @Test
     func setsEventListeners() {
-        let ops = mountOps(button {}.onClick { _ in })
+        let ops = mountOps { button {}.onClick { _ in } }
 
         #expect(
             ops == [
@@ -45,12 +45,12 @@ struct ReconcilerMountingTests {
 
     @Test
     func mountsFragment() {
-        let ops = mountOps(
+        let ops = mountOps {
             ul {
                 li { "Text" }
                 li { p {} }
             }
-        )
+        }
 
         #expect(
             ops == [
@@ -70,13 +70,13 @@ struct ReconcilerMountingTests {
     @Test
     func mountsDynamicList() {
         #expect(
-            mountOps(
+            mountOps {
                 div {
                     for _ in 0..<2 {
                         p {}
                     }
                 }
-            ) == [
+            } == [
                 .createElement("div"),
                 .createElement("p"),
                 .createElement("p"),
@@ -88,7 +88,7 @@ struct ReconcilerMountingTests {
 
     @Test
     func mountsConditionals() {
-        let ops = mountOps(
+        let ops = mountOps {
             div {
                 if false {
                     p {}
@@ -98,7 +98,7 @@ struct ReconcilerMountingTests {
                     }
                 }
             }
-        )
+        }
 
         #expect(
             ops == [
@@ -111,11 +111,32 @@ struct ReconcilerMountingTests {
     }
 
     @Test
+    func mountsSwitch() {
+        #expect(
+            mountOps {
+                switch 2 {
+                case 0:
+                    p { "Zero" }
+                case 1:
+                    p { "One" }
+                default:
+                    p { "Two" }
+                }
+            } == [
+                .createElement("p"),
+                .createText("Two"),
+                .addChild(parent: "<p>", child: "Two"),
+                .addChild(parent: "<>", child: "<p>"),
+            ]
+        )
+    }
+
+    @Test
     func mountsStatelessFunction() {
         #expect(
-            mountOps(
+            mountOps {
                 TestView(text: "Hello")
-            ) == [
+            } == [
                 .createElement("p"),
                 .createText("Hello"),
                 .addChild(parent: "<p>", child: "Hello"),
@@ -127,9 +148,9 @@ struct ReconcilerMountingTests {
     @Test
     func mountsStatefulFunction() {
         #expect(
-            mountOps(
+            mountOps {
                 TestViewWithState()
-            ) == [
+            } == [
                 .createElement("p"),
                 .createText("12"),
                 .addChild(parent: "<p>", child: "12"),
