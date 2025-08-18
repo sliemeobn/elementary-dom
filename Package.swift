@@ -22,7 +22,12 @@ let package = Package(
                 .target(name: "ElementaryDOMMacros"),
                 .target(name: "Reactivity"),
             ],
-            swiftSettings: [.swiftLanguageMode(.v5)]
+            swiftSettings: [
+                .swiftLanguageMode(.v5),
+                .enableUpcomingFeature("ExistentialAny"),
+                .enableUpcomingFeature("ConciseMagicFile"),
+                .enableUpcomingFeature("ImplicitOpenExistentials"),
+            ]
         ),
         .macro(
             name: "ElementaryDOMMacros",

@@ -1,4 +1,12 @@
-@attached(extension, conformances: View, _StatefulView, names: named(__initializeState), named(__restoreState), named(__applyContext))
+@attached(
+    extension,
+    conformances: View,
+    _StatefulView,
+    names: named(__initializeState),
+    named(__restoreState),
+    named(__applyContext),
+    named(Node)
+)
 @attached(memberAttribute)
 public macro View() = #externalMacro(module: "ElementaryDOMMacros", type: "ViewMacro")
 

@@ -1,50 +1,38 @@
 public struct _KeyedView<Value: View>: View {
+    public typealias Node = Dynamic<Value.Node>
+
     var key: String
     var value: Value
 
-    public static func _renderView(_ view: consuming Self, context: consuming _ViewRenderingContext) -> _RenderedView {
+    public static func _makeNode(
+        _ view: consuming Self,
+        context: consuming _ViewRenderingContext,
+        reconciler: inout _ReconcilerBatch
+    ) -> Node {
         .init(
-            value: .keyed(.explicit(view.key), Value._renderView(view.value, context: context))
+            key: .explicit(view.key),
+            child: Value._makeNode(view.value, context: context, reconciler: &reconciler),
+            context: &reconciler
         )
     }
 
-    public static func _makeNode<DOM>(
+    public static func _patchNode(
         _ view: consuming Self,
         context: consuming _ViewRenderingContext,
-        reconciler: inout _ReconcilerBatch<DOM>
-    ) -> _ReconcilerNode<DOM> {
-        .dynamic(
-            .init(
-                key: .explicit(view.key),
-                child: Value._makeNode(view.value, context: context, reconciler: &reconciler),
-                context: &reconciler
-            )
-        )
-    }
-
-    public static func _patchNode<DOM>(
-        _ view: consuming Self,
-        context: consuming _ViewRenderingContext,
-        node: borrowing _ReconcilerNode<DOM>,
-        reconciler: inout _ReconcilerBatch<DOM>
+        node: inout Node,
+        reconciler: inout _ReconcilerBatch
     ) {
-        switch node {
-        case .dynamic(let dynamic):
-            // TODO: maybe optimize for "array-of-one" case
-            dynamic.patch(
-                key: .explicit(view.key),
-                context: &reconciler,
-                makeOrPatchNode: { [context] node, r in
-                    if node == nil {
-                        node = Value._makeNode(view.value, context: context, reconciler: &r)
-                    } else {
-                        Value._patchNode(view.value, context: context, node: node!, reconciler: &r)
-                    }
+        node.patch(
+            key: .explicit(view.key),
+            context: &reconciler,
+            makeOrPatchNode: { [context] node, r in
+                if node == nil {
+                    node = Value._makeNode(view.value, context: context, reconciler: &r)
+                } else {
+                    Value._patchNode(view.value, context: context, node: &node!, reconciler: &r)
                 }
-            )
-        default:
-            fatalError("Expected dynamic node, got \(node)")
-        }
+            }
+        )
     }
 }
 

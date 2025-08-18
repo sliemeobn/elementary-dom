@@ -5,8 +5,8 @@ public protocol DOMEvent {
 }
 
 extension DOMEvent {
-    init?(anyObject: AnyObject) {
-        guard let rawEvent = anyObject as? JSObject else {
+    init?(raw: DOM.Event) {
+        guard let rawEvent = raw.ref as? JSObject else {
             return nil
         }
 
@@ -15,9 +15,9 @@ extension DOMEvent {
 }
 
 extension DOMEvent {
-    static func makeHandler(_ handler: @escaping (Self) -> Void) -> (AnyObject) -> Void {
+    static func makeHandler(_ handler: @escaping (Self) -> Void) -> (DOM.Event) -> Void {
         { event in
-            guard let event = Self(anyObject: event) else {
+            guard let event = Self(raw: event) else {
                 assertionFailure("Bad event type")
                 return
             }

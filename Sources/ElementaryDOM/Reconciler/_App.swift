@@ -1,16 +1,16 @@
 // TODO: main-actor stuff very unclear at the moment, ideally not needed at all
-final class App<DOMInteractor: _DOMInteracting> {
-    typealias Reconciler = _ReconcilerBatch<DOMInteractor>
+final class App<DOMInteractor: DOM.Interactor> {
+    typealias Reconciler = _ReconcilerBatch
 
     private var dom: DOMInteractor
-    private var root: Reconciler.Node.Element!
+    private var root: (any ParentElement)!
 
     private var nextUpdateRun: Reconciler.PendingFunctionQueue = .init()
 
     init<RootView: View>(dom: DOMInteractor, root rootView: consuming RootView) {
         self.dom = dom
 
-        self.root = .init(
+        self.root = Element(
             root: dom.root,
             makeReconciler: { node in
                 Reconciler(
@@ -30,7 +30,7 @@ final class App<DOMInteractor: _DOMInteracting> {
         )
     }
 
-    func scheduleFunction(_ function: Reconciler.Node.Function) {
+    func scheduleFunction(_ function: any FunctionNode) {
         if nextUpdateRun.isEmpty {
             //TODO: use next microtask instead of requestAnimationFrame
             dom.requestAnimationFrame { [self] _ in

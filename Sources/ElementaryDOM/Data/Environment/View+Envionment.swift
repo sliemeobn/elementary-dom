@@ -8,33 +8,30 @@ public extension View {
     }
 }
 
-public struct _EnvironmentView<V, Wrapped: View>: View {
+public struct _EnvironmentView<V, Wrapped: View>: _Mountable {
+    public typealias Node = Wrapped.Node
+
     public typealias Tag = Wrapped.Tag
     let wrapped: Wrapped
     let key: EnvironmentValues._Key<V>
     let value: V
 
-    public static func _renderView(_ view: consuming Self, context: consuming _ViewRenderingContext) -> _RenderedView {
-        context.environment[view.key] = view.value
-        return Wrapped._renderView(view.wrapped, context: context)
-    }
-
-    public static func _makeNode<DOM>(
+    public static func _makeNode(
         _ view: consuming Self,
         context: consuming _ViewRenderingContext,
-        reconciler: inout _ReconcilerBatch<DOM>
-    ) -> _ReconcilerNode<DOM> {
+        reconciler: inout _ReconcilerBatch
+    ) -> Node {
         context.environment[view.key] = view.value
         return Wrapped._makeNode(view.wrapped, context: context, reconciler: &reconciler)
     }
 
-    public static func _patchNode<DOM>(
+    public static func _patchNode(
         _ view: consuming Self,
         context: consuming _ViewRenderingContext,
-        node: borrowing _ReconcilerNode<DOM>,
-        reconciler: inout _ReconcilerBatch<DOM>
+        node: inout Node,
+        reconciler: inout _ReconcilerBatch
     ) {
         context.environment[view.key] = view.value
-        Wrapped._patchNode(view.wrapped, context: context, node: node, reconciler: &reconciler)
+        Wrapped._patchNode(view.wrapped, context: context, node: &node, reconciler: &reconciler)
     }
 }

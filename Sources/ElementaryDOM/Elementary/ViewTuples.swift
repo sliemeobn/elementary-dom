@@ -1,270 +1,212 @@
 import Elementary
 
-extension _HTMLTuple2: View where V0: View, V1: View {
-    public static func _renderView(_ view: consuming Self, context: consuming _ViewRenderingContext) -> _RenderedView {
-        .init(
-            value: .staticList([
-                V0._renderView(view.v0, context: copy context),
-                V1._renderView(view.v1, context: copy context),
-            ])
+extension _HTMLTuple2: _Mountable where V0: _Mountable, V1: _Mountable {
+    public typealias Node = TupleNode2<V0.Node, V1.Node>
+
+    public static func _makeNode(
+        _ view: consuming Self,
+        context: consuming _ViewRenderingContext,
+        reconciler: inout _ReconcilerBatch
+    ) -> Node {
+        Node(
+            V0._makeNode(view.v0, context: copy context, reconciler: &reconciler),
+            V1._makeNode(view.v1, context: copy context, reconciler: &reconciler)
         )
     }
 
-    public static func _makeNode<DOM>(
+    public static func _patchNode(
         _ view: consuming Self,
         context: consuming _ViewRenderingContext,
-        reconciler: inout _ReconcilerBatch<DOM>
-    ) -> _ReconcilerNode<DOM> {
-        .fragment([
-            V0._makeNode(view.v0, context: copy context, reconciler: &reconciler),
-            V1._makeNode(view.v1, context: copy context, reconciler: &reconciler),
-        ])
-    }
-
-    public static func _patchNode<DOM>(
-        _ view: consuming Self,
-        context: consuming _ViewRenderingContext,
-        node: borrowing _ReconcilerNode<DOM>,
-        reconciler: inout _ReconcilerBatch<DOM>
+        node: inout Node,
+        reconciler: inout _ReconcilerBatch
     ) {
-        switch node {
-        case let .fragment(children):
-            V0._patchNode(view.v0, context: copy context, node: children[0], reconciler: &reconciler)
-            V1._patchNode(view.v1, context: copy context, node: children[1], reconciler: &reconciler)
-        default:
-            fatalError("Expected fragment node")
-        }
+        V0._patchNode(view.v0, context: copy context, node: &node.value.0, reconciler: &reconciler)
+        V1._patchNode(view.v1, context: copy context, node: &node.value.1, reconciler: &reconciler)
     }
 }
 
-extension _HTMLTuple3: View where V0: View, V1: View, V2: View {
-    public static func _renderView(_ view: consuming Self, context: consuming _ViewRenderingContext) -> _RenderedView {
-        .init(
-            value: .staticList([
-                V0._renderView(view.v0, context: copy context),
-                V1._renderView(view.v1, context: copy context),
-                V2._renderView(view.v2, context: copy context),
-            ])
+extension _HTMLTuple3: _Mountable where V0: _Mountable, V1: _Mountable, V2: _Mountable {
+    public typealias Node = TupleNode3<V0.Node, V1.Node, V2.Node>
+
+    public static func _makeNode(
+        _ view: consuming Self,
+        context: consuming _ViewRenderingContext,
+        reconciler: inout _ReconcilerBatch
+    ) -> Node {
+        Node(
+            V0._makeNode(view.v0, context: copy context, reconciler: &reconciler),
+            V1._makeNode(view.v1, context: copy context, reconciler: &reconciler),
+            V2._makeNode(view.v2, context: copy context, reconciler: &reconciler)
         )
     }
 
-    public static func _makeNode<DOM>(
+    public static func _patchNode(
         _ view: consuming Self,
         context: consuming _ViewRenderingContext,
-        reconciler: inout _ReconcilerBatch<DOM>
-    ) -> _ReconcilerNode<DOM> {
-        .fragment([
+        node: inout Node,
+        reconciler: inout _ReconcilerBatch
+    ) {
+        V0._patchNode(view.v0, context: copy context, node: &node.value.0, reconciler: &reconciler)
+        V1._patchNode(view.v1, context: copy context, node: &node.value.1, reconciler: &reconciler)
+        V2._patchNode(view.v2, context: copy context, node: &node.value.2, reconciler: &reconciler)
+    }
+}
+
+extension _HTMLTuple4: _Mountable where V0: _Mountable, V1: _Mountable, V2: _Mountable, V3: _Mountable {
+    public typealias Node = TupleNode4<V0.Node, V1.Node, V2.Node, V3.Node>
+
+    public static func _makeNode(
+        _ view: consuming Self,
+        context: consuming _ViewRenderingContext,
+        reconciler: inout _ReconcilerBatch
+    ) -> Node {
+        Node(
             V0._makeNode(view.v0, context: copy context, reconciler: &reconciler),
             V1._makeNode(view.v1, context: copy context, reconciler: &reconciler),
             V2._makeNode(view.v2, context: copy context, reconciler: &reconciler),
-        ])
-    }
-
-    public static func _patchNode<DOM>(
-        _ view: consuming Self,
-        context: consuming _ViewRenderingContext,
-        node: borrowing _ReconcilerNode<DOM>,
-        reconciler: inout _ReconcilerBatch<DOM>
-    ) {
-        switch node {
-        case let .fragment(children):
-            V0._patchNode(view.v0, context: copy context, node: children[0], reconciler: &reconciler)
-            V1._patchNode(view.v1, context: copy context, node: children[1], reconciler: &reconciler)
-            V2._patchNode(view.v2, context: copy context, node: children[2], reconciler: &reconciler)
-        default:
-            fatalError("Expected fragment node")
-        }
-    }
-}
-
-extension _HTMLTuple4: View where V0: View, V1: View, V2: View, V3: View {
-    public static func _renderView(_ view: consuming Self, context: consuming _ViewRenderingContext) -> _RenderedView {
-        .init(
-            value: .staticList([
-                V0._renderView(view.v0, context: copy context),
-                V1._renderView(view.v1, context: copy context),
-                V2._renderView(view.v2, context: copy context),
-                V3._renderView(view.v3, context: copy context),
-            ])
+            V3._makeNode(view.v3, context: copy context, reconciler: &reconciler)
         )
     }
 
-    public static func _makeNode<DOM>(
+    public static func _patchNode(
         _ view: consuming Self,
         context: consuming _ViewRenderingContext,
-        reconciler: inout _ReconcilerBatch<DOM>
-    ) -> _ReconcilerNode<DOM> {
-        .fragment([
+        node: inout Node,
+        reconciler: inout _ReconcilerBatch
+    ) {
+        V0._patchNode(view.v0, context: copy context, node: &node.value.0, reconciler: &reconciler)
+        V1._patchNode(view.v1, context: copy context, node: &node.value.1, reconciler: &reconciler)
+        V2._patchNode(view.v2, context: copy context, node: &node.value.2, reconciler: &reconciler)
+        V3._patchNode(view.v3, context: copy context, node: &node.value.3, reconciler: &reconciler)
+    }
+}
+
+extension _HTMLTuple5: _Mountable where V0: _Mountable, V1: _Mountable, V2: _Mountable, V3: _Mountable, V4: _Mountable {
+    public typealias Node = TupleNode5<V0.Node, V1.Node, V2.Node, V3.Node, V4.Node>
+
+    public static func _makeNode(
+        _ view: consuming Self,
+        context: consuming _ViewRenderingContext,
+        reconciler: inout _ReconcilerBatch
+    ) -> Node {
+        Node(
             V0._makeNode(view.v0, context: copy context, reconciler: &reconciler),
             V1._makeNode(view.v1, context: copy context, reconciler: &reconciler),
             V2._makeNode(view.v2, context: copy context, reconciler: &reconciler),
             V3._makeNode(view.v3, context: copy context, reconciler: &reconciler),
-        ])
-    }
-
-    public static func _patchNode<DOM>(
-        _ view: consuming Self,
-        context: consuming _ViewRenderingContext,
-        node: borrowing _ReconcilerNode<DOM>,
-        reconciler: inout _ReconcilerBatch<DOM>
-    ) {
-        switch node {
-        case let .fragment(children):
-            V0._patchNode(view.v0, context: copy context, node: children[0], reconciler: &reconciler)
-            V1._patchNode(view.v1, context: copy context, node: children[1], reconciler: &reconciler)
-            V2._patchNode(view.v2, context: copy context, node: children[2], reconciler: &reconciler)
-            V3._patchNode(view.v3, context: copy context, node: children[3], reconciler: &reconciler)
-        default:
-            fatalError("Expected fragment node")
-        }
-    }
-}
-
-extension _HTMLTuple5: View where V0: View, V1: View, V2: View, V3: View, V4: View {
-    public static func _renderView(_ view: consuming Self, context: consuming _ViewRenderingContext) -> _RenderedView {
-        .init(
-            value: .staticList([
-                V0._renderView(view.v0, context: copy context),
-                V1._renderView(view.v1, context: copy context),
-                V2._renderView(view.v2, context: copy context),
-                V3._renderView(view.v3, context: copy context),
-                V4._renderView(view.v4, context: copy context),
-            ])
+            V4._makeNode(view.v4, context: copy context, reconciler: &reconciler)
         )
     }
 
-    public static func _makeNode<DOM>(
+    public static func _patchNode(
         _ view: consuming Self,
         context: consuming _ViewRenderingContext,
-        reconciler: inout _ReconcilerBatch<DOM>
-    ) -> _ReconcilerNode<DOM> {
-        .fragment([
+        node: inout Node,
+        reconciler: inout _ReconcilerBatch
+    ) {
+        V0._patchNode(view.v0, context: copy context, node: &node.value.0, reconciler: &reconciler)
+        V1._patchNode(view.v1, context: copy context, node: &node.value.1, reconciler: &reconciler)
+        V2._patchNode(view.v2, context: copy context, node: &node.value.2, reconciler: &reconciler)
+        V3._patchNode(view.v3, context: copy context, node: &node.value.3, reconciler: &reconciler)
+        V4._patchNode(view.v4, context: copy context, node: &node.value.4, reconciler: &reconciler)
+    }
+}
+
+extension _HTMLTuple6: _Mountable where V0: _Mountable, V1: _Mountable, V2: _Mountable, V3: _Mountable, V4: _Mountable, V5: _Mountable {
+    public typealias Node = TupleNode6<V0.Node, V1.Node, V2.Node, V3.Node, V4.Node, V5.Node>
+
+    public static func _makeNode(
+        _ view: consuming Self,
+        context: consuming _ViewRenderingContext,
+        reconciler: inout _ReconcilerBatch
+    ) -> Node {
+        Node(
             V0._makeNode(view.v0, context: copy context, reconciler: &reconciler),
             V1._makeNode(view.v1, context: copy context, reconciler: &reconciler),
             V2._makeNode(view.v2, context: copy context, reconciler: &reconciler),
             V3._makeNode(view.v3, context: copy context, reconciler: &reconciler),
             V4._makeNode(view.v4, context: copy context, reconciler: &reconciler),
-        ])
-    }
-
-    public static func _patchNode<DOM>(
-        _ view: consuming Self,
-        context: consuming _ViewRenderingContext,
-        node: borrowing _ReconcilerNode<DOM>,
-        reconciler: inout _ReconcilerBatch<DOM>
-    ) {
-        switch node {
-        case let .fragment(children):
-            V0._patchNode(view.v0, context: copy context, node: children[0], reconciler: &reconciler)
-            V1._patchNode(view.v1, context: copy context, node: children[1], reconciler: &reconciler)
-            V2._patchNode(view.v2, context: copy context, node: children[2], reconciler: &reconciler)
-            V3._patchNode(view.v3, context: copy context, node: children[3], reconciler: &reconciler)
-            V4._patchNode(view.v4, context: copy context, node: children[4], reconciler: &reconciler)
-        default:
-            fatalError("Expected fragment node")
-        }
-    }
-}
-
-extension _HTMLTuple6: View where V0: View, V1: View, V2: View, V3: View, V4: View, V5: View {
-    public static func _renderView(_ view: consuming Self, context: consuming _ViewRenderingContext) -> _RenderedView {
-        .init(
-            value: .staticList([
-                V0._renderView(view.v0, context: copy context),
-                V1._renderView(view.v1, context: copy context),
-                V2._renderView(view.v2, context: copy context),
-                V3._renderView(view.v3, context: copy context),
-                V4._renderView(view.v4, context: copy context),
-                V5._renderView(view.v5, context: copy context),
-            ])
+            V5._makeNode(view.v5, context: copy context, reconciler: &reconciler)
         )
     }
 
-    public static func _makeNode<DOM>(
+    public static func _patchNode(
         _ view: consuming Self,
         context: consuming _ViewRenderingContext,
-        reconciler: inout _ReconcilerBatch<DOM>
-    ) -> _ReconcilerNode<DOM> {
-        .fragment([
-            V0._makeNode(view.v0, context: copy context, reconciler: &reconciler),
-            V1._makeNode(view.v1, context: copy context, reconciler: &reconciler),
-            V2._makeNode(view.v2, context: copy context, reconciler: &reconciler),
-            V3._makeNode(view.v3, context: copy context, reconciler: &reconciler),
-            V4._makeNode(view.v4, context: copy context, reconciler: &reconciler),
-            V5._makeNode(view.v5, context: copy context, reconciler: &reconciler),
-        ])
-    }
-
-    public static func _patchNode<DOM>(
-        _ view: consuming Self,
-        context: consuming _ViewRenderingContext,
-        node: borrowing _ReconcilerNode<DOM>,
-        reconciler: inout _ReconcilerBatch<DOM>
+        node: inout Node,
+        reconciler: inout _ReconcilerBatch
     ) {
-        switch node {
-        case let .fragment(children):
-            V0._patchNode(view.v0, context: copy context, node: children[0], reconciler: &reconciler)
-            V1._patchNode(view.v1, context: copy context, node: children[1], reconciler: &reconciler)
-            V2._patchNode(view.v2, context: copy context, node: children[2], reconciler: &reconciler)
-            V3._patchNode(view.v3, context: copy context, node: children[3], reconciler: &reconciler)
-            V4._patchNode(view.v4, context: copy context, node: children[4], reconciler: &reconciler)
-            V5._patchNode(view.v5, context: copy context, node: children[5], reconciler: &reconciler)
-        default:
-            fatalError("Expected fragment node")
-        }
+        V0._patchNode(view.v0, context: copy context, node: &node.value.0, reconciler: &reconciler)
+        V1._patchNode(view.v1, context: copy context, node: &node.value.1, reconciler: &reconciler)
+        V2._patchNode(view.v2, context: copy context, node: &node.value.2, reconciler: &reconciler)
+        V3._patchNode(view.v3, context: copy context, node: &node.value.3, reconciler: &reconciler)
+        V4._patchNode(view.v4, context: copy context, node: &node.value.4, reconciler: &reconciler)
+        V5._patchNode(view.v5, context: copy context, node: &node.value.5, reconciler: &reconciler)
     }
 }
 
-#if !hasFeature(Embedded)
-extension _HTMLTuple: View where repeat each Child: View {
-    public static func _renderView(_ view: consuming Self, context: consuming _ViewRenderingContext) -> _RenderedView {
-        var renderedChildren: [_RenderedView] = []
-        // renderedChildren.reserveCapacity(view.value.count)
+// Generic variadic tuple support using parameter packs
+extension _HTMLTuple: _Mountable where repeat each Child: View {
+    public typealias Node = TupleNode<repeat (each Child).Node>
 
-        func addChild<C: View>(_ child: consuming sending C) {
-            renderedChildren.append(C._renderView(child, context: copy context))
-        }
-
-        repeat addChild(each view.value)
-
-        return .init(
-            value: .staticList(renderedChildren)
+    public static func _makeNode(
+        _ view: consuming Self,
+        context: consuming _ViewRenderingContext,
+        reconciler: inout _ReconcilerBatch
+    ) -> Node {
+        Node(
+            repeat makeNode(
+                each view.value,
+                context: copy context,
+                reconciler: &reconciler
+            )
         )
     }
 
-    public static func _makeNode<DOM>(
+    public static func _patchNode(
         _ view: consuming Self,
         context: consuming _ViewRenderingContext,
-        reconciler: inout _ReconcilerBatch<DOM>
-    ) -> _ReconcilerNode<DOM> {
-        var nodes: [_ReconcilerNode<DOM>] = []
-
-        func addChild<C: View>(_ child: consuming sending C) {
-            nodes.append(C._makeNode(child, context: copy context, reconciler: &reconciler))
-        }
-
-        repeat addChild(each view.value)
-
-        return .fragment(nodes)
-    }
-
-    public static func _patchNode<DOM>(
-        _ view: consuming Self,
-        context: consuming _ViewRenderingContext,
-        node: borrowing _ReconcilerNode<DOM>,
-        reconciler: inout _ReconcilerBatch<DOM>
+        node: inout Node,
+        reconciler: inout _ReconcilerBatch
     ) {
-        switch node {
-        case let .fragment(children):
-            var i = 0
-            func patchChild<C: View>(_ child: consuming sending C) {
-                C._patchNode(child, context: copy context, node: children[i], reconciler: &reconciler)
-                i += 1
-            }
-            repeat patchChild(each view.value)
-        default:
-            fatalError("Expected fragment node")
+        for var (view, node) in repeat (each view.value, each node.value) {
+            patchNode(view, context: copy context, node: &node, reconciler: &reconciler)
         }
+
+        // repeat patchNode(
+        //     each view.value,
+        //     context: copy context,
+        //     node: each &node.value,
+        //     reconciler: &reconciler
+        // )
     }
 }
-#endif
+
+private func makeNode<V: View>(_ view: consuming V, context: consuming _ViewRenderingContext, reconciler: inout _ReconcilerBatch) -> V.Node
+{
+    V._makeNode(view, context: context, reconciler: &reconciler)
+}
+
+private func patchNode<V: View>(
+    _ view: consuming V,
+    context: consuming _ViewRenderingContext,
+    node: inout V.Node,
+    reconciler: inout _ReconcilerBatch
+) {
+    V._patchNode(view, context: context, node: &node, reconciler: &reconciler)
+}
+
+// func patch<each V: _Mountable>(
+//     _ views: (repeat each V),
+//     _ nodes: (repeat (each V).Node),
+//     context: consuming _ViewRenderingContext,
+//     reconciler: inout _ReconcilerBatch
+// ) {
+//     for var (view, node) in repeat (each views, each nodes) {
+//         patch(view, context: context, node: &node, reconciler: &reconciler)
+//     }
+// }
+
+// func patch<V: _Mountable>(_ v: V, context: consuming _ViewRenderingContext, node: inout V.Node, reconciler: inout _ReconcilerBatch) {
+//     V._patchNode(v, context: context, node: &node, reconciler: &reconciler)
+// }

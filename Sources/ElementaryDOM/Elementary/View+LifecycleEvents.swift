@@ -18,36 +18,26 @@ public extension View {
 
 public struct _LifecycleEventView<Wrapped: View>: View {
     public typealias Tag = Wrapped.Tag
+    public typealias Node = Lifecycle<Wrapped.Node>
+
     let wrapped: Wrapped
     let listener: _LifecycleHook
 
-    public static func _renderView(_ view: consuming Self, context: consuming _ViewRenderingContext) -> _RenderedView {
-        .init(
-            value:
-                .lifecycle(view.listener, Wrapped._renderView(view.wrapped, context: context))
-        )
-    }
-
-    public static func _makeNode<DOM>(
+    public static func _makeNode(
         _ view: consuming Self,
         context: consuming _ViewRenderingContext,
-        reconciler: inout _ReconcilerBatch<DOM>
-    ) -> _ReconcilerNode<DOM> {
-        .lifecycle(.init(value: view.listener, child: Wrapped._makeNode(view.wrapped, context: context, reconciler: &reconciler)))
+        reconciler: inout _ReconcilerBatch
+    ) -> Node {
+        .init(value: view.listener, child: Wrapped._makeNode(view.wrapped, context: context, reconciler: &reconciler))
     }
 
-    public static func _patchNode<DOM>(
+    public static func _patchNode(
         _ view: consuming Self,
         context: consuming _ViewRenderingContext,
-        node: borrowing _ReconcilerNode<DOM>,
-        reconciler: inout _ReconcilerBatch<DOM>
+        node: inout Node,
+        reconciler: inout _ReconcilerBatch
     ) {
-        switch node {
-        case let .lifecycle(lifecycle):
-            //TODO: should we patch something? maybe update values?
-            Wrapped._patchNode(view.wrapped, context: context, node: lifecycle.child, reconciler: &reconciler)
-        default:
-            fatalError("Expected lifecycle node, got \(node)")
-        }
+        //TODO: should we patch something? maybe update values?
+        Wrapped._patchNode(view.wrapped, context: context, node: &node.child, reconciler: &reconciler)
     }
 }

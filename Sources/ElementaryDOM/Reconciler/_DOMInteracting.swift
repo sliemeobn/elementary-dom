@@ -1,35 +1,46 @@
 import Elementary
 
-public protocol _DOMInteracting {
-    associatedtype Node
-    associatedtype Event: AnyObject
-    associatedtype EventSink
+// Type-erased node reference
+public enum DOM {
+    public struct Node {
+        let ref: AnyObject
+    }
 
-    var root: Node { get }
+    public struct Event {
+        let ref: AnyObject
+    }
 
-    func makeEventSink(_ handler: @escaping (String, Event) -> Void) -> EventSink
+    public struct EventSink {
+        let ref: AnyObject
+    }
 
-    func createText(_ text: String) -> Node
-    func createElement(_ element: String) -> Node
-    // Low-level DOM-like attribute APIs
-    func setAttribute(_ node: Node, name: String, value: String?)
-    func removeAttribute(_ node: Node, name: String)
+    public protocol Interactor {
+        var root: Node { get }
 
-    // Low-level DOM-like event listener APIs
-    func addEventListener(_ node: Node, event: String, sink: EventSink)
-    func removeEventListener(_ node: Node, event: String, sink: EventSink)
-    func patchText(_ node: Node, with text: String, replacing: String)
-    func replaceChildren(_ children: [Node], in parent: Node)
-    // New explicit child list operations
-    func insertChild(_ child: Node, before sibling: Node?, in parent: Node)
-    func removeChild(_ child: Node, from parent: Node)
+        func makeEventSink(_ handler: @escaping (String, Event) -> Void) -> EventSink
 
-    func requestAnimationFrame(_ callback: @escaping (Double) -> Void)
+        func createText(_ text: String) -> Node
+        func createElement(_ element: String) -> Node
+        // Low-level DOM-like attribute APIs
+        func setAttribute(_ node: Node, name: String, value: String?)
+        func removeAttribute(_ node: Node, name: String)
+
+        // Low-level DOM-like event listener APIs
+        func addEventListener(_ node: Node, event: String, sink: EventSink)
+        func removeEventListener(_ node: Node, event: String, sink: EventSink)
+        func patchText(_ node: Node, with text: String, replacing: String)
+        func replaceChildren(_ children: [Node], in parent: Node)
+        // New explicit child list operations
+        func insertChild(_ child: Node, before sibling: Node?, in parent: Node)
+        func removeChild(_ child: Node, from parent: Node)
+
+        func requestAnimationFrame(_ callback: @escaping (Double) -> Void)
+    }
 }
 
-extension _DOMInteracting {
+extension DOM.Interactor {
     func patchElementAttributes(
-        _ node: Node,
+        _ node: DOM.Node,
         with attributes: _AttributeStorage,
         replacing: _AttributeStorage
     ) {
@@ -60,10 +71,10 @@ extension _DOMInteracting {
     }
 
     func patchEventListeners(
-        _ node: Node,
+        _ node: DOM.Node,
         with listers: _DomEventListenerStorage,
         replacing: _DomEventListenerStorage,
-        sink: @autoclosure () -> EventSink
+        sink: @autoclosure () -> DOM.EventSink
     ) {
         guard !(listers.listeners.isEmpty && replacing.listeners.isEmpty) else { return }
 

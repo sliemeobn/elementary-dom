@@ -1,5 +1,5 @@
 public enum _ViewKey: Equatable, Hashable, CustomStringConvertible {
-    case structure(Int)  // try to fold conditional chains and switches into this
+    case structure(Int)
     case explicit(String)
 
     static var falseKey: Self { .structure(0) }

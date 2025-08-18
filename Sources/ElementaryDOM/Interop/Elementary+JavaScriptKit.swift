@@ -1,20 +1,32 @@
 import Elementary
 import JavaScriptKit
 
-final class JSKitDOMInteractor: _DOMInteracting {
-    typealias Node = JSObject
-    typealias Event = JSObject
-    typealias EventSink = JSValue
+extension DOM.Node {
+    init(_ node: JSObject) { self.init(ref: node) }
+    var jsObject: JSObject { ref as! JSObject }
+}
 
+extension DOM.Event {
+    init(_ event: JSObject) { self.init(ref: event) }
+    var jsObject: JSObject { ref as! JSObject }
+}
+
+extension DOM.EventSink {
+    init(_ sink: JSClosure) { self.init(ref: sink) }
+    var jsClosure: JSClosure { ref as! JSClosure }
+}
+
+final class JSKitDOMInteractor: DOM.Interactor {
     let document = JSObject.global.document
-    let root: Node
 
-    init(root: Node) {
-        self.root = root
+    let root: DOM.Node
+
+    init(root: JSObject) {
+        self.root = .init(root)
     }
 
-    func makeEventSink(_ handler: @escaping (String, Event) -> Void) -> EventSink {
-        JSValue.object(
+    func makeEventSink(_ handler: @escaping (String, DOM.Event) -> Void) -> DOM.EventSink {
+        .init(
             JSClosure { arguments in
                 guard arguments.count >= 1 else { return .undefined }
 
@@ -22,61 +34,61 @@ final class JSKitDOMInteractor: _DOMInteracting {
                     return .undefined
                 }
 
-                handler(type, event)
+                handler(type, .init(event))
                 return .undefined
             }
         )
     }
 
-    func createText(_ text: String) -> Node {
-        document.createTextNode(text.jsValue).object!
+    func createText(_ text: String) -> DOM.Node {
+        .init(document.createTextNode(text.jsValue).object!)
     }
 
-    func createElement(_ element: String) -> Node {
-        document.createElement(element.jsValue).object!
+    func createElement(_ element: String) -> DOM.Node {
+        .init(document.createElement(element.jsValue).object!)
     }
 
     // Low-level DOM-like operations used by protocol extensions
-    func setAttribute(_ node: Node, name: String, value: String?) {
-        _ = node.setAttribute!(name.jsValue, value.jsValue)
+    func setAttribute(_ node: DOM.Node, name: String, value: String?) {
+        _ = node.jsObject.setAttribute!(name.jsValue, value.jsValue)
     }
 
-    func removeAttribute(_ node: Node, name: String) {
-        _ = node.removeAttribute!(name)
+    func removeAttribute(_ node: DOM.Node, name: String) {
+        _ = node.jsObject.removeAttribute!(name)
     }
 
-    func addEventListener(_ node: Node, event: String, sink: EventSink) {
-        _ = node.addEventListener!(event.jsValue, sink)
+    func addEventListener(_ node: DOM.Node, event: String, sink: DOM.EventSink) {
+        _ = node.jsObject.addEventListener!(event.jsValue, sink.jsClosure)
     }
 
-    func removeEventListener(_ node: Node, event: String, sink: EventSink) {
-        _ = node.removeEventListener!(event.jsValue, sink)
+    func removeEventListener(_ node: DOM.Node, event: String, sink: DOM.EventSink) {
+        _ = node.jsObject.removeEventListener!(event.jsValue, sink.jsClosure)
     }
 
-    func patchText(_ node: Node, with text: String, replacing: String) {
+    func patchText(_ node: DOM.Node, with text: String, replacing: String) {
         guard !text.utf8Equals(replacing) else { return }
-        _ = node.textContent = text.jsValue
+        _ = node.jsObject.textContent = text.jsValue
     }
 
-    func replaceChildren(_ children: [Node], in parent: Node) {
+    func replaceChildren(_ children: [DOM.Node], in parent: DOM.Node) {
         logTrace("setting \(children.count) children in \(parent)")
-        let function = parent.replaceChildren.function!
+        let function = parent.jsObject.replaceChildren.function!
         function.callAsFunction(
-            this: parent,
-            arguments: children.map { $0.jsValue }
+            this: parent.jsObject,
+            arguments: children.map { $0.jsObject.jsValue }
         )
     }
 
-    func insertChild(_ child: Node, before sibling: Node?, in parent: Node) {
+    func insertChild(_ child: DOM.Node, before sibling: DOM.Node?, in parent: DOM.Node) {
         if let s = sibling {
-            _ = parent.insertBefore!(child, s)
+            _ = parent.jsObject.insertBefore!(child.jsObject, s.jsObject)
         } else {
-            _ = parent.appendChild!(child)
+            _ = parent.jsObject.appendChild!(child.jsObject)
         }
     }
 
-    func removeChild(_ child: Node, from parent: Node) {
-        _ = parent.removeChild!(child)
+    func removeChild(_ child: DOM.Node, from parent: DOM.Node) {
+        _ = parent.jsObject.removeChild!(child.jsObject)
     }
 
     func requestAnimationFrame(_ callback: @escaping (Double) -> Void) {

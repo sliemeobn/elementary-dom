@@ -3,21 +3,26 @@ import Elementary
 // TODO: maybe this should not derive from HTML at all
 // TODO: think about how the square MainActor-isolation with server side usage
 // TODO: maybe the _renderView should "reconcile" itself directly into a generic reconciler type instread of returning a _RenderedView (possible saving some allocations/currency types)
-public protocol View: HTML where Content: View {
-    static func _renderView(_ view: consuming Self, context: consuming _ViewRenderingContext) -> _RenderedView
+public protocol View: HTML & _Mountable where Content: HTML & _Mountable<ViewNode> {
+    associatedtype ViewNode: MountedNode = Function<Content.Node>
+
     static func __applyContext(_ context: borrowing _ViewRenderingContext, to view: inout Self)
+}
 
-    static func _makeNode<DOM>(
+public protocol _Mountable<Node> {
+    associatedtype Node: MountedNode
+
+    static func _makeNode(
         _ view: consuming Self,
         context: consuming _ViewRenderingContext,
-        reconciler: inout _ReconcilerBatch<DOM>
-    ) -> _ReconcilerNode<DOM>
+        reconciler: inout _ReconcilerBatch
+    ) -> Node
 
-    static func _patchNode<DOM>(
+    static func _patchNode(
         _ view: consuming Self,
         context: consuming _ViewRenderingContext,
-        node: borrowing _ReconcilerNode<DOM>,
-        reconciler: inout _ReconcilerBatch<DOM>
+        node: inout Node,
+        reconciler: inout _ReconcilerBatch
     )
 }
 
@@ -32,7 +37,24 @@ public extension View where Content == Never {
     }
 }
 
-extension Never: View {}
+extension Never: _Mountable {
+    public typealias Node = EmptyNode
+
+    public static func _makeNode(
+        _ view: consuming Self,
+        context: consuming _ViewRenderingContext,
+        reconciler: inout _ReconcilerBatch
+    ) -> Node {
+        fatalError("This should never be called")
+    }
+
+    public static func _patchNode(
+        _ view: consuming Self,
+        context: consuming _ViewRenderingContext,
+        node: inout Node,
+        reconciler: inout _ReconcilerBatch
+    ) {}
+}
 
 public struct _ViewRenderingContext {
     var eventListeners: _DomEventListenerStorage = .init()
@@ -56,7 +78,9 @@ public struct _ViewRenderingContext {
     }
 }
 
-extension HTMLElement: View where Content: View {
+extension HTMLElement: _Mountable, View where Content: _Mountable {
+    public typealias Node = Element<Content.Node>
+
     private static func makeValue(_ view: borrowing Self, context: inout _ViewRenderingContext) -> _DomElement {
         var attributes = view._attributes
         attributes.append(context.takeAttributes())
@@ -68,349 +92,254 @@ extension HTMLElement: View where Content: View {
         )
     }
 
-    public static func _renderView(_ view: consuming Self, context: consuming _ViewRenderingContext) -> _RenderedView {
-        .init(
-            value: .element(
-                makeValue(view, context: &context),
-                Content._renderView(view.content, context: context)
-            )
+    public static func _makeNode(
+        _ view: consuming Self,
+        context: consuming _ViewRenderingContext,
+        reconciler: inout _ReconcilerBatch
+    ) -> Node {
+        Node(
+            value: makeValue(view, context: &context),
+            context: &reconciler,
+            makeChild: { [context] r in Content._makeNode(view.content, context: context, reconciler: &r) }
         )
     }
 
-    public static func _makeNode<DOM>(
+    public static func _patchNode(
         _ view: consuming Self,
         context: consuming _ViewRenderingContext,
-        reconciler: inout _ReconcilerBatch<DOM>
-    ) -> _ReconcilerNode<DOM> {
-        .element(
-            .init(
-                value: makeValue(view, context: &context),
-                context: &reconciler,
-                makeChild: { [context] r in Content._makeNode(view.content, context: context, reconciler: &r) }
-            )
-        )
-    }
-
-    public static func _patchNode<DOM>(
-        _ view: consuming Self,
-        context: consuming _ViewRenderingContext,
-        node: borrowing _ReconcilerNode<DOM>,
-        reconciler: inout _ReconcilerBatch<DOM>
+        node: inout Node,
+        reconciler: inout _ReconcilerBatch
     ) {
-        switch node {
-        case let .element(element):
-            let value = makeValue(view, context: &context)
-            element.patch(value, context: &reconciler)
-
-            Content._patchNode(
-                view.content,
-                context: context,
-                node: element.child,
-                reconciler: &reconciler
-            )
-        default:
-            fatalError("Expected element node, got \(node)")
-        }
-    }
-}
-
-extension HTMLVoidElement: View {
-    private static func makeValue(_ view: borrowing Self, context: inout _ViewRenderingContext) -> _DomElement {
-        var attributes = view._attributes
-        attributes.append(context.takeAttributes())
-
-        return _DomElement(
-            tagName: Tag.name,
-            attributes: attributes,
-            listerners: context.takeListeners()
-        )
-    }
-
-    public static func _renderView(_ view: consuming Self, context: consuming _ViewRenderingContext) -> _RenderedView {
         let value = makeValue(view, context: &context)
-        return .init(
-            value: .element(
-                value,
-                .init(value: .nothing)
-            )
-        )
-    }
-
-    public static func _makeNode<DOM>(
-        _ view: consuming Self,
-        context: consuming _ViewRenderingContext,
-        reconciler: inout _ReconcilerBatch<DOM>
-    ) -> _ReconcilerNode<DOM> {
-        .element(
-            .init(
-                value: makeValue(view, context: &context),
-                context: &reconciler,
-                makeChild: { _ in .nothing }
-            )
-        )
-    }
-
-    public static func _patchNode<DOM>(
-        _ view: consuming Self,
-        context: consuming _ViewRenderingContext,
-        node: borrowing _ReconcilerNode<DOM>,
-        reconciler: inout _ReconcilerBatch<DOM>
-    ) {
-        switch node {
-        case let .element(element):
-            let value = makeValue(view, context: &context)
-            element.patch(value, context: &reconciler)
-        default:
-            fatalError("Expected element node, got \(node)")
-        }
-    }
-}
-
-extension HTMLText: View {
-    public static func _renderView(_ view: consuming Self, context _: consuming _ViewRenderingContext) -> _RenderedView {
-        .init(
-            value: .text(view.text)
-        )
-    }
-
-    public static func _makeNode<DOM>(
-        _ view: consuming Self,
-        context: consuming _ViewRenderingContext,
-        reconciler: inout _ReconcilerBatch<DOM>
-    ) -> _ReconcilerNode<DOM> {
-        .text(.init(view.text, context: &reconciler))
-    }
-
-    public static func _patchNode<DOM>(
-        _ view: consuming Self,
-        context: consuming _ViewRenderingContext,
-        node: borrowing _ReconcilerNode<DOM>,
-        reconciler: inout _ReconcilerBatch<DOM>
-    ) {
-        switch node {
-        case let .text(text):
-            text.patch(view.text, context: &reconciler)
-        default:
-            fatalError("Expected text node, got \(node)")
-        }
-    }
-}
-
-extension EmptyHTML: View {
-    public static func _renderView(_: consuming Self, context _: consuming _ViewRenderingContext) -> _RenderedView {
-        .init(
-            value: .nothing
-        )
-    }
-
-    public static func _makeNode<DOM>(
-        _ view: consuming Self,
-        context: consuming _ViewRenderingContext,
-        reconciler: inout _ReconcilerBatch<DOM>
-    ) -> _ReconcilerNode<DOM> {
-        .nothing
-    }
-
-    public static func _patchNode<DOM>(
-        _ view: consuming Self,
-        context: consuming _ViewRenderingContext,
-        node: borrowing _ReconcilerNode<DOM>,
-        reconciler: inout _ReconcilerBatch<DOM>
-    ) {
-    }
-}
-
-extension Optional: View where Wrapped: View {
-    public static func _renderView(_ view: consuming Self, context: consuming _ViewRenderingContext) -> _RenderedView {
-        switch view {
-        case let .some(view):
-            return .init(value: .keyed(.trueKey, Wrapped._renderView(view, context: context)))
-        case .none:
-            return .init(value: .keyed(.falseKey, .init(value: .nothing)))
-        }
-    }
-
-    public static func _makeNode<DOM>(
-        _ view: consuming Self,
-        context: consuming _ViewRenderingContext,
-        reconciler: inout _ReconcilerBatch<DOM>
-    ) -> _ReconcilerNode<DOM> {
-        switch view {
-        case let .some(view):
-            return .dynamic(
-                .init(key: .trueKey, child: Wrapped._makeNode(view, context: context, reconciler: &reconciler), context: &reconciler)
-            )
-        case .none:
-            return .dynamic(.init(key: .falseKey, child: .nothing, context: &reconciler))
-        }
-    }
-
-    public static func _patchNode<DOM>(
-        _ view: consuming Self,
-        context: consuming _ViewRenderingContext,
-        node: borrowing _ReconcilerNode<DOM>,
-        reconciler: inout _ReconcilerBatch<DOM>
-    ) {
-        switch node {
-        case let .dynamic(dynamic):
-            switch view {
-            case let .some(view):
-                dynamic.patch(
-                    key: .trueKey,
-                    context: &reconciler,
-                    makeOrPatchNode: { [context] node, r in
-                        if node == nil {
-                            node = Wrapped._makeNode(view, context: context, reconciler: &r)
-                        } else {
-                            Wrapped._patchNode(view, context: context, node: node!, reconciler: &r)
-                        }
-                    }
-                )
-            case .none:
-                dynamic.patch(
-                    key: .falseKey,
-                    context: &reconciler,
-                    makeOrPatchNode: { node, r in
-                        if node == nil {
-                            node = .nothing
-                        }
-                    }
+        node.patch(
+            value,
+            context: &reconciler,
+            patchChild: { [context] child, r in
+                Content._patchNode(
+                    view.content,
+                    context: context,
+                    node: &child,
+                    reconciler: &r
                 )
             }
-        default:
-            fatalError("Expected dynamic node, got \(node)")
-        }
+        )
     }
 }
 
-extension _HTMLConditional: View where TrueContent: View, FalseContent: View {
-    public static func _renderView(_ view: consuming Self, context: consuming _ViewRenderingContext) -> _RenderedView {
-        // TODO: think about collapsing structure keys better switch folding
-        switch view.value {
-        case let .trueContent(content):
-            .init(value: .keyed(.trueKey, TrueContent._renderView(content, context: context)))
-        case let .falseContent(content):
-            .init(value: .keyed(.falseKey, FalseContent._renderView(content, context: context)))
-        }
+extension HTMLVoidElement: _Mountable, View {
+    public typealias Node = Element<EmptyNode>
+
+    private static func makeValue(_ view: borrowing Self, context: inout _ViewRenderingContext) -> _DomElement {
+        var attributes = view._attributes
+        attributes.append(context.takeAttributes())
+
+        return _DomElement(
+            tagName: Tag.name,
+            attributes: attributes,
+            listerners: context.takeListeners()
+        )
     }
 
-    public static func _makeNode<DOM>(
+    public static func _makeNode(
         _ view: consuming Self,
         context: consuming _ViewRenderingContext,
-        reconciler: inout _ReconcilerBatch<DOM>
-    ) -> _ReconcilerNode<DOM> {
-        switch view.value {
-        case let .trueContent(content):
-            return .dynamic(
-                .init(key: .trueKey, child: TrueContent._makeNode(content, context: context, reconciler: &reconciler), context: &reconciler)
-            )
-        case let .falseContent(content):
-            return .dynamic(
-                .init(
-                    key: .falseKey,
-                    child: FalseContent._makeNode(content, context: context, reconciler: &reconciler),
-                    context: &reconciler
-                )
-            )
-        }
+        reconciler: inout _ReconcilerBatch
+    ) -> Node {
+        Node(
+            value: makeValue(view, context: &context),
+            context: &reconciler,
+            makeChild: { _ in EmptyNode() }
+        )
     }
 
-    public static func _patchNode<DOM>(
+    public static func _patchNode(
         _ view: consuming Self,
         context: consuming _ViewRenderingContext,
-        node: borrowing _ReconcilerNode<DOM>,
-        reconciler: inout _ReconcilerBatch<DOM>
+        node: inout Node,
+        reconciler: inout _ReconcilerBatch
     ) {
-        switch node {
-        case let .dynamic(dynamic):
-            switch view.value {
-            case let .trueContent(content):
-                dynamic.patch(
-                    key: .trueKey,
-                    context: &reconciler,
-                    makeOrPatchNode: { [context] node, r in
-                        if node == nil {
-                            node = TrueContent._makeNode(content, context: context, reconciler: &r)
-                        } else {
-                            TrueContent._patchNode(content, context: context, node: node!, reconciler: &r)
-                        }
-                    }
-                )
-            case let .falseContent(content):
-                dynamic.patch(
-                    key: .falseKey,
-                    context: &reconciler,
-                    makeOrPatchNode: { [context] node, r in
-                        if node == nil {
-                            node = FalseContent._makeNode(content, context: context, reconciler: &r)
-                        } else {
-                            FalseContent._patchNode(content, context: context, node: node!, reconciler: &r)
-                        }
-                    }
-                )
+        let value = makeValue(view, context: &context)
+        node.patch(
+            value,
+            context: &reconciler,
+            patchChild: { child, r in
+                // no children anyway
             }
-        default:
-            fatalError("Expected dynamic node, got \(node)")
-        }
+        )
     }
 }
 
-extension _HTMLArray: View where Element: View {
-    public static func _renderView(_ view: consuming Self, context: consuming _ViewRenderingContext) -> _RenderedView {
-        // FIXME: this feels awkward
-        .init(
-            value: .dynamicList(
-                view.value.map { Element._renderView($0, context: copy context) }
-            )
-        )
-    }
+extension HTMLText: _Mountable, View {
+    public typealias Node = TextNode
 
-    public static func _makeNode<DOM>(
+    public static func _makeNode(
         _ view: consuming Self,
         context: consuming _ViewRenderingContext,
-        reconciler: inout _ReconcilerBatch<DOM>
-    ) -> _ReconcilerNode<DOM> {
-        .dynamic(
-            .init(
-                view.value.enumerated().map { (index, element) in
-                    (
-                        key: .structure(index),
-                        node: Element._makeNode(element, context: copy context, reconciler: &reconciler)
-                    )
-                },
-                context: &reconciler
-            )
-        )
+        reconciler: inout _ReconcilerBatch
+    ) -> Node {
+        Node(view.text, context: &reconciler)
     }
 
-    public static func _patchNode<DOM>(
+    public static func _patchNode(
         _ view: consuming Self,
         context: consuming _ViewRenderingContext,
-        node: borrowing _ReconcilerNode<DOM>,
-        reconciler: inout _ReconcilerBatch<DOM>
+        node: inout Node,
+        reconciler: inout _ReconcilerBatch
     ) {
-        switch node {
-        case let .dynamic(dynamicList):
-            // maybe we can optimize this
-            let indexes = view.value.indices.map { _ViewKey.structure($0) }
-            dynamicList.patch(
-                indexes,
-                context: &reconciler,
-                makeOrPatchNode: { index, node, r in
-                    if node == nil {
-                        node = Element._makeNode(view.value[index], context: copy context, reconciler: &r)
-                    } else {
-                        Element._patchNode(view.value[index], context: copy context, node: node!, reconciler: &r)
-                    }
+        node.patch(view.text, context: &reconciler)
+    }
+}
+
+extension EmptyHTML: _Mountable, View {
+    public typealias Node = EmptyNode
+
+    public static func _makeNode(
+        _ view: consuming Self,
+        context: consuming _ViewRenderingContext,
+        reconciler: inout _ReconcilerBatch
+    ) -> Node {
+        EmptyNode()
+    }
+
+    public static func _patchNode(
+        _ view: consuming Self,
+        context: consuming _ViewRenderingContext,
+        node: inout Node,
+        reconciler: inout _ReconcilerBatch
+    ) {}
+}
+
+extension Optional: _Mountable where Wrapped: _Mountable {
+    public typealias Node = ConditionalNode<Wrapped.Node, EmptyNode>
+
+    public static func _makeNode(
+        _ view: consuming Self,
+        context: consuming _ViewRenderingContext,
+        reconciler: inout _ReconcilerBatch
+    ) -> Node {
+        switch view {
+        case let .some(view):
+            return .init(a: Wrapped._makeNode(view, context: context, reconciler: &reconciler))
+        case .none:
+            return .init(b: EmptyNode())
+        }
+    }
+
+    public static func _patchNode(
+        _ view: consuming Self,
+        context: consuming _ViewRenderingContext,
+        node: inout Node,
+        reconciler: inout _ReconcilerBatch
+    ) {
+        switch view {
+        case let .some(view):
+            node.patchWithA(reconciler: &reconciler) { [context] a, r in
+                if a == nil {
+                    a = Wrapped._makeNode(view, context: context, reconciler: &r)
+                } else {
+                    Wrapped._patchNode(view, context: context, node: &a!, reconciler: &r)
                 }
-            )
-        default:
-            fatalError("Expected dynamic list node, got \(node)")
+            }
+        case .none:
+            node.patchWithB(reconciler: &reconciler) { b, r in
+                if b == nil {
+                    b = EmptyNode()
+                } else {
+                }
+            }
         }
     }
 }
 
-extension ForEach: View where Content: _KeyReadableView, Data: Collection {
+extension _HTMLConditional: _Mountable where TrueContent: _Mountable, FalseContent: _Mountable {
+    public typealias Node = ConditionalNode<TrueContent.Node, FalseContent.Node>
+
+    public static func _makeNode(
+        _ view: consuming Self,
+        context: consuming _ViewRenderingContext,
+        reconciler: inout _ReconcilerBatch
+    ) -> Node {
+        switch view.value {
+        case let .trueContent(content):
+            return .init(a: TrueContent._makeNode(content, context: context, reconciler: &reconciler))
+        case let .falseContent(content):
+            return .init(b: FalseContent._makeNode(content, context: context, reconciler: &reconciler))
+        }
+    }
+
+    public static func _patchNode(
+        _ view: consuming Self,
+        context: consuming _ViewRenderingContext,
+        node: inout Node,
+        reconciler: inout _ReconcilerBatch
+    ) {
+        switch view.value {
+        case let .trueContent(content):
+            node.patchWithA(reconciler: &reconciler) { [context] a, r in
+                if a == nil {
+                    a = TrueContent._makeNode(content, context: context, reconciler: &r)
+                } else {
+                    TrueContent._patchNode(content, context: context, node: &a!, reconciler: &r)
+                }
+            }
+        case let .falseContent(content):
+            node.patchWithB(reconciler: &reconciler) { [context] b, r in
+                if b == nil {
+                    b = FalseContent._makeNode(content, context: context, reconciler: &r)
+                } else {
+                    FalseContent._patchNode(content, context: context, node: &b!, reconciler: &r)
+                }
+            }
+        }
+    }
+}
+
+extension _HTMLArray: _Mountable, View where Element: View {
+    public typealias Node = Dynamic<Element.Node>
+
+    public static func _makeNode(
+        _ view: consuming Self,
+        context: consuming _ViewRenderingContext,
+        reconciler: inout _ReconcilerBatch
+    ) -> Node {
+        Node(
+            view.value.enumerated().map { [context] (index, element) in
+                (
+                    key: .structure(index),
+                    node: Element._makeNode(element, context: context, reconciler: &reconciler)
+                )
+            },
+            context: &reconciler
+        )
+    }
+
+    public static func _patchNode(
+        _ view: consuming Self,
+        context: consuming _ViewRenderingContext,
+        node: inout Node,
+        reconciler: inout _ReconcilerBatch
+    ) {
+
+        // maybe we can optimize this
+        let indexes = view.value.indices.map { _ViewKey.structure($0) }
+        node.patch(
+            indexes,
+            context: &reconciler,
+            makeOrPatchNode: { [context] index, node, r in
+                if node == nil {
+                    node = Element._makeNode(view.value[index], context: context, reconciler: &r)
+                } else {
+                    Element._patchNode(view.value[index], context: context, node: &node!, reconciler: &r)
+                }
+            }
+        )
+
+    }
+}
+
+extension ForEach: _Mountable where Content: _KeyReadableView, Data: Collection {
+    public typealias Node = Dynamic<Content.Value.Node>
+
     public init<V: View>(
         _ data: Data,
         @HTMLBuilder content: @escaping @Sendable (Data.Element) -> V
@@ -434,86 +363,60 @@ extension ForEach: View where Content: _KeyReadableView, Data: Collection {
         )
     }
 
-    public static func _renderView(_ view: consuming Self, context: consuming _ViewRenderingContext) -> _RenderedView {
-        .init(
-            value: .dynamicList(
-                view._data.map {
-                    Content._renderView(
-                        view._contentBuilder($0),
-                        context: copy context
-                    )
-                }
-            )
+    public static func _makeNode(
+        _ view: consuming Self,
+        context: consuming _ViewRenderingContext,
+        reconciler: inout _ReconcilerBatch
+    ) -> Node {
+        Node(
+            view._data
+                .map { [context] value in
+                    let view = view._contentBuilder(value)
+                    return (key: view._key, node: Content.Value._makeNode(view._value, context: context, reconciler: &reconciler))
+                },
+            context: &reconciler
         )
     }
 
-    public static func _makeNode<DOM>(
+    public static func _patchNode(
         _ view: consuming Self,
         context: consuming _ViewRenderingContext,
-        reconciler: inout _ReconcilerBatch<DOM>
-    ) -> _ReconcilerNode<DOM> {
-        .dynamic(
-            .init(
-                view._data
-                    .map { value in
-                        let view = view._contentBuilder(value)
-                        return (key: view._key, node: Content.Value._makeNode(view._value, context: copy context, reconciler: &reconciler))
-                    },
-                context: &reconciler
-            )
-        )
-    }
-
-    public static func _patchNode<DOM>(
-        _ view: consuming Self,
-        context: consuming _ViewRenderingContext,
-        node: borrowing _ReconcilerNode<DOM>,
-        reconciler: inout _ReconcilerBatch<DOM>
+        node: inout Node,
+        reconciler: inout _ReconcilerBatch
     ) {
-        switch node {
-        case let .dynamic(dynamicList):
-            let views = view._data.map { value in view._contentBuilder(value) }
-            dynamicList.patch(
-                views.map { $0._key },
-                context: &reconciler
-            ) { [context] index, node, r in
-                if node == nil {
-                    node = Content.Value._makeNode(views[index]._value, context: context, reconciler: &r)
-                } else {
-                    Content.Value._patchNode(views[index]._value, context: context, node: node!, reconciler: &r)
-                }
+        let views = view._data.map { value in view._contentBuilder(value) }
+        node.patch(
+            views.map { $0._key },
+            context: &reconciler
+        ) { [context] index, node, r in
+            if node == nil {
+                node = Content.Value._makeNode(views[index]._value, context: context, reconciler: &r)
+            } else {
+                Content.Value._patchNode(views[index]._value, context: context, node: &node!, reconciler: &r)
             }
-        default:
-            fatalError("Expected dynamic list node, got \(node)")
         }
     }
 }
 
-extension _AttributedElement: View where Content: View {
-    public static func _renderView(_ view: consuming Self, context: consuming _ViewRenderingContext) -> _RenderedView {
-        // TODO: make prepent from elementary available
-        view.attributes.append(context.attributes)
-        context.attributes = view.attributes
+extension _AttributedElement: _Mountable where Content: _Mountable {
+    public typealias Node = Content.Node
 
-        return Content._renderView(view.content, context: context)
-    }
-
-    public static func _makeNode<DOM>(
+    public static func _makeNode(
         _ view: consuming Self,
         context: consuming _ViewRenderingContext,
-        reconciler: inout _ReconcilerBatch<DOM>
-    ) -> _ReconcilerNode<DOM> {
+        reconciler: inout _ReconcilerBatch
+    ) -> Node {
         view.attributes.append(context.takeAttributes())
         context.attributes = view.attributes
 
         return Content._makeNode(view.content, context: context, reconciler: &reconciler)
     }
 
-    public static func _patchNode<DOM>(
+    public static func _patchNode(
         _ view: consuming Self,
         context: consuming _ViewRenderingContext,
-        node: borrowing _ReconcilerNode<DOM>,
-        reconciler: inout _ReconcilerBatch<DOM>
+        node: inout Node,
+        reconciler: inout _ReconcilerBatch
     ) {
         view.attributes.append(context.takeAttributes())
         context.attributes = view.attributes
@@ -521,7 +424,7 @@ extension _AttributedElement: View where Content: View {
         Content._patchNode(
             view.content,
             context: context,
-            node: node,
+            node: &node,
             reconciler: &reconciler
         )
     }
