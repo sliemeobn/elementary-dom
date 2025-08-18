@@ -33,7 +33,9 @@
 //     }
 // }
 
-public protocol MountedNode: ~Copyable {
+// FIXME:NONCOPYABLE
+// public protocol MountedNode: ~Copyable {
+public protocol MountedNode {
     mutating func runLayoutPass(_ ops: inout LayoutPass)
     mutating func startRemoval(reconciler: inout _ReconcilerBatch)
 }

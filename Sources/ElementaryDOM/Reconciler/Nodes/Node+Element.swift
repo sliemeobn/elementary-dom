@@ -1,23 +1,19 @@
-protocol Layoutable: AnyObject {
-    var identifier: String { get }
-    func performChildrenPass(_ reconciler: inout _ReconcilerBatch)
+private extension AnyLayoutContainer {
+    init(_ element: Element<some MountedNode>) {
+        self.identifier = element.identifier
+        self.setDirty = element.setDirty
+        self.performLayout = element.performChildrenPass
+    }
 }
 
-// TODO: rename
-protocol ParentElement: AnyObject {
-    var identifier: String { get }
-    func registerNewChild(_ reconciler: inout _ReconcilerBatch)
-    func registerRemovedChild(reconciler: inout _ReconcilerBatch)
-}
-
-public final class Element<ChildNode: MountedNode>: Layoutable, ParentElement, MountedNode {
-
+public final class Element<ChildNode: MountedNode>: MountedNode {
     var domNode: ManagedDOMReference
     var value: _DomElement
     private var child: ChildNode!
 
     var eventSink: DOM.EventSink?
     var childrenLayoutStatus: ChildrenLayoutStatus = .init()
+    private(set) var asLayoutContainer: AnyLayoutContainer!
 
     struct ChildrenLayoutStatus {
         var isDirty: Bool = false
@@ -32,6 +28,7 @@ public final class Element<ChildNode: MountedNode>: Layoutable, ParentElement, M
         let domReference = context.dom.createElement(value.tagName)
         self.domNode = .init(reference: domReference, status: .added)
         self.value = value
+        self.asLayoutContainer = AnyLayoutContainer(self)
 
         context.dom.patchElementAttributes(
             domReference,
@@ -39,18 +36,22 @@ public final class Element<ChildNode: MountedNode>: Layoutable, ParentElement, M
             replacing: .none
         )
 
-        context.dom.patchEventListeners(
-            domReference,
-            with: value.listerners,
-            replacing: .none,
-            sink: getOrMakeEventSync(context.dom)
-        )
+        if !value.listerners.listeners.isEmpty {
+            self.eventSink = context.dom.makeEventSink(handleEvent(_:event:))
+
+            context.dom.patchEventListeners(
+                domReference,
+                with: value.listerners,
+                replacing: .none,
+                sink: eventSink!
+            )
+        }
 
         logTrace("created element \(identifier) in \(context.parentElement.identifier)")
 
         let parent = context.parentElement
-        parent.registerNewChild(&context)
-        context.parentElement = self
+        parent.setDirty(true, &context)
+        context.parentElement = AnyLayoutContainer(self)
         self.child = makeChild(&context)
         context.parentElement = parent
     }
@@ -80,33 +81,24 @@ public final class Element<ChildNode: MountedNode>: Layoutable, ParentElement, M
             replacing: value.attributes
         )
 
-        context.dom.patchEventListeners(
-            domNode.reference,
-            with: newValue.listerners,
-            replacing: value.listerners,
-            sink: getOrMakeEventSync(context.dom)
-        )
+        if let eventSink {
+            context.dom.patchEventListeners(
+                domNode.reference,
+                with: newValue.listerners,
+                replacing: value.listerners,
+                sink: eventSink
+            )
+        } else {
+            assert(newValue.listerners.listeners.isEmpty, "unexpected added listener on element in patch")
+        }
 
         self.value = newValue
 
         // TODO: use "withParent"
         let oldParent = context.parentElement
-        context.parentElement = self
+        context.parentElement = AnyLayoutContainer(self)
         patchChild(&child, &context)
         context.parentElement = oldParent
-    }
-
-    func getOrMakeEventSync(_ dom: some DOM.Interactor) -> DOM.EventSink {
-        if let sink = eventSink {
-            return sink
-        } else {
-            logTrace("making event sink for element \(value.tagName)")
-            let sink = dom.makeEventSink { [self] type, event in
-                self.handleEvent(type, event: event)
-            }
-            eventSink = sink
-            return sink
-        }
     }
 
     func handleEvent(_ name: String, event: DOM.Event) {
@@ -114,21 +106,12 @@ public final class Element<ChildNode: MountedNode>: Layoutable, ParentElement, M
         value.listerners.handleEvent(name, event)
     }
 
-    // TODO: make this cleaner somehow - also, we can reuse the child-list and use a span for collecting
-    func registerNewChild(_ reconciler: inout _ReconcilerBatch) {
-        childrenLayoutStatus.count += 1
+    func setDirty(isAddition: Bool, reconciler: inout _ReconcilerBatch) {
+        // TODO: count needed storage for children
 
         if !childrenLayoutStatus.isDirty {
             childrenLayoutStatus.isDirty = true
-            reconciler.registerNodeForChildrenUpdate(self)
-        }
-    }
-
-    func registerRemovedChild(reconciler: inout _ReconcilerBatch) {
-        childrenLayoutStatus.count -= 1
-        if !childrenLayoutStatus.isDirty {
-            childrenLayoutStatus.isDirty = true
-            reconciler.registerNodeForChildrenUpdate(self)
+            reconciler.registerNodeForChildrenUpdate(AnyLayoutContainer(self))
         }
     }
 
@@ -138,7 +121,7 @@ public final class Element<ChildNode: MountedNode>: Layoutable, ParentElement, M
 
     public func startRemoval(reconciler: inout _ReconcilerBatch) {
         domNode.status = .removed
-        reconciler.parentElement.registerRemovedChild(reconciler: &reconciler)
+        reconciler.parentElement.setDirty(false, &reconciler)
     }
 
     func performChildrenPass(_ reconciler: inout _ReconcilerBatch) {

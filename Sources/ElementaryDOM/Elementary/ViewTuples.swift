@@ -176,17 +176,26 @@ extension _HTMLTuple: _Mountable where repeat each Child: _Mountable {
         node: inout Node,
         reconciler: inout _ReconcilerBatch
     ) {
+        // I don't think there is a way to spell this currently without warnings
         for var (view, node) in repeat (each view.value, each node.value) {
+            __noop_goshDarnValuePacksAreAnnoyingAF(&view)  // this is to suppress a warning
             patchNode(view, context: copy context, node: &node, reconciler: &reconciler)
         }
 
+        // NOTE: this doesn't work because I don't think we can pass a value pack as inout
         // repeat patchNode(
         //     each view.value,
         //     context: copy context,
         //     node: each &node.value,
         //     reconciler: &reconciler
         // )
+
     }
+}
+
+@inline(__always)
+private func __noop_goshDarnValuePacksAreAnnoyingAF(_ v: inout some _Mountable) {
+    // FIXME (once possible)
 }
 
 private func makeNode<V: _Mountable>(

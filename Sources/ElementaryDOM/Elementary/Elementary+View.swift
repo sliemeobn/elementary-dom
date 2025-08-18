@@ -3,13 +3,12 @@ import Elementary
 // TODO: maybe this should not derive from HTML at all
 // TODO: think about how the square MainActor-isolation with server side usage
 // TODO: maybe the _renderView should "reconcile" itself directly into a generic reconciler type instread of returning a _RenderedView (possible saving some allocations/currency types)
-public protocol View: HTML & _Mountable where Content: HTML & _Mountable<ViewNode> {
-    associatedtype ViewNode: MountedNode = Function<Content.Node>
+public protocol View: HTML & _Mountable where Content: HTML & _Mountable {
 
     static func __applyContext(_ context: borrowing _ViewRenderingContext, to view: inout Self)
 }
 
-public protocol _Mountable<Node> {
+public protocol _Mountable {
     associatedtype Node: MountedNode
 
     static func _makeNode(

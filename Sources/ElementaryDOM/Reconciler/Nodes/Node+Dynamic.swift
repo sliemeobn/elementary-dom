@@ -46,9 +46,15 @@ public final class Dynamic<ChildNode: MountedNode>: MountedNode {
         }
     }
 
-    init(_ value: some Sequence<(key: _ViewKey, node: ChildNode)>, context: inout _ReconcilerBatch) {
-        self.keys = []
-        self.children = []
+    init(keys: [_ViewKey], children: [ChildNode?]) {
+        assert(keys.count == children.count)
+        self.keys = keys
+        self.children = children
+    }
+
+    convenience init(_ value: some Sequence<(key: _ViewKey, node: ChildNode)>, context: inout _ReconcilerBatch) {
+        var keys = [_ViewKey]()
+        var children = [ChildNode?]()
 
         keys.reserveCapacity(value.underestimatedCount)
         children.reserveCapacity(value.underestimatedCount)
@@ -57,6 +63,8 @@ public final class Dynamic<ChildNode: MountedNode>: MountedNode {
             keys.append(entry.key)
             children.append(entry.node)
         }
+
+        self.init(keys: keys, children: children)
     }
 
     convenience init(key: _ViewKey, child: ChildNode, context: inout _ReconcilerBatch) {

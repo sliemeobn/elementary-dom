@@ -1,10 +1,11 @@
+// FIXME:NONCOPYABLE make ~Copyable once associatedtype is supported
 public final class Lifecycle<ChildNode: MountedNode>: MountedNode {
     var value: _LifecycleHook
     var child: ChildNode
 
-    init(value: _LifecycleHook, child: ChildNode) {
+    init(value: _LifecycleHook, child: consuming ChildNode) {
         self.value = value
-        self.child = child
+        self.child = consume child
     }
 
     public func runLayoutPass(_ ops: inout LayoutPass) {

@@ -17,7 +17,7 @@ public final class Function<ChildNode: MountedNode>: FunctionNode, MountedNode {
 
     var value: Value
     var state: _ManagedState?
-    let parentElement: any ParentElement
+    let parentElement: AnyLayoutContainer
     public var depthInTree: Int
 
     public var identifier: String {

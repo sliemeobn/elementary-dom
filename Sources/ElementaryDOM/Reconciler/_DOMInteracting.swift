@@ -75,7 +75,7 @@ extension DOM.Interactor {
         _ node: DOM.Node,
         with listers: _DomEventListenerStorage,
         replacing: _DomEventListenerStorage,
-        sink: @autoclosure () -> DOM.EventSink
+        sink: DOM.EventSink
     ) {
         guard !(listers.listeners.isEmpty && replacing.listeners.isEmpty) else { return }
 
@@ -87,13 +87,13 @@ extension DOM.Interactor {
                 previous.remove(at: previousIndex)
             } else {
                 logTrace("adding listener \(event)")
-                addEventListener(node, event: event, sink: sink())
+                addEventListener(node, event: event, sink: sink)
             }
         }
 
         for event in previous {
             logTrace("removing listener \(event)")
-            removeEventListener(node, event: event, sink: sink())
+            removeEventListener(node, event: event, sink: sink)
         }
     }
 }

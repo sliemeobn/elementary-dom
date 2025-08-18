@@ -78,7 +78,6 @@ struct ReconcilerPatchingTests {
         )
     }
 
-    // TODO: add tests for conditionals
     // TODO: add tests for lists (growing, shrinking, no-change)
     // TODO: add tests for keyed lists (reordering, adding, removing in the middle)
 

@@ -9,19 +9,25 @@ struct RemovalCoordinator: ~Copyable {
     }
 }
 
+struct AnyLayoutContainer {
+    let identifier: String
+    let setDirty: (Bool, inout _ReconcilerBatch) -> Void
+    let performLayout: (inout _ReconcilerBatch) -> Void
+}
+
 public struct _ReconcilerBatch: ~Copyable {
     let dom: any DOM.Interactor
     let reportObservedChange: (any FunctionNode) -> Void
 
-    private(set) var nodesWithChangedChildren: [any Layoutable]
+    private(set) var nodesWithChangedChildren: [AnyLayoutContainer]
     // TODO: make this a "with" function
-    var parentElement: any ParentElement
+    var parentElement: AnyLayoutContainer
     var pendingFunctions: PendingFunctionQueue
     var depth: Int
 
     init(
         dom: any DOM.Interactor,
-        parentElement: any ParentElement,
+        parentElement: AnyLayoutContainer,
         pendingFunctions: consuming PendingFunctionQueue,
         reportObservedChange: @escaping (any FunctionNode) -> Void
     ) {
@@ -34,7 +40,7 @@ public struct _ReconcilerBatch: ~Copyable {
         depth = 0
     }
 
-    mutating func registerNodeForChildrenUpdate(_ node: any Layoutable) {
+    mutating func registerNodeForChildrenUpdate(_ node: AnyLayoutContainer) {
         logTrace("registerNodeForChildrenUpdate \(node.identifier)")
         nodesWithChangedChildren.append(node)
     }
@@ -51,7 +57,7 @@ public struct _ReconcilerBatch: ~Copyable {
         // perform child-layout passes
         for node in nodesWithChangedChildren.reversed() {
             logTrace("performing children pass for \(node.identifier)")
-            node.performChildrenPass(&self)
+            node.performLayout(&self)
         }
 
         logTrace("performUpdateRun finished")
@@ -124,7 +130,8 @@ public struct LayoutPass {
     }
 }
 
-struct ManagedDOMReference: ~Copyable {
+// FIXME:NONCOPYABLE make ~Copyable once associatedtype is supported
+struct ManagedDOMReference {  //: ~Copyable
     let reference: DOM.Node
     var status: LayoutPass.Entry.Status
 }

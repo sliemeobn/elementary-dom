@@ -3,31 +3,40 @@ final class App<DOMInteractor: DOM.Interactor> {
     typealias Reconciler = _ReconcilerBatch
 
     private var dom: DOMInteractor
-    private var root: (any ParentElement)!
+    private var root: AnyLayoutContainer!
 
     private var nextUpdateRun: Reconciler.PendingFunctionQueue = .init()
 
-    init<RootView: View>(dom: DOMInteractor, root rootView: consuming RootView) {
+    init(dom: DOMInteractor) {
         self.dom = dom
+        self.root = nil
+    }
 
-        self.root = Element(
-            root: dom.root,
-            makeReconciler: { node in
-                Reconciler(
-                    dom: dom,
-                    parentElement: node,
-                    pendingFunctions: .init(),
-                    reportObservedChange: self.scheduleFunction
-                )
-            },
-            makeChild: { [rootView] reconciler in
-                RootView._makeNode(
-                    rootView,
-                    context: _ViewRenderingContext(),
-                    reconciler: &reconciler
-                )
-            }
-        )
+    // generic initializers must be convenience on final classes for embedded
+    // https://github.com/swiftlang/swift/issues/78150
+    convenience init<RootView: View>(dom: DOMInteractor, root rootView: consuming RootView) {
+        self.init(dom: dom)
+
+        self.root =
+            Element(
+                root: dom.root,
+                makeReconciler: { node in
+                    Reconciler(
+                        dom: dom,
+                        parentElement: node.asLayoutContainer,
+                        pendingFunctions: .init(),
+                        reportObservedChange: self.scheduleFunction
+                    )
+                },
+                makeChild: { [rootView] reconciler in
+                    RootView._makeNode(
+                        rootView,
+                        context: _ViewRenderingContext(),
+                        reconciler: &reconciler
+                    )
+                }
+            )
+            .asLayoutContainer
     }
 
     func scheduleFunction(_ function: any FunctionNode) {
