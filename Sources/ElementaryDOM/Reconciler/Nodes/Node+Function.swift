@@ -21,7 +21,7 @@ public final class Function<ChildNode: MountedNode>: FunctionNode, MountedNode {
     public var depthInTree: Int
 
     public var identifier: String {
-        "\(depthInTree):\(ObjectIdentifier(self).debugDescription)"
+        "\(depthInTree):\(ObjectIdentifier(self).hashValue)"
     }
 
     var child: ChildNode?

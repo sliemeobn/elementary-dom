@@ -8,7 +8,7 @@ public extension View {
     }
 }
 
-public struct _EnvironmentView<V, Wrapped: View>: _Mountable {
+public struct _EnvironmentView<V, Wrapped: View>: View {
     public typealias Node = Wrapped.Node
 
     public typealias Tag = Wrapped.Tag

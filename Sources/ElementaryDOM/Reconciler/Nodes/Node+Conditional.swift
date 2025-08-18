@@ -1,5 +1,5 @@
 //TODO: implement this better
-public class ConditionalNode<NodeA: MountedNode, NodeB: MountedNode>: MountedNode where NodeA: ~Copyable, NodeB: ~Copyable {
+public final class ConditionalNode<NodeA: MountedNode, NodeB: MountedNode>: MountedNode where NodeA: ~Copyable, NodeB: ~Copyable {
     var a: NodeA?
     var b: NodeB?
     var state: State

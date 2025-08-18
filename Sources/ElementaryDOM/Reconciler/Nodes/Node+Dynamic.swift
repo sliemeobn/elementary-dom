@@ -80,42 +80,43 @@ public final class Dynamic<ChildNode: MountedNode>: MountedNode {
         context: inout _ReconcilerBatch,
         makeOrPatchNode: (Int, inout ChildNode?, inout _ReconcilerBatch) -> Void
     ) {
-        // // // make key diff on entries
-        // // let diff = newKeys.difference(from: keys).inferringMoves()
+        // make key diff on entries
+        let diff = newKeys.difference(from: keys).inferringMoves()
 
-        // // for change in diff {
-        // //     switch change {
-        // //     case let .remove(offset, element: key, associatedWith: nil):  // exclude associatedWith case as these are moves
-        // //         let node = children.remove(at: offset)
-        // //         guard let node = node else { fatalError("child at index \(offset) is nil") }
-        // //         keys.remove(at: offset)
-        // //         leavingChildren.append(key, atIndex: offset, value: node)
-        // //     // TODO: remove
-        // //     // node.startRemoval(&context) { [self] in
-        // //     //     self.completeRemoval(key)
-        // //     // }
-        // //     case let .insert(offset, element: key, associatedWith: movedFrom):
-        // //         if let movedFrom {
-        // //             let source = RangeSet(Range(movedFrom...movedFrom))
+        for change in diff {
+            switch change {
+            case let .remove(offset, element: key, associatedWith: nil):  // exclude associatedWith case as these are moves
+                let node = children.remove(at: offset)
+                guard var node = node else { fatalError("child at index \(offset) is nil") }
+                keys.remove(at: offset)
+                node.startRemoval(reconciler: &context)
 
-        // //             children.moveSubranges(source, to: offset)
-        // //             keys.moveSubranges(source, to: offset)
+                leavingChildren.append(key, atIndex: offset, value: node)
+            case let .insert(offset, element: key, associatedWith: movedFrom):
+                if let movedFrom {
+                    children.moveForward(from: movedFrom, to: offset)
+                    keys.moveForward(from: movedFrom, to: offset)
 
-        // //             // NOTE: maybe adjust indices of leaving children?
-        // //         } else {
-        // //             children.insert(nil, at: offset)
-        // //             keys.insert(key, at: offset)
-        // //             leavingChildren.reflectInsertionAt(offset)
-        // //         }
-        // //     default:
-        // //         fatalError("unexpected diff")
-        // //     }
-        // }
+                    // NOTE: not available in embedded
+                    // let source = RangeSet(Range(movedFrom...movedFrom))
+                    // children.moveSubranges(source, to: offset)
+                    // keys.moveSubranges(source, to: offset)
 
-        // // run update / patch functions on all nodes
-        // for index in children.indices {
-        //     makeOrPatchNode(index, &children[index], &context)
-        // }
+                    // NOTE: maybe adjust indices of leaving children?
+                } else {
+                    children.insert(nil, at: offset)
+                    keys.insert(key, at: offset)
+                    leavingChildren.reflectInsertionAt(offset)
+                }
+            default:
+                fatalError("unexpected diff")
+            }
+        }
+
+        // run update / patch functions on all nodes
+        for index in children.indices {
+            makeOrPatchNode(index, &children[index], &context)
+        }
     }
 
     func completeRemoval(_ key: _ViewKey) {
@@ -152,5 +153,13 @@ public final class Dynamic<ChildNode: MountedNode>: MountedNode {
             leavingNode.value.runLayoutPass(&ops)
             nextLeavingNode = leavingNodes.next()
         }
+    }
+}
+
+private extension Array {
+    mutating func moveForward(from source: Index, to destination: Index) {
+        assert(source > destination)
+        let element = self.remove(at: source)
+        insert(element, at: destination)
     }
 }

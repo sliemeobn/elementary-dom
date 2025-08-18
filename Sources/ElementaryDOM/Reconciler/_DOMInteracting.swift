@@ -14,7 +14,8 @@ public enum DOM {
         let ref: AnyObject
     }
 
-    public protocol Interactor {
+    // TODO: remove anyobject and make reconcier runs generic over this
+    public protocol Interactor: AnyObject {
         var root: Node { get }
 
         func makeEventSink(_ handler: @escaping (String, Event) -> Void) -> EventSink

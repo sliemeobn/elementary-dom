@@ -1,5 +1,6 @@
 import Elementary
 
+extension _HTMLTuple2: View where V0: View, V1: View {}
 extension _HTMLTuple2: _Mountable where V0: _Mountable, V1: _Mountable {
     public typealias Node = TupleNode2<V0.Node, V1.Node>
 
@@ -25,6 +26,7 @@ extension _HTMLTuple2: _Mountable where V0: _Mountable, V1: _Mountable {
     }
 }
 
+extension _HTMLTuple3: View where V0: View, V1: View, V2: View {}
 extension _HTMLTuple3: _Mountable where V0: _Mountable, V1: _Mountable, V2: _Mountable {
     public typealias Node = TupleNode3<V0.Node, V1.Node, V2.Node>
 
@@ -52,6 +54,7 @@ extension _HTMLTuple3: _Mountable where V0: _Mountable, V1: _Mountable, V2: _Mou
     }
 }
 
+extension _HTMLTuple4: View where V0: View, V1: View, V2: View, V3: View {}
 extension _HTMLTuple4: _Mountable where V0: _Mountable, V1: _Mountable, V2: _Mountable, V3: _Mountable {
     public typealias Node = TupleNode4<V0.Node, V1.Node, V2.Node, V3.Node>
 
@@ -81,6 +84,7 @@ extension _HTMLTuple4: _Mountable where V0: _Mountable, V1: _Mountable, V2: _Mou
     }
 }
 
+extension _HTMLTuple5: View where V0: View, V1: View, V2: View, V3: View, V4: View {}
 extension _HTMLTuple5: _Mountable where V0: _Mountable, V1: _Mountable, V2: _Mountable, V3: _Mountable, V4: _Mountable {
     public typealias Node = TupleNode5<V0.Node, V1.Node, V2.Node, V3.Node, V4.Node>
 
@@ -112,6 +116,7 @@ extension _HTMLTuple5: _Mountable where V0: _Mountable, V1: _Mountable, V2: _Mou
     }
 }
 
+extension _HTMLTuple6: View where V0: View, V1: View, V2: View, V3: View, V4: View, V5: View {}
 extension _HTMLTuple6: _Mountable where V0: _Mountable, V1: _Mountable, V2: _Mountable, V3: _Mountable, V4: _Mountable, V5: _Mountable {
     public typealias Node = TupleNode6<V0.Node, V1.Node, V2.Node, V3.Node, V4.Node, V5.Node>
 
@@ -145,8 +150,10 @@ extension _HTMLTuple6: _Mountable where V0: _Mountable, V1: _Mountable, V2: _Mou
     }
 }
 
+#if !hasFeature(Embedded)
 // Generic variadic tuple support using parameter packs
-extension _HTMLTuple: _Mountable where repeat each Child: View {
+extension _HTMLTuple: View where repeat each Child: View {}
+extension _HTMLTuple: _Mountable where repeat each Child: _Mountable {
     public typealias Node = TupleNode<repeat (each Child).Node>
 
     public static func _makeNode(
@@ -182,12 +189,15 @@ extension _HTMLTuple: _Mountable where repeat each Child: View {
     }
 }
 
-private func makeNode<V: View>(_ view: consuming V, context: consuming _ViewRenderingContext, reconciler: inout _ReconcilerBatch) -> V.Node
-{
+private func makeNode<V: _Mountable>(
+    _ view: consuming V,
+    context: consuming _ViewRenderingContext,
+    reconciler: inout _ReconcilerBatch
+) -> V.Node {
     V._makeNode(view, context: context, reconciler: &reconciler)
 }
 
-private func patchNode<V: View>(
+private func patchNode<V: _Mountable>(
     _ view: consuming V,
     context: consuming _ViewRenderingContext,
     node: inout V.Node,
@@ -195,6 +205,7 @@ private func patchNode<V: View>(
 ) {
     V._patchNode(view, context: context, node: &node, reconciler: &reconciler)
 }
+#endif
 
 // func patch<each V: _Mountable>(
 //     _ views: (repeat each V),

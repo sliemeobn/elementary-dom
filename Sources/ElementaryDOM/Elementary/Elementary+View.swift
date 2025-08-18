@@ -209,6 +209,7 @@ extension EmptyHTML: _Mountable, View {
     ) {}
 }
 
+extension Optional: View where Wrapped: View {}
 extension Optional: _Mountable where Wrapped: _Mountable {
     public typealias Node = ConditionalNode<Wrapped.Node, EmptyNode>
 
@@ -251,6 +252,7 @@ extension Optional: _Mountable where Wrapped: _Mountable {
     }
 }
 
+extension _HTMLConditional: View where TrueContent: View, FalseContent: View {}
 extension _HTMLConditional: _Mountable where TrueContent: _Mountable, FalseContent: _Mountable {
     public typealias Node = ConditionalNode<TrueContent.Node, FalseContent.Node>
 
@@ -337,7 +339,7 @@ extension _HTMLArray: _Mountable, View where Element: View {
     }
 }
 
-extension ForEach: _Mountable where Content: _KeyReadableView, Data: Collection {
+extension ForEach: _Mountable, View where Content: _KeyReadableView, Data: Collection {
     public typealias Node = Dynamic<Content.Value.Node>
 
     public init<V: View>(
@@ -398,7 +400,7 @@ extension ForEach: _Mountable where Content: _KeyReadableView, Data: Collection 
     }
 }
 
-extension _AttributedElement: _Mountable where Content: _Mountable {
+extension _AttributedElement: _Mountable, View where Content: _Mountable {
     public typealias Node = Content.Node
 
     public static func _makeNode(
