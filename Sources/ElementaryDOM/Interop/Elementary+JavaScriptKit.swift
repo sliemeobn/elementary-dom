@@ -65,8 +65,7 @@ final class JSKitDOMInteractor: DOM.Interactor {
         _ = node.jsObject.removeEventListener!(event.jsValue, sink.jsClosure.jsValue)
     }
 
-    func patchText(_ node: DOM.Node, with text: String, replacing: String) {
-        guard !text.utf8Equals(replacing) else { return }
+    func patchText(_ node: DOM.Node, with text: String) {
         _ = node.jsObject.textContent = text.jsValue
     }
 

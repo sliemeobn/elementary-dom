@@ -3,7 +3,7 @@ public final class Function<ChildNode: MountedNode>: MountedNode where ChildNode
 
     var value: Value
     var state: _ManagedState?
-    let parentElement: AnyLayoutContainer
+    let parentElement: AnyParentElememnt
     public var depthInTree: Int
 
     var asFunctionNode: AnyFunctionNode!
@@ -19,37 +19,43 @@ public final class Function<ChildNode: MountedNode>: MountedNode where ChildNode
         value: Value,
         reconciler: inout _ReconcilerBatch
     ) {
+        guard let parentElement = reconciler.parentElement else {
+            preconditionFailure("function without parent element")
+        }
+
         self.value = value
         self.state = state
-        self.parentElement = reconciler.parentElement
+        self.parentElement = parentElement
         self.depthInTree = reconciler.depth
         self.asFunctionNode = AnyFunctionNode(self)
 
         logTrace("added function \(identifier), state: \(state == nil ? "no" : "yes")")
 
         // we need to break here for scoped reactivity tracking
-        reconciler.pendingFunctions.registerFunctionForUpdate(asFunctionNode)
+        reconciler.addFunction(asFunctionNode)
     }
 
     func patch(_ value: Value, context: inout _ReconcilerBatch) {
         // TOOD: if value has coparing function we can avoid re-running the function
         self.value = value
-        context.pendingFunctions.registerFunctionForUpdate(asFunctionNode)
+        context.addFunction(asFunctionNode)
     }
 
     public func runUpdate(reconciler: inout _ReconcilerBatch) {
         reconciler.depth = depthInTree + 1
-        let reportObservedChange = reconciler.reportObservedChange
+        let reportObservedChange = reconciler.scheduler.scheduleFunction
 
         // TODO: expose cancellation mechanism of reactivity and keep track of it
         // canceling on onmount/recalc maybe important for retain cycles
 
         logTrace("running patchNode for function \(identifier)")
 
-        withReactiveTracking {
-            value.makeOrPatch(state, &child, &reconciler)
-        } onChange: { [reportObservedChange, self] in
-            reportObservedChange(asFunctionNode)
+        reconciler.withCurrentLayoutContainer(parentElement) { context in
+            withReactiveTracking {
+                value.makeOrPatch(state, &child, &context)
+            } onChange: { [reportObservedChange, self] in
+                reportObservedChange(asFunctionNode)
+            }
         }
     }
 
@@ -59,7 +65,7 @@ public final class Function<ChildNode: MountedNode>: MountedNode where ChildNode
         var makeOrPatch: (_ManagedState?, inout ChildNode?, inout _ReconcilerBatch) -> Void
     }
 
-    public func runLayoutPass(_ ops: inout LayoutPass) {
+    public func runLayoutPass(_ ops: inout ContainerLayoutPass) {
         child?.runLayoutPass(&ops)
     }
 

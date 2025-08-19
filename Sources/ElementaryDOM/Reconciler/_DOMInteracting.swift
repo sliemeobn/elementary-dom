@@ -29,7 +29,7 @@ public enum DOM {
         // Low-level DOM-like event listener APIs
         func addEventListener(_ node: Node, event: String, sink: EventSink)
         func removeEventListener(_ node: Node, event: String, sink: EventSink)
-        func patchText(_ node: Node, with text: String, replacing: String)
+        func patchText(_ node: Node, with text: String)
         func replaceChildren(_ children: [Node], in parent: Node)
         // New explicit child list operations
         func insertChild(_ child: Node, before sibling: Node?, in parent: Node)

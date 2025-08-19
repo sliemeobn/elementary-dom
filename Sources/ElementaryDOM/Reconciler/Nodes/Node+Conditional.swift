@@ -1,5 +1,5 @@
 // FIXME:NONCOPYABLE this should be ~Copyable once associatedtype is supported (//where NodeA: ~Copyable, NodeB: ~Copyable)
-public struct ConditionalNode<NodeA: MountedNode, NodeB: MountedNode>: MountedNode {
+public struct ConditionalNode<NodeA: MountedNode, NodeB: MountedNode> {
     var a: NodeA?
     var b: NodeB?
     var state: State
@@ -65,8 +65,10 @@ public struct ConditionalNode<NodeA: MountedNode, NodeB: MountedNode>: MountedNo
             perform(&b, &reconciler)
         }
     }
+}
 
-    public mutating func runLayoutPass(_ ops: inout LayoutPass) {
+extension ConditionalNode: MountedNode {
+    public mutating func runLayoutPass(_ ops: inout ContainerLayoutPass) {
         a?.runLayoutPass(&ops)
         b?.runLayoutPass(&ops)
     }

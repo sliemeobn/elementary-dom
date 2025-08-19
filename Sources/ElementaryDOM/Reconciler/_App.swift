@@ -1,14 +1,10 @@
 // TODO: main-actor stuff very unclear at the moment, ideally not needed at all
 final class App<DOMInteractor: DOM.Interactor> {
-    typealias Reconciler = _ReconcilerBatch
-
-    private var dom: DOMInteractor
-    private var root: AnyLayoutContainer!
-
-    private var nextUpdateRun: Reconciler.PendingFunctionQueue = .init()
+    private var root: AnyParentElememnt!
+    private var scheduler: Scheduler
 
     init(dom: DOMInteractor) {
-        self.dom = dom
+        self.scheduler = Scheduler(dom: dom)
         self.root = nil
     }
 
@@ -17,49 +13,61 @@ final class App<DOMInteractor: DOM.Interactor> {
     convenience init<RootView: View>(dom: DOMInteractor, root rootView: consuming RootView) {
         self.init(dom: dom)
 
+        // TODO: defer running to a "async run" function that hosts the run loop?
+        // wait until async stuff is solid for embedded wasm case
+        var reconciler = _ReconcilerBatch(scheduler: scheduler)
+
         self.root =
             Element(
                 root: dom.root,
-                makeReconciler: { node in
-                    Reconciler(
-                        dom: dom,
-                        parentElement: node.asLayoutContainer,
-                        pendingFunctions: .init(),
-                        reportObservedChange: self.scheduleFunction
-                    )
-                },
-                makeChild: { [rootView] reconciler in
+                context: &reconciler,
+                makeChild: { [rootView] context in
                     RootView._makeNode(
                         rootView,
                         context: _ViewRenderingContext(),
-                        reconciler: &reconciler
+                        reconciler: &context
                     )
                 }
             )
-            .asLayoutContainer
+            .asParentRef
+
+        scheduler.commit(reconciler.drain())
+    }
+}
+
+final class Scheduler {
+    private var dom: any DOM.Interactor
+    private var pendingFunctionsQueue: PendingFunctionQueue = .init()
+
+    init(dom: any DOM.Interactor) {
+        self.dom = dom
     }
 
     func scheduleFunction(_ function: AnyFunctionNode) {
-        if nextUpdateRun.isEmpty {
+        if pendingFunctionsQueue.isEmpty {
             //TODO: use next microtask instead of requestAnimationFrame
             dom.requestAnimationFrame { [self] _ in
-                var updateRun = Reconciler(
-                    dom: dom,
-                    parentElement: root,
-                    pendingFunctions: self.takeNextUpdateRun(),
-                    reportObservedChange: scheduleFunction
-                )
-
-                updateRun.run()
+                self.reconcile()
             }
         }
 
-        nextUpdateRun.registerFunctionForUpdate(function)
+        pendingFunctionsQueue.registerFunctionForUpdate(function)
     }
 
-    private func takeNextUpdateRun() -> Reconciler.PendingFunctionQueue {
-        var nextUpdateRun = Reconciler.PendingFunctionQueue()
-        swap(&nextUpdateRun, &self.nextUpdateRun)
-        return nextUpdateRun
+    func reconcile() {
+        var functions = PendingFunctionQueue()
+        swap(&pendingFunctionsQueue, &functions)
+
+        let plan = _ReconcilerBatch(
+            scheduler: self,
+            pendingFunctions: consume functions,
+        ).drain()
+
+        commit(consume plan)
+    }
+
+    // TODO: think about scheduling, rafs, multiple reconciler runs on the same commit plan, ...
+    func commit(_ plan: consuming CommitPlan) {
+        plan.flush(dom: &dom)
     }
 }

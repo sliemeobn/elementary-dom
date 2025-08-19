@@ -1,105 +1,126 @@
-private extension AnyLayoutContainer {
+private extension AnyParentElememnt {
     init(_ element: Element<some MountedNode & ~Copyable>) {
         self.identifier = element.identifier
-        self.setDirty = element.setDirty
-        self.performLayout = element.performChildrenPass
+        self.reportChangedChildren = element.reportChangedChildren
     }
 }
 
 public final class Element<ChildNode: MountedNode>: MountedNode where ChildNode: ~Copyable {
-    var domNode: ManagedDOMReference
+    var domNode: ManagedDOMReference?
     var value: _DomElement
-    private var child: ChildNode!
+    var child: ChildNode!
 
     var eventSink: DOM.EventSink?
     var childrenLayoutStatus: ChildrenLayoutStatus = .init()
-    private(set) var asLayoutContainer: AnyLayoutContainer!
+
+    let scheduler: Scheduler  // TODO: maybe find a way to not hold on to this
 
     struct ChildrenLayoutStatus {
         var isDirty: Bool = false
         var count: Int = 0
     }
 
-    var identifier: String {
-        "\(value.tagName):\(ObjectIdentifier(self))"
-    }
+    private(set) var asParentRef: AnyParentElememnt!
+
+    var identifier: String!
 
     init(value: _DomElement, context: inout _ReconcilerBatch, makeChild: (inout _ReconcilerBatch) -> ChildNode) {
-        let domReference = context.dom.createElement(value.tagName)
-        self.domNode = .init(reference: domReference, status: .added)
+        precondition(context.parentElement != nil, "parent element must be set")
+
         self.value = value
-        self.asLayoutContainer = AnyLayoutContainer(self)
+        self.scheduler = context.scheduler
+        self.identifier = "\(value.tagName):\(ObjectIdentifier(self))"
+        self.asParentRef = AnyParentElememnt(self)
 
-        context.dom.patchElementAttributes(
-            domReference,
-            with: value.attributes,
-            replacing: .none
-        )
+        logTrace("created element \(identifier!) in \(context.parentElement!.identifier)")
 
-        if !value.listerners.listeners.isEmpty {
-            self.eventSink = context.dom.makeEventSink(handleEvent(_:event:))
+        context.commitPlan.addNodeAction(CommitAction(run: createDOMNode(_:)))
+        context.parentElement?.reportChangedChildren(.added, &context)
 
-            context.dom.patchEventListeners(
-                domReference,
-                with: value.listerners,
-                replacing: .none,
-                sink: eventSink!
-            )
+        context.withCurrentLayoutContainer(asParentRef) {
+            self.child = makeChild(&$0)
         }
-
-        logTrace("created element \(identifier) in \(context.parentElement.identifier)")
-
-        let parent = context.parentElement
-        parent.setDirty(true, &context)
-        context.parentElement = AnyLayoutContainer(self)
-        self.child = makeChild(&context)
-        context.parentElement = parent
     }
 
     init(
         root: DOM.Node,
-        makeReconciler: (Element) -> _ReconcilerBatch,
+        context: inout _ReconcilerBatch,
         makeChild: (inout _ReconcilerBatch) -> ChildNode
     ) {
         self.domNode = .init(reference: root, status: .unchanged)
         self.value = .init(tagName: "<root>", attributes: .none, listerners: .none)
         self.eventSink = nil
-        self.asLayoutContainer = AnyLayoutContainer(self)
+        self.scheduler = context.scheduler
+        self.identifier = "\("_root_"):\(ObjectIdentifier(self))"
+        self.asParentRef = AnyParentElememnt(self)
 
-        logTrace("created root element")
-
-        var reconciler = makeReconciler(self)
-        self.child = makeChild(&reconciler)
-        reconciler.run()
+        context.withCurrentLayoutContainer(asParentRef!) { context in
+            self.child = makeChild(&context)
+        }
     }
 
     func patch(_ newValue: _DomElement, context: inout _ReconcilerBatch, patchChild: (inout ChildNode, inout _ReconcilerBatch) -> Void) {
         logTrace("patching element \(value.tagName)")
 
-        context.dom.patchElementAttributes(
-            domNode.reference,
-            with: newValue.attributes,
-            replacing: value.attributes
-        )
-
-        if let eventSink {
-            context.dom.patchEventListeners(
-                domNode.reference,
-                with: newValue.listerners,
-                replacing: value.listerners,
-                sink: eventSink
-            )
-        } else {
-            assert(newValue.listerners.listeners.isEmpty, "unexpected added listener on element in patch")
+        guard let ref = domNode?.reference else {
+            preconditionFailure("unitialized element in patch - maybe this can be fine?")
         }
+
+        let oldValue = value
+
+        // TODO: diff here and store diff in object, only enqueue if diff is non-empty, use direct function on object in action
+        context.commitPlan.addNodeAction(
+            CommitAction { [ref, oldValue, eventSink] dom in
+
+                dom.patchElementAttributes(
+                    ref,
+                    with: newValue.attributes,
+                    replacing: oldValue.attributes
+                )
+
+                if let eventSink {
+                    dom.patchEventListeners(
+                        ref,
+                        with: newValue.listerners,
+                        replacing: oldValue.listerners,
+                        sink: eventSink
+                    )
+                } else {
+                    assert(newValue.listerners.listeners.isEmpty, "unexpected added listener on element in patch")
+                }
+            }
+        )
 
         self.value = newValue
 
-        // TODO: use "withParent"
-        let oldParent = context.parentElement
-        context.parentElement = AnyLayoutContainer(self)
-        patchChild(&child, &context)
-        context.parentElement = oldParent
+        context.withCurrentLayoutContainer(asParentRef!) { context in
+            patchChild(&child, &context)
+        }
+    }
+
+    func createDOMNode(_ dom: inout any DOM.Interactor) {
+        precondition(domNode == nil, "element already has a DOM node")
+        let ref = dom.createElement(value.tagName)
+        self.domNode = ManagedDOMReference(reference: ref, status: .added)
+
+        dom.patchElementAttributes(ref, with: value.attributes, replacing: value.attributes)
+
+        dom.patchElementAttributes(
+            ref,
+            with: value.attributes,
+            replacing: .none
+        )
+
+        if !value.listerners.listeners.isEmpty {
+            self.eventSink = dom.makeEventSink(handleEvent(_:event:))
+
+            dom.patchEventListeners(
+                ref,
+                with: value.listerners,
+                replacing: .none,
+                sink: eventSink!
+            )
+        }
     }
 
     func handleEvent(_ name: String, event: DOM.Event) {
@@ -107,41 +128,49 @@ public final class Element<ChildNode: MountedNode>: MountedNode where ChildNode:
         value.listerners.handleEvent(name, event)
     }
 
-    func setDirty(isAddition: Bool, reconciler: inout _ReconcilerBatch) {
+    func reportChangedChildren(_ change: AnyParentElememnt.Change, context: inout _ReconcilerBatch) {
         // TODO: count needed storage for children
 
         if !childrenLayoutStatus.isDirty {
             childrenLayoutStatus.isDirty = true
-            reconciler.registerNodeForChildrenUpdate(AnyLayoutContainer(self))
+
+            context.commitPlan.addPlacementAction(CommitAction(run: performLayout(_:)))
         }
     }
 
-    public func runLayoutPass(_ ops: inout LayoutPass) {
-        self.domNode.collectLayoutChanges(&ops)
+    public func runLayoutPass(_ ops: inout ContainerLayoutPass) {
+        assert(domNode != nil, "unitialized element in layout pass")
+        self.domNode?.collectLayoutChanges(&ops)
     }
 
     public func startRemoval(reconciler: inout _ReconcilerBatch) {
-        domNode.status = .removed
-        reconciler.parentElement.setDirty(false, &reconciler)
+        assert(domNode != nil, "unitialized element in startRemoval")
+        // TODO: transitions
+        domNode?.status = .removed
+        reconciler.parentElement!.reportChangedChildren(.removed, &reconciler)
     }
 
-    func performChildrenPass(_ reconciler: inout _ReconcilerBatch) {
+    func performLayout(_ dom: inout any DOM.Interactor) {
+        guard let ref = domNode?.reference else {
+            preconditionFailure("unitialized element in commitChanges - maybe this can be fine?")
+        }
+
         guard childrenLayoutStatus.isDirty else {
             assertionFailure("layout triggered on non-dirty node")
             return
         }
         childrenLayoutStatus.isDirty = false
-        var ops = LayoutPass()  // TODO: initialize with count, could be allocationlessly
+        var ops = ContainerLayoutPass()  // TODO: initialize with count, could be allocationlessly somehow
 
         child.runLayoutPass(&ops)
 
         if ops.canBatchReplace {
             if ops.isAllRemovals {
-                reconciler.dom.replaceChildren([], in: domNode.reference)
+                dom.replaceChildren([], in: ref)
             } else if ops.isAllAdditions {
-                reconciler.dom.replaceChildren(ops.entries.map { $0.reference }, in: domNode.reference)
+                dom.replaceChildren(ops.entries.map { $0.reference }, in: ref)
             } else {
-                fatalError("cannot batch replace children of \(domNode.reference) because it is not all removals or all additions")
+                fatalError("cannot batch replace children of \(ref) because it is not all removals or all additions")
             }
         } else {
             var sibling: DOM.Node?
@@ -149,10 +178,10 @@ public final class Element<ChildNode: MountedNode>: MountedNode where ChildNode:
             for entry in ops.entries.reversed() {
                 switch entry.kind {
                 case .added, .moved:
-                    reconciler.dom.insertChild(entry.reference, before: sibling, in: domNode.reference)
+                    dom.insertChild(entry.reference, before: sibling, in: ref)
                     sibling = entry.reference
                 case .removed:
-                    reconciler.dom.removeChild(entry.reference, from: domNode.reference)
+                    dom.removeChild(entry.reference, from: ref)
                 case .leaving:
                     sibling = entry.reference
                     // TODO: for FLIP handling
@@ -167,7 +196,7 @@ public final class Element<ChildNode: MountedNode>: MountedNode where ChildNode:
 }
 
 extension ManagedDOMReference {
-    mutating func collectLayoutChanges(_ ops: inout LayoutPass) {
+    mutating func collectLayoutChanges(_ ops: inout ContainerLayoutPass) {
         ops.append(.init(kind: status, reference: reference))
         self.status = .unchanged
     }

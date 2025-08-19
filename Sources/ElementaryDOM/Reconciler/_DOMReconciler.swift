@@ -1,18 +1,12 @@
-struct RemovalCoordinator: ~Copyable {
-
-    struct PendingOp: ~Copyable {
-        let coordinator: RemovalCoordinator
-
-        consuming func signal() {
-
-        }
+struct AnyParentElememnt {
+    enum Change {
+        case added
+        case moved
+        case removed
     }
-}
 
-struct AnyLayoutContainer {
-    let identifier: String
-    let setDirty: (Bool, inout _ReconcilerBatch) -> Void
-    let performLayout: (inout _ReconcilerBatch) -> Void
+    let identifier: String  // TODO: make this an object identifier
+    let reportChangedChildren: (Change, inout _ReconcilerBatch) -> Void
 }
 
 struct AnyFunctionNode {
@@ -21,89 +15,120 @@ struct AnyFunctionNode {
     let runUpdate: (inout _ReconcilerBatch) -> Void
 }
 
-public struct _ReconcilerBatch: ~Copyable {
-    let dom: any DOM.Interactor
-    let reportObservedChange: (AnyFunctionNode) -> Void
+struct CommitAction {
+    let run: (inout any DOM.Interactor) -> Void
+}
 
-    private(set) var nodesWithChangedChildren: [AnyLayoutContainer]
-    // TODO: make this a "with" function
-    var parentElement: AnyLayoutContainer
-    var pendingFunctions: PendingFunctionQueue
-    var depth: Int
+public struct _ReconcilerBatch: ~Copyable {
+    let scheduler: Scheduler
+
+    private(set) var pendingFunctions: PendingFunctionQueue
+    private(set) var parentElement: AnyParentElememnt?
+    var commitPlan = CommitPlan()
+
+    var depth: Int  //use with style?
 
     init(
-        dom: any DOM.Interactor,
-        parentElement: AnyLayoutContainer,
-        pendingFunctions: consuming PendingFunctionQueue,
-        reportObservedChange: @escaping (AnyFunctionNode) -> Void
+        scheduler: Scheduler,
+        pendingFunctions: consuming PendingFunctionQueue = .init()
     ) {
-        self.dom = dom
-        self.parentElement = parentElement
         self.pendingFunctions = pendingFunctions
-        self.reportObservedChange = reportObservedChange
+        self.scheduler = scheduler
 
-        nodesWithChangedChildren = []
         depth = 0
     }
 
-    mutating func registerNodeForChildrenUpdate(_ node: AnyLayoutContainer) {
-        logTrace("registerNodeForChildrenUpdate \(node.identifier)")
-        nodesWithChangedChildren.append(node)
+    mutating func addFunction(_ function: AnyFunctionNode) {
+        pendingFunctions.registerFunctionForUpdate(function)
     }
 
-    mutating func run() {
-        logTrace("performUpdateRun started")
+    mutating func withCurrentLayoutContainer(_ container: AnyParentElememnt, block: (inout Self) -> Void) {
+        let previous = parentElement
+        parentElement = container
+        block(&self)
+        parentElement = previous
+    }
 
-        // re-run functions
-        while let next = pendingFunctions.popNextFunctionNode() {
+    consuming func drain() -> CommitPlan {
+        while let next = pendingFunctions.next() {
             next.runUpdate(&self)
         }
 
-        // TODO: collect this but move it out for extra pass handling
-        // perform child-layout passes
-        for node in nodesWithChangedChildren.reversed() {
-            logTrace("performing children pass for \(node.identifier)")
-            node.performLayout(&self)
-        }
-
-        logTrace("performUpdateRun finished")
+        return commitPlan
     }
 
-    struct PendingFunctionQueue: ~Copyable {
-        private var functionsToRun: [AnyFunctionNode] = []
+    // TODO: init with assert, but would need to make commitplan optional
+}
 
-        var isEmpty: Bool { functionsToRun.isEmpty }
+struct PendingFunctionQueue: ~Copyable {
+    private var functionsToRun: [AnyFunctionNode] = []
 
-        mutating func popNextFunctionNode() -> (AnyFunctionNode)? {
-            functionsToRun.popLast()
-        }
+    var isEmpty: Bool { functionsToRun.isEmpty }
 
-        mutating func registerFunctionForUpdate(_ node: AnyFunctionNode) {
-            logTrace("registering function run \(node.identifier)")
-            // sorted insert by depth in reverse order, avoiding duplicates
-            var inserted = false
+    mutating func registerFunctionForUpdate(_ node: AnyFunctionNode) {
+        logTrace("registering function run \(node.identifier)")
+        // sorted insert by depth in reverse order, avoiding duplicates
+        var inserted = false
 
-            for index in functionsToRun.indices {
-                let existingNode = functionsToRun[index]
-                if existingNode.identifier == node.identifier {
-                    inserted = true
-                    break
-                }
-                if node.depthInTree > existingNode.depthInTree {
-                    functionsToRun.insert(node, at: index)
-                    inserted = true
-                    break
-                }
+        for index in functionsToRun.indices {
+            let existingNode = functionsToRun[index]
+            if existingNode.identifier == node.identifier {
+                inserted = true
+                break
             }
-            if !inserted {
-                functionsToRun.append(node)
+            if node.depthInTree > existingNode.depthInTree {
+                functionsToRun.insert(node, at: index)
+                inserted = true
+                break
             }
         }
+        if !inserted {
+            functionsToRun.append(node)
+        }
+    }
+
+    mutating func next() -> AnyFunctionNode? {
+        functionsToRun.popLast()
+    }
+
+    deinit {
+        assert(functionsToRun.isEmpty, "pending functions dropped without being run")
+    }
+}
+
+struct CommitPlan: ~Copyable {
+    private var nodes: [CommitAction] = []
+    private var placements: [CommitAction] = []
+
+    var isEmpty: Bool { nodes.isEmpty && placements.isEmpty }
+
+    mutating func addNodeAction(_ action: CommitAction) {
+        nodes.append(action)
+    }
+
+    mutating func addPlacementAction(_ action: CommitAction) {
+        placements.append(action)
+    }
+
+    consuming func flush(dom: inout any DOM.Interactor) {
+        for node in nodes {
+            node.run(&dom)
+        }
+        nodes.removeAll()
+
+        for placement in placements.reversed() {
+            placement.run(&dom)
+        }
+        placements.removeAll()
+    }
+
+    deinit {
+        assert(isEmpty, "dirty DOM element dropped without being committed")
     }
 }
 
 // TODO: move to a better place, maybe use a span with lifecycle stuff
-public struct LayoutPass {
+public struct ContainerLayoutPass: ~Copyable {
     var entries: [Entry]
     private(set) var isAllRemovals: Bool = true
     private(set) var isAllAdditions: Bool = true
@@ -136,8 +161,37 @@ public struct LayoutPass {
     }
 }
 
-// FIXME:NONCOPYABLE make ~Copyable once associatedtype is supported
-struct ManagedDOMReference {  //: ~Copyable
+struct RemovalPass: ~Copyable {
+    fileprivate final class Liftime {
+        let callback: () -> Void
+
+        init(callback: @escaping () -> Void) {
+            self.callback = callback
+        }
+
+        deinit {
+            callback()
+        }
+    }
+
+    private let lifetime: Liftime
+
+    init(_ callback: @escaping () -> Void) {
+        // NOTE: maybe defer allocation somehow
+        lifetime = Liftime(callback: callback)
+    }
+
+    struct Deferral: ~Copyable {
+        fileprivate let lifetime: Liftime
+        consuming func release() {}
+    }
+
+    func deferRemoval() -> Deferral {
+        Deferral(lifetime: lifetime)
+    }
+}
+
+struct ManagedDOMReference: ~Copyable {
     let reference: DOM.Node
-    var status: LayoutPass.Entry.Status
+    var status: ContainerLayoutPass.Entry.Status
 }

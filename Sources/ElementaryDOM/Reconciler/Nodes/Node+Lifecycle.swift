@@ -8,7 +8,7 @@ public final class Lifecycle<ChildNode: MountedNode>: MountedNode where ChildNod
         self.child = consume child
     }
 
-    public func runLayoutPass(_ ops: inout LayoutPass) {
+    public func runLayoutPass(_ ops: inout ContainerLayoutPass) {
         child.runLayoutPass(&ops)
     }
 

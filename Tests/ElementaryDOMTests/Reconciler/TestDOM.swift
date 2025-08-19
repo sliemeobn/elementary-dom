@@ -166,7 +166,7 @@ final class TestDOM: DOM.Interactor {
         ops.append(.removeListener(node: label(node), event: event))
     }
 
-    func patchText(_ node: DOM.Node, with text: String, replacing: String) {
+    func patchText(_ node: DOM.Node, with text: String) {
         ops.append(.patchText(node: label(node), to: text))
         node.value.kind = .text(text)
     }

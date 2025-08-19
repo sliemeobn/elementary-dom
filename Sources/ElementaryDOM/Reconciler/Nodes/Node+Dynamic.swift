@@ -1,6 +1,6 @@
 // FIXME:NONCOPYABLE this could be a ~Copyable struct once associatedtype is supported
 // will be fun to implement with a non-copyable array type of sorts
-public final class Dynamic<ChildNode: MountedNode>: MountedNode {
+public final class Dynamic<ChildNode: MountedNode> {
     var keys: [_ViewKey]
     private var children: [ChildNode?]
     private var leavingChildren: LeavingChildrenTracker = .init()
@@ -133,14 +133,16 @@ public final class Dynamic<ChildNode: MountedNode>: MountedNode {
         // TOOD: something -> register DOM node update?
         leavingChildren.remove(key)
     }
+}
 
+extension Dynamic: MountedNode {
     public func startRemoval(reconciler: inout _ReconcilerBatch) {
         for index in children.indices {
             children[index]?.startRemoval(reconciler: &reconciler)
         }
     }
 
-    public func runLayoutPass(_ ops: inout LayoutPass) {
+    public func runLayoutPass(_ ops: inout ContainerLayoutPass) {
         // the trick here is to efficiently interleave the leaving nodes with the active nodes to match the DOM order
 
         var leavingNodes = leavingChildren.entries.makeIterator()
