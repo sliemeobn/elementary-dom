@@ -12,15 +12,9 @@ public struct TupleNode<each N: MountedNode>: MountedNode {
         }
     }
 
-    public mutating func startRemoval(_ reconciler: inout _ReconcilerBatch) {
+    public mutating func apply(_ op: _ReconcileOp, _ reconciler: inout _ReconcilerBatch) {
         for var value in repeat each value {
-            value.startRemoval(&reconciler)
-        }
-    }
-
-    public mutating func cancelRemoval(_ reconciler: inout _ReconcilerBatch) {
-        for var value in repeat each value {
-            value.cancelRemoval(&reconciler)
+            value.apply(op, &reconciler)
         }
     }
 }
@@ -37,14 +31,9 @@ public struct TupleNode2<N0: MountedNode, N1: MountedNode>: MountedNode {
         value.1.collectChildren(&ops)
     }
 
-    public mutating func startRemoval(_ reconciler: inout _ReconcilerBatch) {
-        value.0.startRemoval(&reconciler)
-        value.1.startRemoval(&reconciler)
-    }
-
-    public mutating func cancelRemoval(_ reconciler: inout _ReconcilerBatch) {
-        value.0.cancelRemoval(&reconciler)
-        value.1.cancelRemoval(&reconciler)
+    public mutating func apply(_ op: _ReconcileOp, _ reconciler: inout _ReconcilerBatch) {
+        value.0.apply(op, &reconciler)
+        value.1.apply(op, &reconciler)
     }
 }
 
@@ -61,16 +50,10 @@ public struct TupleNode3<N0: MountedNode, N1: MountedNode, N2: MountedNode>: Mou
         value.2.collectChildren(&ops)
     }
 
-    public mutating func startRemoval(_ reconciler: inout _ReconcilerBatch) {
-        value.0.startRemoval(&reconciler)
-        value.1.startRemoval(&reconciler)
-        value.2.startRemoval(&reconciler)
-    }
-
-    public mutating func cancelRemoval(_ reconciler: inout _ReconcilerBatch) {
-        value.0.cancelRemoval(&reconciler)
-        value.1.cancelRemoval(&reconciler)
-        value.2.cancelRemoval(&reconciler)
+    public mutating func apply(_ op: _ReconcileOp, _ reconciler: inout _ReconcilerBatch) {
+        value.0.apply(op, &reconciler)
+        value.1.apply(op, &reconciler)
+        value.2.apply(op, &reconciler)
     }
 }
 
@@ -88,18 +71,11 @@ public struct TupleNode4<N0: MountedNode, N1: MountedNode, N2: MountedNode, N3: 
         value.3.collectChildren(&ops)
     }
 
-    public mutating func startRemoval(_ reconciler: inout _ReconcilerBatch) {
-        value.0.startRemoval(&reconciler)
-        value.1.startRemoval(&reconciler)
-        value.2.startRemoval(&reconciler)
-        value.3.startRemoval(&reconciler)
-    }
-
-    public mutating func cancelRemoval(_ reconciler: inout _ReconcilerBatch) {
-        value.0.cancelRemoval(&reconciler)
-        value.1.cancelRemoval(&reconciler)
-        value.2.cancelRemoval(&reconciler)
-        value.3.cancelRemoval(&reconciler)
+    public mutating func apply(_ op: _ReconcileOp, _ reconciler: inout _ReconcilerBatch) {
+        value.0.apply(op, &reconciler)
+        value.1.apply(op, &reconciler)
+        value.2.apply(op, &reconciler)
+        value.3.apply(op, &reconciler)
     }
 }
 
@@ -118,20 +94,12 @@ public struct TupleNode5<N0: MountedNode, N1: MountedNode, N2: MountedNode, N3: 
         value.4.collectChildren(&ops)
     }
 
-    public mutating func startRemoval(_ reconciler: inout _ReconcilerBatch) {
-        value.0.startRemoval(&reconciler)
-        value.1.startRemoval(&reconciler)
-        value.2.startRemoval(&reconciler)
-        value.3.startRemoval(&reconciler)
-        value.4.startRemoval(&reconciler)
-    }
-
-    public mutating func cancelRemoval(_ reconciler: inout _ReconcilerBatch) {
-        value.0.cancelRemoval(&reconciler)
-        value.1.cancelRemoval(&reconciler)
-        value.2.cancelRemoval(&reconciler)
-        value.3.cancelRemoval(&reconciler)
-        value.4.cancelRemoval(&reconciler)
+    public mutating func apply(_ op: _ReconcileOp, _ reconciler: inout _ReconcilerBatch) {
+        value.0.apply(op, &reconciler)
+        value.1.apply(op, &reconciler)
+        value.2.apply(op, &reconciler)
+        value.3.apply(op, &reconciler)
+        value.4.apply(op, &reconciler)
     }
 }
 
@@ -152,21 +120,12 @@ public struct TupleNode6<N0: MountedNode, N1: MountedNode, N2: MountedNode, N3: 
         value.5.collectChildren(&ops)
     }
 
-    public mutating func startRemoval(_ reconciler: inout _ReconcilerBatch) {
-        value.0.startRemoval(&reconciler)
-        value.1.startRemoval(&reconciler)
-        value.2.startRemoval(&reconciler)
-        value.3.startRemoval(&reconciler)
-        value.4.startRemoval(&reconciler)
-        value.5.startRemoval(&reconciler)
-    }
-
-    public mutating func cancelRemoval(_ reconciler: inout _ReconcilerBatch) {
-        value.0.cancelRemoval(&reconciler)
-        value.1.cancelRemoval(&reconciler)
-        value.2.cancelRemoval(&reconciler)
-        value.3.cancelRemoval(&reconciler)
-        value.4.cancelRemoval(&reconciler)
-        value.5.cancelRemoval(&reconciler)
+    public mutating func apply(_ op: _ReconcileOp, _ reconciler: inout _ReconcilerBatch) {
+        value.0.apply(op, &reconciler)
+        value.1.apply(op, &reconciler)
+        value.2.apply(op, &reconciler)
+        value.3.apply(op, &reconciler)
+        value.4.apply(op, &reconciler)
+        value.5.apply(op, &reconciler)
     }
 }

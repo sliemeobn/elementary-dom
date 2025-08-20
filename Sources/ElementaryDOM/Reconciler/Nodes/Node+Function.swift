@@ -43,7 +43,7 @@ public final class Function<ChildNode: MountedNode>: MountedNode where ChildNode
 
     public func runUpdate(reconciler: inout _ReconcilerBatch) {
         reconciler.depth = depthInTree + 1
-        let reportObservedChange = reconciler.scheduler.scheduleFunction
+        let scheduler = reconciler.scheduler
 
         // TODO: expose cancellation mechanism of reactivity and keep track of it
         // canceling on onmount/recalc maybe important for retain cycles
@@ -53,8 +53,8 @@ public final class Function<ChildNode: MountedNode>: MountedNode where ChildNode
         reconciler.withCurrentLayoutContainer(parentElement) { context in
             withReactiveTracking {
                 value.makeOrPatch(state, &child, &context)
-            } onChange: { [reportObservedChange, self] in
-                reportObservedChange(asFunctionNode)
+            } onChange: { [scheduler, self] in
+                scheduler.scheduleFunction(self.asFunctionNode)
             }
         }
     }
@@ -69,12 +69,8 @@ public final class Function<ChildNode: MountedNode>: MountedNode where ChildNode
         child?.collectChildren(&ops)
     }
 
-    public func startRemoval(_ reconciler: inout _ReconcilerBatch) {
-        child?.startRemoval(&reconciler)
-    }
-
-    public func cancelRemoval(_ reconciler: inout _ReconcilerBatch) {
-        child?.cancelRemoval(&reconciler)
+    public func apply(_ op: _ReconcileOp, _ reconciler: inout _ReconcilerBatch) {
+        child?.apply(op, &reconciler)
     }
 }
 

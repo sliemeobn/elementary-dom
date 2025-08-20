@@ -1,6 +1,6 @@
 // FIXME:NONCOPYABLE make ~Copyable once associatedtype is supported
-public final class Lifecycle<ChildNode: MountedNode>: MountedNode where ChildNode: ~Copyable {
-    var value: _LifecycleHook
+public struct Lifecycle<ChildNode: MountedNode>: MountedNode {
+    private var value: _LifecycleHook
     var child: ChildNode
 
     init(value: _LifecycleHook, child: consuming ChildNode) {
@@ -8,15 +8,11 @@ public final class Lifecycle<ChildNode: MountedNode>: MountedNode where ChildNod
         self.child = consume child
     }
 
-    public func collectChildren(_ ops: inout ContainerLayoutPass) {
+    public mutating func collectChildren(_ ops: inout ContainerLayoutPass) {
         child.collectChildren(&ops)
     }
 
-    public func startRemoval(_ reconciler: inout _ReconcilerBatch) {
-        child.startRemoval(&reconciler)
-    }
-
-    public func cancelRemoval(_ reconciler: inout _ReconcilerBatch) {
-        child.cancelRemoval(&reconciler)
+    public mutating func apply(_ op: _ReconcileOp, _ reconciler: inout _ReconcilerBatch) {
+        child.apply(op, &reconciler)
     }
 }

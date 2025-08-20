@@ -16,10 +16,9 @@ public enum _ViewKey: Equatable, Hashable, CustomStringConvertible {
     public func hash(into hasher: inout Hasher) {
         switch self {
         case let .structure(index):
-            hasher.combine(index)
+            index.hash(into: &hasher)
         case let .explicit(key):
-            // TODO: is this safe?
-            key.withContiguousStorageIfAvailable { hasher.combine(bytes: UnsafeRawBufferPointer($0)) }
+            key.hash(into: &hasher)
         }
     }
 

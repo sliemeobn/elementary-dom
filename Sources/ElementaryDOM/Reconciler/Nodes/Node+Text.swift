@@ -36,12 +36,17 @@ public final class TextNode: MountedNode {
         domNode?.collectLayoutChanges(&ops)
     }
 
-    public func startRemoval(_ reconciler: inout _ReconcilerBatch) {
-        domNode?.status = .removed
-        reconciler.parentElement?.reportChangedChildren(.removed, &reconciler)
-    }
-
-    public func cancelRemoval(_ reconciler: inout _ReconcilerBatch) {
-        fatalError("not implemented")
+    public func apply(_ op: _ReconcileOp, _ reconciler: inout _ReconcilerBatch) {
+        switch op {
+        case .startRemoval:
+            domNode?.status = .removed
+            reconciler.parentElement?.reportChangedChildren(.removed, &reconciler)
+        case .cancelRemoval:
+            fatalError("not implemented")
+        case .markAsMoved:
+            // TODO: checks and handling
+            domNode?.status = .moved
+            reconciler.parentElement?.reportChangedChildren(.moved, &reconciler)
+        }
     }
 }

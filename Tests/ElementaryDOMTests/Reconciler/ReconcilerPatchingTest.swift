@@ -139,8 +139,106 @@ struct ReconcilerPatchingTests {
         )
     }
 
-    // TODO: add tests for lists (growing, shrinking, no-change)
-    // TODO: add tests for keyed lists (reordering, adding, removing in the middle)
+    @Test
+    func patchesArrayAdditions() {
+        let state = CounterState()
+        let ops = patchOps {
+            for i in 0..<state.number {
+                "Item \(i)"
+            }
+        } toggle: {
+            state.number += 1
+            state.number += 1
+        }
+
+        #expect(
+            ops == [
+                .createText("Item 0"),
+                .createText("Item 1"),
+                .setChildren(parent: "<>", children: ["Item 0", "Item 1"]),
+            ]
+        )
+    }
+
+    @Test
+    func patchesArrayRemovals() {
+        let state = CounterState()
+        state.number = 2
+        let ops = patchOps {
+            for i in 0..<state.number {
+                "Item \(i)"
+            }
+        } toggle: {
+            state.number -= 1
+        }
+
+        #expect(
+            ops == [
+                .removeChild(parent: "<>", child: "Item 1")
+            ]
+        )
+    }
+
+    @Test
+    func patchesKeyedForEachAdditionsAndRemovals() {
+        let state = StringListState(["A", "B", "C"])
+        let ops = patchOps {
+            ForEach(state.items, key: \.self) { item in
+                item
+            }
+        } toggle: {
+            state.items.insert("D", at: 2)
+            state.items.remove(at: 0)
+        }
+
+        #expect(
+            ops == [
+                .createText("D"),
+                .addChild(parent: "<>", child: "D", before: "C"),
+                .removeChild(parent: "<>", child: "A"),
+            ]
+        )
+    }
+
+    @Test
+    func patchesKeyedMoves() {
+        let state = StringListState(["A", "B", "C"])
+        let ops = patchOps {
+            ForEach(state.items, key: \.self) { item in
+                item
+            }
+        } toggle: {
+            state.items.swapAt(0, 2)
+        }
+
+        #expect(
+            ops == [
+                .addChild(parent: "<>", child: "A"),
+                .addChild(parent: "<>", child: "B", before: "A"),
+            ]
+        )
+    }
+
+    @Test
+    func patchesListReorderingWithRemovalsAndAdditions() {
+        let state = StringListState(["A", "B", "C"])
+        let ops = patchOps {
+            ForEach(state.items, key: \.self) { item in
+                item
+            }
+        } toggle: {
+            state.items = ["C", "B", "D"]
+        }
+
+        #expect(
+            ops == [
+                .createText("D"),
+                .addChild(parent: "<>", child: "D"),
+                .addChild(parent: "<>", child: "B", before: "D"),
+                .removeChild(parent: "<>", child: "A"),
+            ]
+        )
+    }
 
     @Test
     func countsUp() {
@@ -183,4 +281,13 @@ private class ToggleState {
 @Reactive
 private class CounterState {
     var number = 0
+}
+
+@Reactive
+private class StringListState {
+    var items: [String]
+
+    init(_ items: [String] = []) {
+        self.items = items
+    }
 }

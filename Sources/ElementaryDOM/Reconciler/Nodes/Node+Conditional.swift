@@ -52,7 +52,7 @@ public struct ConditionalNode<NodeA: MountedNode, NodeB: MountedNode> {
             perform(&a, &reconciler)
             state = .a
         case .b:
-            b!.startRemoval(&reconciler)
+            b!.apply(.startRemoval, &reconciler)
             perform(&a, &reconciler)
             state = .aWithBLeaving
         case .aWithBLeaving:
@@ -60,8 +60,8 @@ public struct ConditionalNode<NodeA: MountedNode, NodeB: MountedNode> {
             state = .aWithBLeaving
         case .bWithALeaving:
             perform(&a, &reconciler)
-            a!.cancelRemoval(&reconciler)
-            b!.startRemoval(&reconciler)
+            a!.apply(.cancelRemoval, &reconciler)
+            b!.apply(.startRemoval, &reconciler)
             state = .aWithBLeaving
         }
     }
@@ -73,7 +73,7 @@ public struct ConditionalNode<NodeA: MountedNode, NodeB: MountedNode> {
             perform(&b, &reconciler)
             state = .b
         case .a:
-            a!.startRemoval(&reconciler)
+            a!.apply(.startRemoval, &reconciler)
             perform(&b, &reconciler)
             state = .bWithALeaving
         case .bWithALeaving:
@@ -81,8 +81,8 @@ public struct ConditionalNode<NodeA: MountedNode, NodeB: MountedNode> {
             state = .bWithALeaving
         case .aWithBLeaving:
             perform(&b, &reconciler)
-            b!.cancelRemoval(&reconciler)
-            a!.startRemoval(&reconciler)
+            b!.apply(.cancelRemoval, &reconciler)
+            a!.apply(.startRemoval, &reconciler)
             state = .bWithALeaving
         }
     }
@@ -123,14 +123,9 @@ extension ConditionalNode: MountedNode {
         }
     }
 
-    public mutating func startRemoval(_ reconciler: inout _ReconcilerBatch) {
-        a?.startRemoval(&reconciler)
-        b?.startRemoval(&reconciler)
-    }
-
-    public mutating func cancelRemoval(_ reconciler: inout _ReconcilerBatch) {
-        a?.cancelRemoval(&reconciler)
-        b?.cancelRemoval(&reconciler)
+    public mutating func apply(_ op: _ReconcileOp, _ reconciler: inout _ReconcilerBatch) {
+        a?.apply(op, &reconciler)
+        b?.apply(op, &reconciler)
     }
 }
 

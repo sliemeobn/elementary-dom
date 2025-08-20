@@ -14,7 +14,7 @@ struct ReconcilerMountingTests {
                 .addChild(parent: "<>", child: "<div>"),
             ]
         )
-    }   
+    }
 
     @Test
     func setsAttributes() {
@@ -155,6 +155,36 @@ struct ReconcilerMountingTests {
                 .createText("12"),
                 .addChild(parent: "<p>", child: "12"),
                 .addChild(parent: "<>", child: "<p>"),
+            ]
+        )
+    }
+
+    @Test
+    func mountsArray() {
+        #expect(
+            mountOps {
+                for i in 0..<2 {
+                    "Item \(i)"
+                }
+            } == [
+                .createText("Item 0"),
+                .createText("Item 1"),
+                .setChildren(parent: "<>", children: ["Item 0", "Item 1"]),
+            ]
+        )
+    }
+
+    @Test
+    func mountsKeyedForEach() {
+        #expect(
+            mountOps {
+                ForEach(0..<2, key: \.self) { i in
+                    "Item \(i)"
+                }
+            } == [
+                .createText("Item 0"),
+                .createText("Item 1"),
+                .setChildren(parent: "<>", children: ["Item 0", "Item 1"]),
             ]
         )
     }

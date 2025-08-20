@@ -24,9 +24,9 @@ public struct _ReconcilerBatch: ~Copyable {
 
     private(set) var pendingFunctions: PendingFunctionQueue
     private(set) var parentElement: AnyParentElememnt?
-    var commitPlan = CommitPlan()
+    var depth: Int = 0
 
-    var depth: Int  //use with style?
+    var commitPlan = CommitPlan()
 
     init(
         scheduler: Scheduler,

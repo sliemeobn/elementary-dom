@@ -143,11 +143,20 @@ public final class Element<ChildNode: MountedNode>: MountedNode where ChildNode:
         self.domNode?.collectLayoutChanges(&ops)
     }
 
-    public func startRemoval(_ reconciler: inout _ReconcilerBatch) {
-        assert(domNode != nil, "unitialized element in startRemoval")
-        // TODO: transitions
-        domNode?.status = .removed
-        reconciler.parentElement!.reportChangedChildren(.removed, &reconciler)
+    public func apply(_ op: _ReconcileOp, _ reconciler: inout _ReconcilerBatch) {
+        switch op {
+        case .startRemoval:
+            assert(domNode != nil, "unitialized element in startRemoval")
+            // TODO: transitions
+            domNode?.status = .removed
+            reconciler.parentElement!.reportChangedChildren(.removed, &reconciler)
+        case .cancelRemoval:
+            fatalError("not implemented")
+        case .markAsMoved:
+            assert(domNode != nil, "unitialized element in markAsMoved")
+            domNode?.status = .moved
+            reconciler.parentElement!.reportChangedChildren(.moved, &reconciler)
+        }
     }
 
     func performLayout(_ dom: inout any DOM.Interactor) {
@@ -194,9 +203,6 @@ public final class Element<ChildNode: MountedNode>: MountedNode where ChildNode:
         }
     }
 
-    public func cancelRemoval(_ reconciler: inout _ReconcilerBatch) {
-        fatalError("not implemented")
-    }
 }
 
 extension ManagedDOMReference {
