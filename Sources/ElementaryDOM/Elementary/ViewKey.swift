@@ -18,7 +18,8 @@ public enum _ViewKey: Equatable, Hashable, CustomStringConvertible {
         case let .structure(index):
             index.hash(into: &hasher)
         case let .explicit(key):
-            key.hash(into: &hasher)
+            // TODO: is this safe?
+            key.withContiguousStorageIfAvailable { hasher.combine(bytes: UnsafeRawBufferPointer($0)) }
         }
     }
 
