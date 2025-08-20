@@ -31,13 +31,17 @@ public final class TextNode: MountedNode {
         dom.patchText(ref, with: value)
     }
 
-    public func runLayoutPass(_ ops: inout ContainerLayoutPass) {
+    public func collectChildren(_ ops: inout ContainerLayoutPass) {
         assert(domNode != nil, "unitialized text node in layout pass")
         domNode?.collectLayoutChanges(&ops)
     }
 
-    public func startRemoval(reconciler: inout _ReconcilerBatch) {
+    public func startRemoval(_ reconciler: inout _ReconcilerBatch) {
         domNode?.status = .removed
         reconciler.parentElement?.reportChangedChildren(.removed, &reconciler)
+    }
+
+    public func cancelRemoval(_ reconciler: inout _ReconcilerBatch) {
+        fatalError("not implemented")
     }
 }

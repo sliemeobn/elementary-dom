@@ -65,12 +65,16 @@ public final class Function<ChildNode: MountedNode>: MountedNode where ChildNode
         var makeOrPatch: (_ManagedState?, inout ChildNode?, inout _ReconcilerBatch) -> Void
     }
 
-    public func runLayoutPass(_ ops: inout ContainerLayoutPass) {
-        child?.runLayoutPass(&ops)
+    public func collectChildren(_ ops: inout ContainerLayoutPass) {
+        child?.collectChildren(&ops)
     }
 
-    public func startRemoval(reconciler: inout _ReconcilerBatch) {
-        child?.startRemoval(reconciler: &reconciler)
+    public func startRemoval(_ reconciler: inout _ReconcilerBatch) {
+        child?.startRemoval(&reconciler)
+    }
+
+    public func cancelRemoval(_ reconciler: inout _ReconcilerBatch) {
+        child?.cancelRemoval(&reconciler)
     }
 }
 

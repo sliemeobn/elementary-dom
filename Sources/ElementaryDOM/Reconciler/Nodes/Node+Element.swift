@@ -138,12 +138,12 @@ public final class Element<ChildNode: MountedNode>: MountedNode where ChildNode:
         }
     }
 
-    public func runLayoutPass(_ ops: inout ContainerLayoutPass) {
+    public func collectChildren(_ ops: inout ContainerLayoutPass) {
         assert(domNode != nil, "unitialized element in layout pass")
         self.domNode?.collectLayoutChanges(&ops)
     }
 
-    public func startRemoval(reconciler: inout _ReconcilerBatch) {
+    public func startRemoval(_ reconciler: inout _ReconcilerBatch) {
         assert(domNode != nil, "unitialized element in startRemoval")
         // TODO: transitions
         domNode?.status = .removed
@@ -162,7 +162,7 @@ public final class Element<ChildNode: MountedNode>: MountedNode where ChildNode:
         childrenLayoutStatus.isDirty = false
         var ops = ContainerLayoutPass()  // TODO: initialize with count, could be allocationlessly somehow
 
-        child.runLayoutPass(&ops)
+        child.collectChildren(&ops)
 
         if ops.canBatchReplace {
             if ops.isAllRemovals {
@@ -192,6 +192,10 @@ public final class Element<ChildNode: MountedNode>: MountedNode where ChildNode:
                 }
             }
         }
+    }
+
+    public func cancelRemoval(_ reconciler: inout _ReconcilerBatch) {
+        fatalError("not implemented")
     }
 }
 

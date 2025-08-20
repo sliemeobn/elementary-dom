@@ -111,7 +111,7 @@ struct ReconcilerPatchingTests {
     @Test func patchesSwitchMultipleTimes() async throws {
         let state = CounterState()
         let dom = TestDOM()
-        dom.mount(
+        dom.mount {
             div {
                 switch state.number {
                 case 0:
@@ -122,7 +122,7 @@ struct ReconcilerPatchingTests {
                     br()
                 }
             }
-        )
+        }
         state.number += 1
         dom.runNextFrame()
         dom.clearOps()
@@ -132,10 +132,9 @@ struct ReconcilerPatchingTests {
 
         #expect(
             dom.ops == [
-                .removeChild(parent: "<>", child: "<p>"),
-                .addChild(parent: "<>", child: "<a>"),
-                .removeChild(parent: "<>", child: "<a>"),
-                .addChild(parent: "<>", child: "<br>"),
+                .createElement("br"),
+                .addChild(parent: "<div>", child: "<br>"),
+                .removeChild(parent: "<div>", child: "<a>"),
             ]
         )
     }
@@ -145,11 +144,12 @@ struct ReconcilerPatchingTests {
 
     @Test
     func countsUp() {
-        let view = CounterView()
-        let state = view.state
+        let state = CounterState()
 
         let dom = TestDOM()
-        dom.mount(view)
+        dom.mount {
+            p { "\(state.number)" }
+        }
         dom.clearOps()
 
         state.number += 1
@@ -183,13 +183,4 @@ private class ToggleState {
 @Reactive
 private class CounterState {
     var number = 0
-}
-
-@View
-private struct CounterView {
-    @State var state = CounterState()
-
-    var content: some View {
-        p { "\(state.number)" }
-    }
 }

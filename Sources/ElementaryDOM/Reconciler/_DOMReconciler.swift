@@ -151,7 +151,7 @@ public struct ContainerLayoutPass: ~Copyable {
         enum Status {
             case unchanged
             case added
-            case leaving
+            case leaving  // TODO: something can be leaving and moved....
             case removed
             case moved
         }
@@ -161,35 +161,70 @@ public struct ContainerLayoutPass: ~Copyable {
     }
 }
 
-struct RemovalPass: ~Copyable {
-    fileprivate final class Liftime {
-        let callback: () -> Void
+// // TODO: make this work... we need a cancel
+// public struct _PendingRemoval {
+//     fileprivate final class Tracker {
+//         private var deferralCount: Int = 0
+//         private var onCompleted: (() -> Void)?
 
-        init(callback: @escaping () -> Void) {
-            self.callback = callback
-        }
+//         init(onCompleted: @escaping () -> Void) {
+//             self.onCompleted = onCompleted
+//         }
 
-        deinit {
-            callback()
-        }
-    }
+//         func up() {
+//             deferralCount += 1
+//         }
 
-    private let lifetime: Liftime
+//         func down() {
+//             assert(
+//                 onCompleted != nil,
+//                 "Removal tracker was signaled without onCompleted, most likely after cancellation - not sure if this should happen"
+//             )
+//             deferralCount -= 1
+//             if deferralCount == 0 {
+//                 onCompleted?()
+//                 onCompleted = nil
+//             }
+//         }
 
-    init(_ callback: @escaping () -> Void) {
-        // NOTE: maybe defer allocation somehow
-        lifetime = Liftime(callback: callback)
-    }
+//         fileprivate func cancel() {
+//             onCompleted = nil
+//         }
 
-    struct Deferral: ~Copyable {
-        fileprivate let lifetime: Liftime
-        consuming func release() {}
-    }
+//         deinit {
+//             onCompleted?()
+//         }
+//     }
 
-    func deferRemoval() -> Deferral {
-        Deferral(lifetime: lifetime)
-    }
-}
+//     private let tracker: Tracker
+
+//     init(onCompleted: @escaping () -> Void) {
+//         // maybe defer allocation somehow
+//         tracker = Tracker(onCompleted: onCompleted)
+//     }
+
+//     struct Deferral: ~Copyable {
+//         fileprivate let lifetime: Tracker
+
+//         fileprivate init(lifetime: Tracker) {
+//             self.lifetime = lifetime
+//             lifetime.up()
+//         }
+
+//         consuming func release() {
+//             lifetime.down()
+//         }
+//     }
+
+//     nonmutating func deferRemoval(onCancel: @escaping () -> Void) -> Deferral {
+//         Deferral(lifetime: tracker)
+//     }
+
+//     consuming func cancel() {
+//         // TODO: think about that....
+//         tracker.cancel()
+//     }
+// }
 
 struct ManagedDOMReference: ~Copyable {
     let reference: DOM.Node

@@ -1,5 +1,3 @@
-// FIXME:NONCOPYABLE this could be a ~Copyable struct once associatedtype is supported
-// will be fun to implement with a non-copyable array type of sorts
 public final class Dynamic<ChildNode: MountedNode> {
     var keys: [_ViewKey]
     private var children: [ChildNode?]
@@ -99,9 +97,9 @@ public final class Dynamic<ChildNode: MountedNode> {
                 let node = children.remove(at: offset)
                 guard var node = node else { fatalError("child at index \(offset) is nil") }
                 keys.remove(at: offset)
-                node.startRemoval(reconciler: &context)
 
                 leavingChildren.append(key, atIndex: offset, value: node)
+                node.startRemoval(&context)
             case let .insert(offset, element: key, associatedWith: movedFrom):
                 if let movedFrom {
                     children.moveForward(from: movedFrom, to: offset)
@@ -136,13 +134,13 @@ public final class Dynamic<ChildNode: MountedNode> {
 }
 
 extension Dynamic: MountedNode {
-    public func startRemoval(reconciler: inout _ReconcilerBatch) {
+    public func startRemoval(_ reconciler: inout _ReconcilerBatch) {
         for index in children.indices {
-            children[index]?.startRemoval(reconciler: &reconciler)
+            children[index]?.startRemoval(&reconciler)
         }
     }
 
-    public func runLayoutPass(_ ops: inout ContainerLayoutPass) {
+    public func collectChildren(_ ops: inout ContainerLayoutPass) {
         // the trick here is to efficiently interleave the leaving nodes with the active nodes to match the DOM order
 
         var leavingNodes = leavingChildren.entries.makeIterator()
@@ -154,16 +152,24 @@ extension Dynamic: MountedNode {
             }
 
             if nextLeavingNode?.atIndex == index {
-                nextLeavingNode!.value.runLayoutPass(&ops)  // cannot be nil if non-nil index is equal
+                nextLeavingNode!.value.collectChildren(&ops)  // cannot be nil if non-nil index is equal
                 nextLeavingNode = leavingNodes.next()
             }
 
-            child.runLayoutPass(&ops)
+            child.collectChildren(&ops)
         }
 
         while var leavingNode = nextLeavingNode {
-            leavingNode.value.runLayoutPass(&ops)
+            leavingNode.value.collectChildren(&ops)
             nextLeavingNode = leavingNodes.next()
+        }
+        // Clear leaving children after they have been collected so removal is applied exactly once
+        leavingChildren.entries.removeAll()
+    }
+
+    public func cancelRemoval(_ reconciler: inout _ReconcilerBatch) {
+        for index in children.indices {
+            children[index]?.cancelRemoval(&reconciler)
         }
     }
 }

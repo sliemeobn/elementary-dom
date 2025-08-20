@@ -243,15 +243,15 @@ extension TestDOM.NodeRef.Kind: Equatable {
     }
 }
 
-func mountOps(@HTMLBuilder _ view: () -> some View) -> [TestDOM.Op] {
+func mountOps(@HTMLBuilder _ view: @escaping () -> some View) -> [TestDOM.Op] {
     let dom = TestDOM()
-    dom.mount(view())
+    dom.mount(view)
     return dom.ops
 }
 
 func patchOps(@HTMLBuilder _ view: @escaping () -> some View, toggle: () -> Void) -> [TestDOM.Op] {
     let dom = TestDOM()
-    dom.mount(DeferredResolutionView { view() })
+    dom.mount(view)
     dom.clearOps()
     print("---- PATCHING ----")
     toggle()
@@ -260,8 +260,8 @@ func patchOps(@HTMLBuilder _ view: @escaping () -> some View, toggle: () -> Void
 }
 
 extension TestDOM {
-    func mount(_ view: some View) {
-        _ = App(dom: self, root: view)
+    func mount(_ view: @escaping () -> some View) {
+        _ = App(dom: self, root: DeferredResolutionView(root: view))
     }
 }
 
