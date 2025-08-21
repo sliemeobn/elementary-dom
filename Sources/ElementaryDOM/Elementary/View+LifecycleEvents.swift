@@ -18,24 +18,24 @@ public extension View {
 
 public struct _LifecycleEventView<Wrapped: View>: View {
     public typealias Tag = Wrapped.Tag
-    public typealias Node = Lifecycle<Wrapped.Node>
+    public typealias _MountedNode = _LifecycleNode<Wrapped._MountedNode>
 
     let wrapped: Wrapped
     let listener: _LifecycleHook
 
     public static func _makeNode(
         _ view: consuming Self,
-        context: consuming _ViewRenderingContext,
-        reconciler: inout _ReconcilerBatch
-    ) -> Node {
+        context: consuming _ViewContext,
+        reconciler: inout _RenderContext
+    ) -> _MountedNode {
         .init(value: view.listener, child: Wrapped._makeNode(view.wrapped, context: context, reconciler: &reconciler))
     }
 
     public static func _patchNode(
         _ view: consuming Self,
-        context: consuming _ViewRenderingContext,
-        node: inout Node,
-        reconciler: inout _ReconcilerBatch
+        context: consuming _ViewContext,
+        node: inout _MountedNode,
+        reconciler: inout _RenderContext
     ) {
         //TODO: should we patch something? maybe update values?
         Wrapped._patchNode(view.wrapped, context: context, node: &node.child, reconciler: &reconciler)

@@ -2,14 +2,14 @@ import Elementary
 
 extension _HTMLTuple2: View where V0: View, V1: View {}
 extension _HTMLTuple2: _Mountable where V0: _Mountable, V1: _Mountable {
-    public typealias Node = TupleNode2<V0.Node, V1.Node>
+    public typealias _MountedNode = _TupleNode2<V0._MountedNode, V1._MountedNode>
 
     public static func _makeNode(
         _ view: consuming Self,
-        context: consuming _ViewRenderingContext,
-        reconciler: inout _ReconcilerBatch
-    ) -> Node {
-        Node(
+        context: consuming _ViewContext,
+        reconciler: inout _RenderContext
+    ) -> _MountedNode {
+        _MountedNode(
             V0._makeNode(view.v0, context: copy context, reconciler: &reconciler),
             V1._makeNode(view.v1, context: copy context, reconciler: &reconciler)
         )
@@ -17,9 +17,9 @@ extension _HTMLTuple2: _Mountable where V0: _Mountable, V1: _Mountable {
 
     public static func _patchNode(
         _ view: consuming Self,
-        context: consuming _ViewRenderingContext,
-        node: inout Node,
-        reconciler: inout _ReconcilerBatch
+        context: consuming _ViewContext,
+        node: inout _MountedNode,
+        reconciler: inout _RenderContext
     ) {
         V0._patchNode(view.v0, context: copy context, node: &node.value.0, reconciler: &reconciler)
         V1._patchNode(view.v1, context: copy context, node: &node.value.1, reconciler: &reconciler)
@@ -28,14 +28,14 @@ extension _HTMLTuple2: _Mountable where V0: _Mountable, V1: _Mountable {
 
 extension _HTMLTuple3: View where V0: View, V1: View, V2: View {}
 extension _HTMLTuple3: _Mountable where V0: _Mountable, V1: _Mountable, V2: _Mountable {
-    public typealias Node = TupleNode3<V0.Node, V1.Node, V2.Node>
+    public typealias _MountedNode = _TupleNode3<V0._MountedNode, V1._MountedNode, V2._MountedNode>
 
     public static func _makeNode(
         _ view: consuming Self,
-        context: consuming _ViewRenderingContext,
-        reconciler: inout _ReconcilerBatch
-    ) -> Node {
-        Node(
+        context: consuming _ViewContext,
+        reconciler: inout _RenderContext
+    ) -> _MountedNode {
+        _MountedNode(
             V0._makeNode(view.v0, context: copy context, reconciler: &reconciler),
             V1._makeNode(view.v1, context: copy context, reconciler: &reconciler),
             V2._makeNode(view.v2, context: copy context, reconciler: &reconciler)
@@ -44,9 +44,9 @@ extension _HTMLTuple3: _Mountable where V0: _Mountable, V1: _Mountable, V2: _Mou
 
     public static func _patchNode(
         _ view: consuming Self,
-        context: consuming _ViewRenderingContext,
-        node: inout Node,
-        reconciler: inout _ReconcilerBatch
+        context: consuming _ViewContext,
+        node: inout _MountedNode,
+        reconciler: inout _RenderContext
     ) {
         V0._patchNode(view.v0, context: copy context, node: &node.value.0, reconciler: &reconciler)
         V1._patchNode(view.v1, context: copy context, node: &node.value.1, reconciler: &reconciler)
@@ -56,14 +56,14 @@ extension _HTMLTuple3: _Mountable where V0: _Mountable, V1: _Mountable, V2: _Mou
 
 extension _HTMLTuple4: View where V0: View, V1: View, V2: View, V3: View {}
 extension _HTMLTuple4: _Mountable where V0: _Mountable, V1: _Mountable, V2: _Mountable, V3: _Mountable {
-    public typealias Node = TupleNode4<V0.Node, V1.Node, V2.Node, V3.Node>
+    public typealias _MountedNode = _TupleNode4<V0._MountedNode, V1._MountedNode, V2._MountedNode, V3._MountedNode>
 
     public static func _makeNode(
         _ view: consuming Self,
-        context: consuming _ViewRenderingContext,
-        reconciler: inout _ReconcilerBatch
-    ) -> Node {
-        Node(
+        context: consuming _ViewContext,
+        reconciler: inout _RenderContext
+    ) -> _MountedNode {
+        _MountedNode(
             V0._makeNode(view.v0, context: copy context, reconciler: &reconciler),
             V1._makeNode(view.v1, context: copy context, reconciler: &reconciler),
             V2._makeNode(view.v2, context: copy context, reconciler: &reconciler),
@@ -73,9 +73,9 @@ extension _HTMLTuple4: _Mountable where V0: _Mountable, V1: _Mountable, V2: _Mou
 
     public static func _patchNode(
         _ view: consuming Self,
-        context: consuming _ViewRenderingContext,
-        node: inout Node,
-        reconciler: inout _ReconcilerBatch
+        context: consuming _ViewContext,
+        node: inout _MountedNode,
+        reconciler: inout _RenderContext
     ) {
         V0._patchNode(view.v0, context: copy context, node: &node.value.0, reconciler: &reconciler)
         V1._patchNode(view.v1, context: copy context, node: &node.value.1, reconciler: &reconciler)
@@ -86,14 +86,14 @@ extension _HTMLTuple4: _Mountable where V0: _Mountable, V1: _Mountable, V2: _Mou
 
 extension _HTMLTuple5: View where V0: View, V1: View, V2: View, V3: View, V4: View {}
 extension _HTMLTuple5: _Mountable where V0: _Mountable, V1: _Mountable, V2: _Mountable, V3: _Mountable, V4: _Mountable {
-    public typealias Node = TupleNode5<V0.Node, V1.Node, V2.Node, V3.Node, V4.Node>
+    public typealias _MountedNode = _TupleNode5<V0._MountedNode, V1._MountedNode, V2._MountedNode, V3._MountedNode, V4._MountedNode>
 
     public static func _makeNode(
         _ view: consuming Self,
-        context: consuming _ViewRenderingContext,
-        reconciler: inout _ReconcilerBatch
-    ) -> Node {
-        Node(
+        context: consuming _ViewContext,
+        reconciler: inout _RenderContext
+    ) -> _MountedNode {
+        _MountedNode(
             V0._makeNode(view.v0, context: copy context, reconciler: &reconciler),
             V1._makeNode(view.v1, context: copy context, reconciler: &reconciler),
             V2._makeNode(view.v2, context: copy context, reconciler: &reconciler),
@@ -104,9 +104,9 @@ extension _HTMLTuple5: _Mountable where V0: _Mountable, V1: _Mountable, V2: _Mou
 
     public static func _patchNode(
         _ view: consuming Self,
-        context: consuming _ViewRenderingContext,
-        node: inout Node,
-        reconciler: inout _ReconcilerBatch
+        context: consuming _ViewContext,
+        node: inout _MountedNode,
+        reconciler: inout _RenderContext
     ) {
         V0._patchNode(view.v0, context: copy context, node: &node.value.0, reconciler: &reconciler)
         V1._patchNode(view.v1, context: copy context, node: &node.value.1, reconciler: &reconciler)
@@ -118,14 +118,16 @@ extension _HTMLTuple5: _Mountable where V0: _Mountable, V1: _Mountable, V2: _Mou
 
 extension _HTMLTuple6: View where V0: View, V1: View, V2: View, V3: View, V4: View, V5: View {}
 extension _HTMLTuple6: _Mountable where V0: _Mountable, V1: _Mountable, V2: _Mountable, V3: _Mountable, V4: _Mountable, V5: _Mountable {
-    public typealias Node = TupleNode6<V0.Node, V1.Node, V2.Node, V3.Node, V4.Node, V5.Node>
+    public typealias _MountedNode = _TupleNode6<
+        V0._MountedNode, V1._MountedNode, V2._MountedNode, V3._MountedNode, V4._MountedNode, V5._MountedNode
+    >
 
     public static func _makeNode(
         _ view: consuming Self,
-        context: consuming _ViewRenderingContext,
-        reconciler: inout _ReconcilerBatch
-    ) -> Node {
-        Node(
+        context: consuming _ViewContext,
+        reconciler: inout _RenderContext
+    ) -> _MountedNode {
+        _MountedNode(
             V0._makeNode(view.v0, context: copy context, reconciler: &reconciler),
             V1._makeNode(view.v1, context: copy context, reconciler: &reconciler),
             V2._makeNode(view.v2, context: copy context, reconciler: &reconciler),
@@ -137,9 +139,9 @@ extension _HTMLTuple6: _Mountable where V0: _Mountable, V1: _Mountable, V2: _Mou
 
     public static func _patchNode(
         _ view: consuming Self,
-        context: consuming _ViewRenderingContext,
-        node: inout Node,
-        reconciler: inout _ReconcilerBatch
+        context: consuming _ViewContext,
+        node: inout _MountedNode,
+        reconciler: inout _RenderContext
     ) {
         V0._patchNode(view.v0, context: copy context, node: &node.value.0, reconciler: &reconciler)
         V1._patchNode(view.v1, context: copy context, node: &node.value.1, reconciler: &reconciler)
@@ -154,14 +156,14 @@ extension _HTMLTuple6: _Mountable where V0: _Mountable, V1: _Mountable, V2: _Mou
 // Generic variadic tuple support using parameter packs
 extension _HTMLTuple: View where repeat each Child: View {}
 extension _HTMLTuple: _Mountable where repeat each Child: _Mountable {
-    public typealias Node = TupleNode<repeat (each Child).Node>
+    public typealias _MountedNode = _TupleNode<repeat (each Child)._MountedNode>
 
     public static func _makeNode(
         _ view: consuming Self,
-        context: consuming _ViewRenderingContext,
-        reconciler: inout _ReconcilerBatch
-    ) -> Node {
-        Node(
+        context: consuming _ViewContext,
+        reconciler: inout _RenderContext
+    ) -> _MountedNode {
+        _MountedNode(
             repeat makeNode(
                 each view.value,
                 context: copy context,
@@ -172,9 +174,9 @@ extension _HTMLTuple: _Mountable where repeat each Child: _Mountable {
 
     public static func _patchNode(
         _ view: consuming Self,
-        context: consuming _ViewRenderingContext,
-        node: inout Node,
-        reconciler: inout _ReconcilerBatch
+        context: consuming _ViewContext,
+        node: inout _MountedNode,
+        reconciler: inout _RenderContext
     ) {
         // I don't think there is a way to spell this currently without warnings
         for var (view, node) in repeat (each view.value, each node.value) {
@@ -200,17 +202,17 @@ private func __noop_goshDarnValuePacksAreAnnoyingAF(_ v: inout some _Mountable) 
 
 private func makeNode<V: _Mountable>(
     _ view: consuming V,
-    context: consuming _ViewRenderingContext,
-    reconciler: inout _ReconcilerBatch
-) -> V.Node {
+    context: consuming _ViewContext,
+    reconciler: inout _RenderContext
+) -> V._MountedNode {
     V._makeNode(view, context: context, reconciler: &reconciler)
 }
 
 private func patchNode<V: _Mountable>(
     _ view: consuming V,
-    context: consuming _ViewRenderingContext,
-    node: inout V.Node,
-    reconciler: inout _ReconcilerBatch
+    context: consuming _ViewContext,
+    node: inout V._MountedNode,
+    reconciler: inout _RenderContext
 ) {
     V._patchNode(view, context: context, node: &node, reconciler: &reconciler)
 }

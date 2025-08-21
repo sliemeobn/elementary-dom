@@ -1,5 +1,5 @@
 // FIXME:NONCOPYABLE this should be ~Copyable once associatedtype is supported (will be fun to implement a noncopyable version of this ; )
-public struct Dynamic<ChildNode: MountedNode> {
+public struct _KeyedNode<ChildNode: _Reconcilable> {
     private var keys: [_ViewKey]
     private var children: [ChildNode?]
     private var leavingChildren: LeavingChildrenTracker = .init()
@@ -10,7 +10,7 @@ public struct Dynamic<ChildNode: MountedNode> {
         self.children = children
     }
 
-    init(_ value: some Sequence<(key: _ViewKey, node: ChildNode)>, context: inout _ReconcilerBatch) {
+    init(_ value: some Sequence<(key: _ViewKey, node: ChildNode)>, context: inout _RenderContext) {
         var keys = [_ViewKey]()
         var children = [ChildNode?]()
 
@@ -25,14 +25,14 @@ public struct Dynamic<ChildNode: MountedNode> {
         self.init(keys: keys, children: children)
     }
 
-    init(key: _ViewKey, child: ChildNode, context: inout _ReconcilerBatch) {
+    init(key: _ViewKey, child: ChildNode, context: inout _RenderContext) {
         self.init(CollectionOfOne((key: key, node: child)), context: &context)
     }
 
     mutating func patch(
         key: _ViewKey,
-        context: inout _ReconcilerBatch,
-        makeOrPatchNode: (inout ChildNode?, inout _ReconcilerBatch) -> Void
+        context: inout _RenderContext,
+        makeOrPatchNode: (inout ChildNode?, inout _RenderContext) -> Void
     ) {
         patch(
             CollectionOfOne(key),
@@ -43,8 +43,8 @@ public struct Dynamic<ChildNode: MountedNode> {
 
     mutating func patch(
         _ newKeys: some BidirectionalCollection<_ViewKey>,
-        context: inout _ReconcilerBatch,
-        makeOrPatchNode: (Int, inout ChildNode?, inout _ReconcilerBatch) -> Void
+        context: inout _RenderContext,
+        makeOrPatchNode: (Int, inout ChildNode?, inout _RenderContext) -> Void
     ) {
         // TODO: add fast-pass for empty key list
         let diff = newKeys.difference(from: keys).inferringMoves()
@@ -95,8 +95,8 @@ public struct Dynamic<ChildNode: MountedNode> {
     }
 }
 
-extension Dynamic: MountedNode {
-    public mutating func apply(_ op: _ReconcileOp, _ reconciler: inout _ReconcilerBatch) {
+extension _KeyedNode: _Reconcilable {
+    public mutating func apply(_ op: _ReconcileOp, _ reconciler: inout _RenderContext) {
         for index in children.indices {
             children[index]?.apply(op, &reconciler)
         }
@@ -130,7 +130,7 @@ extension Dynamic: MountedNode {
 
 }
 
-private extension Dynamic {
+private extension _KeyedNode {
     // FIXME:NONCOPYABLE
     struct LeavingChildrenTracker {  //: ~Copyable {
         struct Entry {

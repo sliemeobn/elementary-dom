@@ -27,7 +27,7 @@ public struct Environment<V> {
         }
     }
 
-    public mutating func __load(from context: borrowing _ViewRenderingContext) {
+    public mutating func __load(from context: borrowing _ViewContext) {
         __load(from: context.environment)
     }
 

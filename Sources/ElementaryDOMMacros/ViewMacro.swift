@@ -35,8 +35,8 @@ extension ViewMacro: ExtensionMacro {
 
             let decl: DeclSyntax = """
                 extension \(raw: type.trimmedDescription): View {
-                    typealias Node = Function<Content.Node>
-                    static func __applyContext(_ context: borrowing _ViewRenderingContext, to view: inout Self) {
+                    typealias _MountedNode = _FunctionNode<Content._MountedNode>
+                    static func __applyContext(_ context: borrowing _ViewContext, to view: inout Self) {
                         \(raw: environmentLoads.map { $0.description }.joined(separator: "\n"))
                     }
                 }

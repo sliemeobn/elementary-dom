@@ -1,13 +1,19 @@
 private extension AnyParentElememnt {
-    init(_ element: Element<some MountedNode & ~Copyable>) {
+    init(_ element: _ElementNode<some _Reconcilable & ~Copyable>) {
         self.identifier = element.identifier
         self.reportChangedChildren = element.reportChangedChildren
     }
 }
 
-public final class Element<ChildNode: MountedNode>: MountedNode where ChildNode: ~Copyable {
+public final class _ElementNode<ChildNode>: _Reconcilable where ChildNode: _Reconcilable & ~Copyable {
+    public struct Value {
+        let tagName: String
+        var attributes: _AttributeStorage
+        var listerners: _DomEventListenerStorage
+    }
+
     var domNode: ManagedDOMReference?
-    var value: _DomElement
+    var value: Value
     var child: ChildNode!
 
     var eventSink: DOM.EventSink?
@@ -24,7 +30,7 @@ public final class Element<ChildNode: MountedNode>: MountedNode where ChildNode:
 
     var identifier: String!
 
-    init(value: _DomElement, context: inout _ReconcilerBatch, makeChild: (inout _ReconcilerBatch) -> ChildNode) {
+    init(value: Value, context: inout _RenderContext, makeChild: (inout _RenderContext) -> ChildNode) {
         precondition(context.parentElement != nil, "parent element must be set")
 
         self.value = value
@@ -44,8 +50,8 @@ public final class Element<ChildNode: MountedNode>: MountedNode where ChildNode:
 
     init(
         root: DOM.Node,
-        context: inout _ReconcilerBatch,
-        makeChild: (inout _ReconcilerBatch) -> ChildNode
+        context: inout _RenderContext,
+        makeChild: (inout _RenderContext) -> ChildNode
     ) {
         self.domNode = .init(reference: root, status: .unchanged)
         self.value = .init(tagName: "<root>", attributes: .none, listerners: .none)
@@ -59,7 +65,7 @@ public final class Element<ChildNode: MountedNode>: MountedNode where ChildNode:
         }
     }
 
-    func patch(_ newValue: _DomElement, context: inout _ReconcilerBatch, patchChild: (inout ChildNode, inout _ReconcilerBatch) -> Void) {
+    func patch(_ newValue: Value, context: inout _RenderContext, patchChild: (inout ChildNode, inout _RenderContext) -> Void) {
         logTrace("patching element \(value.tagName)")
 
         guard let ref = domNode?.reference else {
@@ -128,7 +134,7 @@ public final class Element<ChildNode: MountedNode>: MountedNode where ChildNode:
         value.listerners.handleEvent(name, event)
     }
 
-    func reportChangedChildren(_ change: AnyParentElememnt.Change, context: inout _ReconcilerBatch) {
+    func reportChangedChildren(_ change: AnyParentElememnt.Change, context: inout _RenderContext) {
         // TODO: count needed storage for children
 
         if !childrenLayoutStatus.isDirty {
@@ -143,7 +149,7 @@ public final class Element<ChildNode: MountedNode>: MountedNode where ChildNode:
         self.domNode?.collectLayoutChanges(&ops)
     }
 
-    public func apply(_ op: _ReconcileOp, _ reconciler: inout _ReconcilerBatch) {
+    public func apply(_ op: _ReconcileOp, _ reconciler: inout _RenderContext) {
         switch op {
         case .startRemoval:
             assert(domNode != nil, "unitialized element in startRemoval")
@@ -203,6 +209,9 @@ public final class Element<ChildNode: MountedNode>: MountedNode where ChildNode:
         }
     }
 
+    deinit {
+        logTrace("deiniting element \(identifier ?? "")")
+    }
 }
 
 extension ManagedDOMReference {

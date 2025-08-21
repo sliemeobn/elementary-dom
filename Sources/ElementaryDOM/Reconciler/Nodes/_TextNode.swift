@@ -1,9 +1,9 @@
 // FIXME:NONCOPYABLE make ~Copyable once associatedtype is supported
-public final class TextNode: MountedNode {
+public final class _TextNode: _Reconcilable {
     var value: String
     var domNode: ManagedDOMReference?
 
-    init(_ newValue: String, context: inout _ReconcilerBatch) {
+    init(_ newValue: String, context: inout _RenderContext) {
         self.value = newValue
         self.domNode = nil
 
@@ -11,7 +11,7 @@ public final class TextNode: MountedNode {
         context.parentElement?.reportChangedChildren(.added, &context)
     }
 
-    func patch(_ newValue: String, context: inout _ReconcilerBatch) {
+    func patch(_ newValue: String, context: inout _RenderContext) {
         logTrace("patching text \(value) with \(newValue)")
         guard !value.utf8Equals(newValue) else { return }
 
@@ -36,7 +36,7 @@ public final class TextNode: MountedNode {
         domNode?.collectLayoutChanges(&ops)
     }
 
-    public func apply(_ op: _ReconcileOp, _ reconciler: inout _ReconcilerBatch) {
+    public func apply(_ op: _ReconcileOp, _ reconciler: inout _RenderContext) {
         switch op {
         case .startRemoval:
             domNode?.status = .removed
@@ -48,5 +48,9 @@ public final class TextNode: MountedNode {
             domNode?.status = .moved
             reconciler.parentElement?.reportChangedChildren(.moved, &reconciler)
         }
+    }
+
+    deinit {
+        logTrace("deiniting text node \(value)")
     }
 }

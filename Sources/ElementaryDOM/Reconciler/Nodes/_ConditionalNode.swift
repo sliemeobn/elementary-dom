@@ -1,5 +1,5 @@
 // FIXME:NONCOPYABLE this should be ~Copyable once associatedtype is supported (//where NodeA: ~Copyable, NodeB: ~Copyable)
-public struct ConditionalNode<NodeA: MountedNode, NodeB: MountedNode> {
+public struct _ConditionalNode<NodeA: _Reconcilable, NodeB: _Reconcilable> {
     // FIXME:NONCOPYABLE noncopyable enums cannot mutate in-place, making the code very frustrating to write
     // enum State: ~Copyable {
     //     case a(NodeA)
@@ -45,7 +45,7 @@ public struct ConditionalNode<NodeA: MountedNode, NodeB: MountedNode> {
         self.state = .b
     }
 
-    mutating func patchWithA(reconciler: inout _ReconcilerBatch, _ perform: (inout NodeA?, inout _ReconcilerBatch) -> Void) {
+    mutating func patchWithA(reconciler: inout _RenderContext, _ perform: (inout NodeA?, inout _RenderContext) -> Void) {
         logTrace("patchWithA: \(state)")
         switch state {
         case .a:
@@ -66,7 +66,7 @@ public struct ConditionalNode<NodeA: MountedNode, NodeB: MountedNode> {
         }
     }
 
-    mutating func patchWithB(reconciler: inout _ReconcilerBatch, _ perform: (inout NodeB?, inout _ReconcilerBatch) -> Void) {
+    mutating func patchWithB(reconciler: inout _RenderContext, _ perform: (inout NodeB?, inout _RenderContext) -> Void) {
         logTrace("patchWithB: \(state)")
         switch state {
         case .b:
@@ -88,7 +88,7 @@ public struct ConditionalNode<NodeA: MountedNode, NodeB: MountedNode> {
     }
 }
 
-extension ConditionalNode: MountedNode {
+extension _ConditionalNode: _Reconcilable {
     public mutating func collectChildren(_ ops: inout ContainerLayoutPass) {
         switch state {
         case .a:
@@ -123,7 +123,7 @@ extension ConditionalNode: MountedNode {
         }
     }
 
-    public mutating func apply(_ op: _ReconcileOp, _ reconciler: inout _ReconcilerBatch) {
+    public mutating func apply(_ op: _ReconcileOp, _ reconciler: inout _RenderContext) {
         a?.apply(op, &reconciler)
         b?.apply(op, &reconciler)
     }

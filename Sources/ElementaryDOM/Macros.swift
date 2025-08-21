@@ -5,7 +5,7 @@
     names: named(__initializeState),
     named(__restoreState),
     named(__applyContext),
-    named(Node)
+    named(_MountedNode)
 )
 @attached(memberAttribute)
 public macro View() = #externalMacro(module: "ElementaryDOMMacros", type: "ViewMacro")

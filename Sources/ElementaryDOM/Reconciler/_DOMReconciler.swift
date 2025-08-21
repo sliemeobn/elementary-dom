@@ -2,24 +2,26 @@ struct AnyParentElememnt {
     enum Change {
         case added
         case moved
+        // TODO: leaving?
         case removed
     }
 
     let identifier: String  // TODO: make this an object identifier
-    let reportChangedChildren: (Change, inout _ReconcilerBatch) -> Void
+    let reportChangedChildren: (Change, inout _RenderContext) -> Void
 }
 
 struct AnyFunctionNode {
     let identifier: ObjectIdentifier
     let depthInTree: Int
-    let runUpdate: (inout _ReconcilerBatch) -> Void
+    let runUpdate: (inout _RenderContext) -> Void
 }
 
 struct CommitAction {
+    // TODO: is there a way to make this allocation-free?
     let run: (inout any DOM.Interactor) -> Void
 }
 
-public struct _ReconcilerBatch: ~Copyable {
+public struct _RenderContext: ~Copyable {
     let scheduler: Scheduler
 
     private(set) var pendingFunctions: PendingFunctionQueue
@@ -58,6 +60,11 @@ public struct _ReconcilerBatch: ~Copyable {
     }
 
     // TODO: init with assert, but would need to make commitplan optional
+}
+
+public struct _CommitContext: ~Copyable {
+    let dom: any DOM.Interactor
+    let plan: CommitPlan
 }
 
 struct PendingFunctionQueue: ~Copyable {

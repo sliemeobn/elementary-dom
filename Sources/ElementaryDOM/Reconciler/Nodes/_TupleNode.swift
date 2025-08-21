@@ -1,5 +1,5 @@
 // FIXME:NONCOPYABLE tuples currently do not support ~Copyable
-public struct TupleNode<each N: MountedNode>: MountedNode {
+public struct _TupleNode<each N: _Reconcilable>: _Reconcilable {
     var value: (repeat each N)
 
     init(_ value: repeat each N) {
@@ -12,14 +12,14 @@ public struct TupleNode<each N: MountedNode>: MountedNode {
         }
     }
 
-    public mutating func apply(_ op: _ReconcileOp, _ reconciler: inout _ReconcilerBatch) {
+    public mutating func apply(_ op: _ReconcileOp, _ reconciler: inout _RenderContext) {
         for var value in repeat each value {
             value.apply(op, &reconciler)
         }
     }
 }
 
-public struct TupleNode2<N0: MountedNode, N1: MountedNode>: MountedNode {
+public struct _TupleNode2<N0: _Reconcilable, N1: _Reconcilable>: _Reconcilable {
     var value: (N0, N1)
 
     init(_ n0: N0, _ n1: N1) {
@@ -31,13 +31,13 @@ public struct TupleNode2<N0: MountedNode, N1: MountedNode>: MountedNode {
         value.1.collectChildren(&ops)
     }
 
-    public mutating func apply(_ op: _ReconcileOp, _ reconciler: inout _ReconcilerBatch) {
+    public mutating func apply(_ op: _ReconcileOp, _ reconciler: inout _RenderContext) {
         value.0.apply(op, &reconciler)
         value.1.apply(op, &reconciler)
     }
 }
 
-public struct TupleNode3<N0: MountedNode, N1: MountedNode, N2: MountedNode>: MountedNode {
+public struct _TupleNode3<N0: _Reconcilable, N1: _Reconcilable, N2: _Reconcilable>: _Reconcilable {
     var value: (N0, N1, N2)
 
     init(_ n0: N0, _ n1: N1, _ n2: N2) {
@@ -50,14 +50,14 @@ public struct TupleNode3<N0: MountedNode, N1: MountedNode, N2: MountedNode>: Mou
         value.2.collectChildren(&ops)
     }
 
-    public mutating func apply(_ op: _ReconcileOp, _ reconciler: inout _ReconcilerBatch) {
+    public mutating func apply(_ op: _ReconcileOp, _ reconciler: inout _RenderContext) {
         value.0.apply(op, &reconciler)
         value.1.apply(op, &reconciler)
         value.2.apply(op, &reconciler)
     }
 }
 
-public struct TupleNode4<N0: MountedNode, N1: MountedNode, N2: MountedNode, N3: MountedNode>: MountedNode {
+public struct _TupleNode4<N0: _Reconcilable, N1: _Reconcilable, N2: _Reconcilable, N3: _Reconcilable>: _Reconcilable {
     var value: (N0, N1, N2, N3)
 
     init(_ n0: N0, _ n1: N1, _ n2: N2, _ n3: N3) {
@@ -71,7 +71,7 @@ public struct TupleNode4<N0: MountedNode, N1: MountedNode, N2: MountedNode, N3: 
         value.3.collectChildren(&ops)
     }
 
-    public mutating func apply(_ op: _ReconcileOp, _ reconciler: inout _ReconcilerBatch) {
+    public mutating func apply(_ op: _ReconcileOp, _ reconciler: inout _RenderContext) {
         value.0.apply(op, &reconciler)
         value.1.apply(op, &reconciler)
         value.2.apply(op, &reconciler)
@@ -79,7 +79,9 @@ public struct TupleNode4<N0: MountedNode, N1: MountedNode, N2: MountedNode, N3: 
     }
 }
 
-public struct TupleNode5<N0: MountedNode, N1: MountedNode, N2: MountedNode, N3: MountedNode, N4: MountedNode>: MountedNode {
+public struct _TupleNode5<N0: _Reconcilable, N1: _Reconcilable, N2: _Reconcilable, N3: _Reconcilable, N4: _Reconcilable>:
+    _Reconcilable
+{
     var value: (N0, N1, N2, N3, N4)
 
     init(_ n0: N0, _ n1: N1, _ n2: N2, _ n3: N3, _ n4: N4) {
@@ -94,7 +96,7 @@ public struct TupleNode5<N0: MountedNode, N1: MountedNode, N2: MountedNode, N3: 
         value.4.collectChildren(&ops)
     }
 
-    public mutating func apply(_ op: _ReconcileOp, _ reconciler: inout _ReconcilerBatch) {
+    public mutating func apply(_ op: _ReconcileOp, _ reconciler: inout _RenderContext) {
         value.0.apply(op, &reconciler)
         value.1.apply(op, &reconciler)
         value.2.apply(op, &reconciler)
@@ -103,7 +105,15 @@ public struct TupleNode5<N0: MountedNode, N1: MountedNode, N2: MountedNode, N3: 
     }
 }
 
-public struct TupleNode6<N0: MountedNode, N1: MountedNode, N2: MountedNode, N3: MountedNode, N4: MountedNode, N5: MountedNode>: MountedNode
+public struct _TupleNode6<
+    N0: _Reconcilable,
+    N1: _Reconcilable,
+    N2: _Reconcilable,
+    N3: _Reconcilable,
+    N4: _Reconcilable,
+    N5: _Reconcilable
+>:
+    _Reconcilable
 {
     var value: (N0, N1, N2, N3, N4, N5)
 
@@ -120,7 +130,7 @@ public struct TupleNode6<N0: MountedNode, N1: MountedNode, N2: MountedNode, N3: 
         value.5.collectChildren(&ops)
     }
 
-    public mutating func apply(_ op: _ReconcileOp, _ reconciler: inout _ReconcilerBatch) {
+    public mutating func apply(_ op: _ReconcileOp, _ reconciler: inout _RenderContext) {
         value.0.apply(op, &reconciler)
         value.1.apply(op, &reconciler)
         value.2.apply(op, &reconciler)

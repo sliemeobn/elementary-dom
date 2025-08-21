@@ -1,5 +1,5 @@
 // FIXME:NONCOPYABLE make ~Copyable once associatedtype is supported
-public struct Lifecycle<ChildNode: MountedNode>: MountedNode {
+public struct _LifecycleNode<ChildNode: _Reconcilable>: _Reconcilable {
     private var value: _LifecycleHook
     var child: ChildNode
 
@@ -12,7 +12,7 @@ public struct Lifecycle<ChildNode: MountedNode>: MountedNode {
         child.collectChildren(&ops)
     }
 
-    public mutating func apply(_ op: _ReconcileOp, _ reconciler: inout _ReconcilerBatch) {
+    public mutating func apply(_ op: _ReconcileOp, _ reconciler: inout _RenderContext) {
         child.apply(op, &reconciler)
     }
 }

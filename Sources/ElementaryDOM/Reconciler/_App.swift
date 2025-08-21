@@ -15,16 +15,16 @@ final class App<DOMInteractor: DOM.Interactor> {
 
         // TODO: defer running to a "async run" function that hosts the run loop?
         // wait until async stuff is solid for embedded wasm case
-        var reconciler = _ReconcilerBatch(scheduler: scheduler)
+        var reconciler = _RenderContext(scheduler: scheduler)
 
         self.root =
-            Element(
+            _ElementNode(
                 root: dom.root,
                 context: &reconciler,
                 makeChild: { [rootView] context in
                     RootView._makeNode(
                         rootView,
-                        context: _ViewRenderingContext(),
+                        context: _ViewContext(),
                         reconciler: &context
                     )
                 }
@@ -58,7 +58,7 @@ final class Scheduler {
         var functions = PendingFunctionQueue()
         swap(&pendingFunctionsQueue, &functions)
 
-        let plan = _ReconcilerBatch(
+        let plan = _RenderContext(
             scheduler: self,
             pendingFunctions: consume functions,
         ).drain()

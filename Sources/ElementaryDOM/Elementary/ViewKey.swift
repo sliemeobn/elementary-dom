@@ -1,32 +1,25 @@
-public enum _ViewKey: Equatable, Hashable, CustomStringConvertible {
-    case structure(Int)
-    case explicit(String)
+public struct _ViewKey: Equatable, Hashable, CustomStringConvertible {
 
-    static var falseKey: Self { .structure(0) }
-    static var trueKey: Self { .structure(1) }
+    // NOTE: this was an enum once, but maybe we don't need this? in any case, let's keep the option for mutiple values here open
+    private let value: String
+
+    public init(value: String) {
+        self.value = value
+    }
+
+    public init<T: LosslessStringConvertible>(_ value: T) {
+        self.value = value.description
+    }
 
     public static func == (lhs: Self, rhs: Self) -> Bool {
-        switch (lhs, rhs) {
-        case let (.structure(l), .structure(r)): return l == r
-        case let (.explicit(l), .explicit(r)): return l.utf8Equals(r)
-        default: return false
-        }
+        lhs.value.utf8Equals(rhs.value)
     }
 
     public func hash(into hasher: inout Hasher) {
-        switch self {
-        case let .structure(index):
-            index.hash(into: &hasher)
-        case let .explicit(key):
-            // TODO: is this safe?
-            key.withContiguousStorageIfAvailable { hasher.combine(bytes: UnsafeRawBufferPointer($0)) }
-        }
+        value.withContiguousStorageIfAvailable { hasher.combine(bytes: UnsafeRawBufferPointer($0)) }
     }
 
     public var description: String {
-        switch self {
-        case let .structure(index): return "structure:(\(index))"
-        case let .explicit(key): return key
-        }
+        value
     }
 }
