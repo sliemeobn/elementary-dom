@@ -4,7 +4,7 @@ public final class _FunctionNode<ChildNode: _Reconcilable>: _Reconcilable where 
 
     var value: Value
     var state: _ManagedState?
-    let parentElement: AnyParentElememnt
+    var parentElement: AnyParentElememnt!
     public var depthInTree: Int
 
     var asFunctionNode: AnyFunctionNode!
@@ -66,12 +66,20 @@ public final class _FunctionNode<ChildNode: _Reconcilable>: _Reconcilable where 
         var makeOrPatch: (_ManagedState?, inout ChildNode?, inout _RenderContext) -> Void
     }
 
-    public func collectChildren(_ ops: inout ContainerLayoutPass) {
-        child?.collectChildren(&ops)
+    public func collectChildren(_ ops: inout ContainerLayoutPass, _ context: inout _CommitContext) {
+        child?.collectChildren(&ops, &context)
     }
 
     public func apply(_ op: _ReconcileOp, _ reconciler: inout _RenderContext) {
         child?.apply(op, &reconciler)
+    }
+
+    public consuming func unmount(_ context: inout _CommitContext) {
+        let c = self.child.take()!
+        c.unmount(&context)
+
+        self.state = nil
+        self.parentElement = nil
     }
 }
 

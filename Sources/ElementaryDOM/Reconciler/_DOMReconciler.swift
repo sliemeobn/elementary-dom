@@ -18,7 +18,7 @@ struct AnyFunctionNode {
 
 struct CommitAction {
     // TODO: is there a way to make this allocation-free?
-    let run: (inout any DOM.Interactor) -> Void
+    let run: (inout _CommitContext) -> Void
 }
 
 public struct _RenderContext: ~Copyable {
@@ -64,7 +64,14 @@ public struct _RenderContext: ~Copyable {
 
 public struct _CommitContext: ~Copyable {
     let dom: any DOM.Interactor
-    let plan: CommitPlan
+
+    init(dom: any DOM.Interactor) {
+        self.dom = dom
+    }
+
+    consuming func drain() {
+        // TODO: post flush event queue
+    }
 }
 
 struct PendingFunctionQueue: ~Copyable {
@@ -118,15 +125,17 @@ struct CommitPlan: ~Copyable {
     }
 
     consuming func flush(dom: inout any DOM.Interactor) {
+        var context = _CommitContext(dom: dom)
         for node in nodes {
-            node.run(&dom)
+            node.run(&context)
         }
         nodes.removeAll()
 
         for placement in placements.reversed() {
-            placement.run(&dom)
+            placement.run(&context)
         }
         placements.removeAll()
+
     }
 
     deinit {

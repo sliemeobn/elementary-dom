@@ -37,7 +37,7 @@ public extension View where Content == Never {
 }
 
 extension Never: _Mountable {
-    public typealias _MountedNode = EmptyNode
+    public typealias _MountedNode = _EmptyNode
 
     public static func _makeNode(
         _ view: consuming Self,
@@ -127,7 +127,7 @@ extension HTMLElement: _Mountable, View where Content: _Mountable {
 }
 
 extension HTMLVoidElement: _Mountable, View {
-    public typealias _MountedNode = _ElementNode<EmptyNode>
+    public typealias _MountedNode = _ElementNode<_EmptyNode>
 
     private static func makeValue(_ view: borrowing Self, context: inout _ViewContext) -> _MountedNode.Value {
         var attributes = view._attributes
@@ -148,7 +148,7 @@ extension HTMLVoidElement: _Mountable, View {
         _MountedNode(
             value: makeValue(view, context: &context),
             context: &reconciler,
-            makeChild: { _ in EmptyNode() }
+            makeChild: { _ in _EmptyNode() }
         )
     }
 
@@ -191,14 +191,14 @@ extension HTMLText: _Mountable, View {
 }
 
 extension EmptyHTML: _Mountable, View {
-    public typealias _MountedNode = EmptyNode
+    public typealias _MountedNode = _EmptyNode
 
     public static func _makeNode(
         _ view: consuming Self,
         context: consuming _ViewContext,
         reconciler: inout _RenderContext
     ) -> _MountedNode {
-        EmptyNode()
+        _EmptyNode()
     }
 
     public static func _patchNode(
@@ -211,7 +211,7 @@ extension EmptyHTML: _Mountable, View {
 
 extension Optional: View where Wrapped: View {}
 extension Optional: _Mountable where Wrapped: _Mountable {
-    public typealias _MountedNode = _ConditionalNode<Wrapped._MountedNode, EmptyNode>
+    public typealias _MountedNode = _ConditionalNode<Wrapped._MountedNode, _EmptyNode>
 
     public static func _makeNode(
         _ view: consuming Self,
@@ -222,7 +222,7 @@ extension Optional: _Mountable where Wrapped: _Mountable {
         case let .some(view):
             return .init(a: Wrapped._makeNode(view, context: context, reconciler: &reconciler))
         case .none:
-            return .init(b: EmptyNode())
+            return .init(b: _EmptyNode())
         }
     }
 
@@ -244,7 +244,7 @@ extension Optional: _Mountable where Wrapped: _Mountable {
         case .none:
             node.patchWithB(reconciler: &reconciler) { b, r in
                 if b == nil {
-                    b = EmptyNode()
+                    b = _EmptyNode()
                 } else {
                 }
             }

@@ -76,16 +76,16 @@ public final class _ElementNode<ChildNode>: _Reconcilable where ChildNode: _Reco
 
         // TODO: diff here and store diff in object, only enqueue if diff is non-empty, use direct function on object in action
         context.commitPlan.addNodeAction(
-            CommitAction { [ref, oldValue, eventSink] dom in
+            CommitAction { [ref, oldValue, eventSink] context in
 
-                dom.patchElementAttributes(
+                context.dom.patchElementAttributes(
                     ref,
                     with: newValue.attributes,
                     replacing: oldValue.attributes
                 )
 
                 if let eventSink {
-                    dom.patchEventListeners(
+                    context.dom.patchEventListeners(
                         ref,
                         with: newValue.listerners,
                         replacing: oldValue.listerners,
@@ -104,23 +104,23 @@ public final class _ElementNode<ChildNode>: _Reconcilable where ChildNode: _Reco
         }
     }
 
-    func createDOMNode(_ dom: inout any DOM.Interactor) {
+    func createDOMNode(_ context: inout _CommitContext) {
         precondition(domNode == nil, "element already has a DOM node")
-        let ref = dom.createElement(value.tagName)
+        let ref = context.dom.createElement(value.tagName)
         self.domNode = ManagedDOMReference(reference: ref, status: .added)
 
-        dom.patchElementAttributes(ref, with: value.attributes, replacing: value.attributes)
+        context.dom.patchElementAttributes(ref, with: value.attributes, replacing: value.attributes)
 
-        dom.patchElementAttributes(
+        context.dom.patchElementAttributes(
             ref,
             with: value.attributes,
             replacing: .none
         )
 
         if !value.listerners.listeners.isEmpty {
-            self.eventSink = dom.makeEventSink(handleEvent(_:event:))
+            self.eventSink = context.dom.makeEventSink(handleEvent(_:event:))
 
-            dom.patchEventListeners(
+            context.dom.patchEventListeners(
                 ref,
                 with: value.listerners,
                 replacing: .none,
@@ -144,7 +144,7 @@ public final class _ElementNode<ChildNode>: _Reconcilable where ChildNode: _Reco
         }
     }
 
-    public func collectChildren(_ ops: inout ContainerLayoutPass) {
+    public func collectChildren(_ ops: inout ContainerLayoutPass, _ context: inout _CommitContext) {
         assert(domNode != nil, "unitialized element in layout pass")
         self.domNode?.collectLayoutChanges(&ops)
     }
@@ -165,7 +165,16 @@ public final class _ElementNode<ChildNode>: _Reconcilable where ChildNode: _Reco
         }
     }
 
-    func performLayout(_ dom: inout any DOM.Interactor) {
+    public consuming func unmount(_ context: inout _CommitContext) {
+        let c = self.child.take()!
+        c.unmount(&context)
+
+        self.domNode = nil
+        self.eventSink = nil
+        self.asParentRef = nil
+    }
+
+    func performLayout(_ context: inout _CommitContext) {
         guard let ref = domNode?.reference else {
             preconditionFailure("unitialized element in commitChanges - maybe this can be fine?")
         }
@@ -177,13 +186,13 @@ public final class _ElementNode<ChildNode>: _Reconcilable where ChildNode: _Reco
         childrenLayoutStatus.isDirty = false
         var ops = ContainerLayoutPass()  // TODO: initialize with count, could be allocationlessly somehow
 
-        child.collectChildren(&ops)
+        child!.collectChildren(&ops, &context)
 
         if ops.canBatchReplace {
             if ops.isAllRemovals {
-                dom.replaceChildren([], in: ref)
+                context.dom.replaceChildren([], in: ref)
             } else if ops.isAllAdditions {
-                dom.replaceChildren(ops.entries.map { $0.reference }, in: ref)
+                context.dom.replaceChildren(ops.entries.map { $0.reference }, in: ref)
             } else {
                 fatalError("cannot batch replace children of \(ref) because it is not all removals or all additions")
             }
@@ -193,10 +202,10 @@ public final class _ElementNode<ChildNode>: _Reconcilable where ChildNode: _Reco
             for entry in ops.entries.reversed() {
                 switch entry.kind {
                 case .added, .moved:
-                    dom.insertChild(entry.reference, before: sibling, in: ref)
+                    context.dom.insertChild(entry.reference, before: sibling, in: ref)
                     sibling = entry.reference
                 case .removed:
-                    dom.removeChild(entry.reference, from: ref)
+                    context.dom.removeChild(entry.reference, from: ref)
                 case .leaving:
                     sibling = entry.reference
                     // TODO: for FLIP handling

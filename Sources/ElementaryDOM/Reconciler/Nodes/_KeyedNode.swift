@@ -102,7 +102,7 @@ extension _KeyedNode: _Reconcilable {
         }
     }
 
-    public mutating func collectChildren(_ ops: inout ContainerLayoutPass) {
+    public mutating func collectChildren(_ ops: inout ContainerLayoutPass, _ context: inout _CommitContext) {
         // the trick here is to efficiently interleave the leaving nodes with the active nodes to match the DOM order
         // the other trick is to stay noncopyable compatible (one fine day we will have lists, associated types and stuff like that)
         // in any case, we need to mutate in place
@@ -113,21 +113,32 @@ extension _KeyedNode: _Reconcilable {
             precondition(children[cIndex] != nil, "unexpected nil child on collection")
 
             if nextInsertionPoint == cIndex {
-                let removed = leavingChildren.commitAndCheckRemoval(at: lIndex, ops: &ops)
+                let removed = leavingChildren.commitAndCheckRemoval(at: lIndex, ops: &ops, context: &context)
                 if !removed { lIndex += 1 }
                 nextInsertionPoint = leavingChildren.insertionIndex(for: lIndex)
             }
 
-            children[cIndex]!.collectChildren(&ops)
+            children[cIndex]!.collectChildren(&ops, &context)
         }
 
         while nextInsertionPoint != nil {
-            let removed = leavingChildren.commitAndCheckRemoval(at: lIndex, ops: &ops)
+            let removed = leavingChildren.commitAndCheckRemoval(at: lIndex, ops: &ops, context: &context)
             if !removed { lIndex += 1 }
             nextInsertionPoint = leavingChildren.insertionIndex(for: lIndex)
         }
     }
 
+    public consuming func unmount(_ context: inout _CommitContext) {
+        for index in children.indices {
+            children[index]?.unmount(&context)
+        }
+
+        children.removeAll()
+        for entry in leavingChildren.entries {
+            entry.value.unmount(&context)
+        }
+        leavingChildren.entries.removeAll()
+    }
 }
 
 private extension _KeyedNode {
@@ -163,9 +174,9 @@ private extension _KeyedNode {
             shiftEntriesFromIndexUpwards(index, by: 1)
         }
 
-        mutating func commitAndCheckRemoval(at index: Int, ops: inout ContainerLayoutPass) -> Bool {
+        mutating func commitAndCheckRemoval(at index: Int, ops: inout ContainerLayoutPass, context: inout _CommitContext) -> Bool {
             let isRemovalCommitted = ops.withRemovalTracking { ops in
-                entries[index].value.collectChildren(&ops)
+                entries[index].value.collectChildren(&ops, &context)
             }
 
             if isRemovalCommitted {

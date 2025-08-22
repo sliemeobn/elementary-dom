@@ -8,11 +8,15 @@ public struct _LifecycleNode<ChildNode: _Reconcilable>: _Reconcilable {
         self.child = consume child
     }
 
-    public mutating func collectChildren(_ ops: inout ContainerLayoutPass) {
-        child.collectChildren(&ops)
+    public mutating func collectChildren(_ ops: inout ContainerLayoutPass, _ context: inout _CommitContext) {
+        child.collectChildren(&ops, &context)
     }
 
     public mutating func apply(_ op: _ReconcileOp, _ reconciler: inout _RenderContext) {
         child.apply(op, &reconciler)
+    }
+
+    public consuming func unmount(_ context: inout _CommitContext) {
+        child.unmount(&context)
     }
 }

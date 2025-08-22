@@ -19,19 +19,19 @@ public final class _TextNode: _Reconcilable {
         self.value = newValue
     }
 
-    func createDOMNode(_ dom: inout any DOM.Interactor) {
-        self.domNode = ManagedDOMReference(reference: dom.createText(value), status: .added)
+    func createDOMNode(_ context: inout _CommitContext) {
+        self.domNode = ManagedDOMReference(reference: context.dom.createText(value), status: .added)
     }
 
-    func updateDOMNode(_ dom: inout any DOM.Interactor) {
+    func updateDOMNode(_ context: inout _CommitContext) {
         guard let ref = domNode?.reference else {
             preconditionFailure("unitialized text node in update - maybe this can be fine?")
         }
 
-        dom.patchText(ref, with: value)
+        context.dom.patchText(ref, with: value)
     }
 
-    public func collectChildren(_ ops: inout ContainerLayoutPass) {
+    public func collectChildren(_ ops: inout ContainerLayoutPass, _ context: inout _CommitContext) {
         assert(domNode != nil, "unitialized text node in layout pass")
         domNode?.collectLayoutChanges(&ops)
     }
@@ -48,6 +48,10 @@ public final class _TextNode: _Reconcilable {
             domNode?.status = .moved
             reconciler.parentElement?.reportChangedChildren(.moved, &reconciler)
         }
+    }
+
+    public consuming func unmount(_ context: inout _CommitContext) {
+        self.domNode = nil
     }
 
     deinit {

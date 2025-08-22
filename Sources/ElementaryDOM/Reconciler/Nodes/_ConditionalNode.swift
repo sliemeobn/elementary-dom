@@ -89,34 +89,34 @@ public struct _ConditionalNode<NodeA: _Reconcilable, NodeB: _Reconcilable> {
 }
 
 extension _ConditionalNode: _Reconcilable {
-    public mutating func collectChildren(_ ops: inout ContainerLayoutPass) {
+    public mutating func collectChildren(_ ops: inout ContainerLayoutPass, _ context: inout _CommitContext) {
         switch state {
         case .a:
-            a!.collectChildren(&ops)
+            a!.collectChildren(&ops, &context)
         case .b:
-            b!.collectChildren(&ops)
+            b!.collectChildren(&ops, &context)
         case .aWithBLeaving:
-            a!.collectChildren(&ops)
+            a!.collectChildren(&ops, &context)
 
             let isRemovalCompleted = ops.withRemovalTracking { ops in
-                b!.collectChildren(&ops)
+                b!.collectChildren(&ops, &context)
             }
 
             if isRemovalCompleted {
-                print("TO BE DONE: unmounting b")
+                b!.unmount(&context)
                 b = nil
                 state = .a
             }
         case .bWithALeaving:
             // NOTE: ordering of a before b is important because we don't want to track moves here
             let isRemovalCompleted = ops.withRemovalTracking { ops in
-                a!.collectChildren(&ops)
+                a!.collectChildren(&ops, &context)
             }
 
-            b!.collectChildren(&ops)
+            b!.collectChildren(&ops, &context)
 
             if isRemovalCompleted {
-                print("TO BE DONE: unmounting a")
+                a!.unmount(&context)
                 a = nil
                 state = .b
             }
@@ -126,6 +126,11 @@ extension _ConditionalNode: _Reconcilable {
     public mutating func apply(_ op: _ReconcileOp, _ reconciler: inout _RenderContext) {
         a?.apply(op, &reconciler)
         b?.apply(op, &reconciler)
+    }
+
+    public consuming func unmount(_ context: inout _CommitContext) {
+        a?.unmount(&context)
+        b?.unmount(&context)
     }
 }
 
