@@ -41,7 +41,7 @@ public final class _ElementNode<ChildNode>: _Reconcilable where ChildNode: _Reco
         logTrace("created element \(identifier!) in \(context.parentElement!.identifier)")
 
         context.commitPlan.addNodeAction(CommitAction(run: createDOMNode(_:)))
-        context.parentElement?.reportChangedChildren(.added, &context)
+        context.parentElement?.reportChangedChildren(.elementAdded, &context)
 
         context.withCurrentLayoutContainer(asParentRef) {
             self.child = makeChild(&$0)
@@ -155,13 +155,13 @@ public final class _ElementNode<ChildNode>: _Reconcilable where ChildNode: _Reco
             assert(domNode != nil, "unitialized element in startRemoval")
             // TODO: transitions
             domNode?.status = .removed
-            reconciler.parentElement!.reportChangedChildren(.removed, &reconciler)
+            reconciler.parentElement!.reportChangedChildren(.elementRemoved, &reconciler)
         case .cancelRemoval:
             fatalError("not implemented")
         case .markAsMoved:
             assert(domNode != nil, "unitialized element in markAsMoved")
             domNode?.status = .moved
-            reconciler.parentElement!.reportChangedChildren(.moved, &reconciler)
+            reconciler.parentElement!.reportChangedChildren(.elementChanged, &reconciler)
         }
     }
 

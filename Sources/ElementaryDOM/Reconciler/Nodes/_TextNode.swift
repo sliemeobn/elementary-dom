@@ -8,7 +8,7 @@ public final class _TextNode: _Reconcilable {
         self.domNode = nil
 
         context.commitPlan.addNodeAction(CommitAction(run: createDOMNode(_:)))
-        context.parentElement?.reportChangedChildren(.added, &context)
+        context.parentElement?.reportChangedChildren(.elementAdded, &context)
     }
 
     func patch(_ newValue: String, context: inout _RenderContext) {
@@ -40,13 +40,13 @@ public final class _TextNode: _Reconcilable {
         switch op {
         case .startRemoval:
             domNode?.status = .removed
-            reconciler.parentElement?.reportChangedChildren(.removed, &reconciler)
+            reconciler.parentElement?.reportChangedChildren(.elementRemoved, &reconciler)
         case .cancelRemoval:
             fatalError("not implemented")
         case .markAsMoved:
             // TODO: checks and handling
             domNode?.status = .moved
-            reconciler.parentElement?.reportChangedChildren(.moved, &reconciler)
+            reconciler.parentElement?.reportChangedChildren(.elementChanged, &reconciler)
         }
     }
 

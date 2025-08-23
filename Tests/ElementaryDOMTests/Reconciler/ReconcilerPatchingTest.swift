@@ -267,6 +267,78 @@ struct ReconcilerPatchingTests {
         )
         #expect(!dom.hasWorkScheduled)
     }
+
+    @Test
+    func deinitsConditionalNodes() {
+        nonisolated(unsafe) var deinitCount = 0
+        let state = ToggleState()
+        _ = patchOps {
+            div {
+                if state.value {
+                    EmptyHTML()
+                } else {
+                    DeinitSnifferView {
+                        deinitCount += 1
+                    }
+                }
+            }
+        } toggle: {
+            state.toggle()
+        }
+
+        #expect(deinitCount == 1)
+    }
+
+    @Test
+    func deinitsKeyedNodes() {
+        nonisolated(unsafe) var deinitCount = 0
+        let state = StringListState(["A", "B", "C"])
+        _ = patchOps {
+            ForEach(state.items, key: \.self) { item in
+                DeinitSnifferView {
+                    deinitCount += 1
+                }
+            }
+        } toggle: {
+            state.items = ["B"]
+        }
+
+        #expect(deinitCount == 2)
+    }
+
+    @Test
+    func deinitsNestedNodes() {
+        nonisolated(unsafe) var deinitCount = 0
+        let state = ToggleState()
+        _ = patchOps {
+            if !state.value {
+                div {
+                    if true {
+                        DeinitSnifferView {
+                            deinitCount += 1
+                        }
+                    }
+                }
+                for _ in 0..<4 {
+                    DeinitSnifferView {
+                        deinitCount += 2
+                    }
+                }
+                ForEach(["A", "B"], key: \.self) { item in
+                    p {}
+                    p {
+                        DeinitSnifferView {
+                            deinitCount += 3
+                        }
+                    }
+                }
+            }
+        } toggle: {
+            state.toggle()
+        }
+
+        #expect(deinitCount == 15)
+    }
 }
 
 @Reactive

@@ -52,8 +52,9 @@ public struct _ConditionalNode<NodeA: _Reconcilable, NodeB: _Reconcilable> {
             perform(&a, &reconciler)
             state = .a
         case .b:
-            b!.apply(.startRemoval, &reconciler)
             perform(&a, &reconciler)
+            b!.apply(.startRemoval, &reconciler)
+            reconciler.parentElement?.reportChangedChildren(.elementChanged, &reconciler)
             state = .aWithBLeaving
         case .aWithBLeaving:
             perform(&a, &reconciler)
@@ -62,6 +63,7 @@ public struct _ConditionalNode<NodeA: _Reconcilable, NodeB: _Reconcilable> {
             perform(&a, &reconciler)
             a!.apply(.cancelRemoval, &reconciler)
             b!.apply(.startRemoval, &reconciler)
+            reconciler.parentElement?.reportChangedChildren(.elementChanged, &reconciler)
             state = .aWithBLeaving
         }
     }
@@ -74,6 +76,7 @@ public struct _ConditionalNode<NodeA: _Reconcilable, NodeB: _Reconcilable> {
             state = .b
         case .a:
             a!.apply(.startRemoval, &reconciler)
+            reconciler.parentElement?.reportChangedChildren(.elementChanged, &reconciler)
             perform(&b, &reconciler)
             state = .bWithALeaving
         case .bWithALeaving:
@@ -83,6 +86,7 @@ public struct _ConditionalNode<NodeA: _Reconcilable, NodeB: _Reconcilable> {
             perform(&b, &reconciler)
             b!.apply(.cancelRemoval, &reconciler)
             a!.apply(.startRemoval, &reconciler)
+            reconciler.parentElement?.reportChangedChildren(.elementChanged, &reconciler)
             state = .bWithALeaving
         }
     }
@@ -145,7 +149,6 @@ extension ContainerLayoutPass {
                 break
             }
         }
-        print("isRemoved: \(isRemoved)")
         return isRemoved
     }
 }

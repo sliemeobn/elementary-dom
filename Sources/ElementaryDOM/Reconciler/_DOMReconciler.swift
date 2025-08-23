@@ -1,9 +1,9 @@
 struct AnyParentElememnt {
     enum Change {
-        case added
-        case moved
+        case elementAdded
+        case elementChanged
         // TODO: leaving?
-        case removed
+        case elementRemoved
     }
 
     let identifier: String  // TODO: make this an object identifier

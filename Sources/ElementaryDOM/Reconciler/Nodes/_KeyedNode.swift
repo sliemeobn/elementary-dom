@@ -69,6 +69,7 @@ public struct _KeyedNode<ChildNode: _Reconcilable> {
                         moversCache[offset] = consume node
                     } else {
                         node.apply(.startRemoval, &context)
+                        context.parentElement?.reportChangedChildren(.elementChanged, &context)
                         leavingChildren.append(key, atIndex: offset, value: node)
                     }
                 case let .insert(offset, element: key, associatedWith: movedFrom):
@@ -182,7 +183,7 @@ private extension _KeyedNode {
             if isRemovalCommitted {
                 let entry = entries.remove(at: index)
                 shiftEntriesFromIndexUpwards(entry.originalMountIndex, by: -1)
-                logWarning("unmounting \(entry.key) at index \(entry.originalMountIndex) NOT IMPLEMENTED")
+                entry.value.unmount(&context)
                 return true
             } else {
                 return false

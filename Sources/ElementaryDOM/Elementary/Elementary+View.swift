@@ -307,7 +307,7 @@ extension _HTMLArray: _Mountable, View where Element: View {
         _MountedNode(
             view.value.enumerated().map { [context] (index, element) in
                 (
-                    key: _ViewKey(index),
+                    key: _ViewKey(index.description),
                     node: Element._makeNode(element, context: context, reconciler: &reconciler)
                 )
             },
@@ -323,7 +323,7 @@ extension _HTMLArray: _Mountable, View where Element: View {
     ) {
 
         // maybe we can optimize this
-        let indexes = view.value.indices.map { _ViewKey($0) }
+        let indexes = view.value.indices.map { _ViewKey($0.description) }
         node.patch(
             indexes,
             context: &reconciler,

@@ -3,7 +3,7 @@ public struct _ViewKey: Equatable, Hashable, CustomStringConvertible {
     // NOTE: this was an enum once, but maybe we don't need this? in any case, let's keep the option for mutiple values here open
     private let value: String
 
-    public init(value: String) {
+    public init(_ value: String) {
         self.value = value
     }
 
