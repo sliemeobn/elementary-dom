@@ -120,6 +120,8 @@ final class TestDOM: DOM.Interactor {
     let root: DOM.Node
     private(set) var ops: [Op] = []
     private(set) var rafCallbacks: [(Double) -> Void] = []
+    private(set) var timeoutCallbacks: [(() -> Void, Double)] = []
+    private(set) var queueMicrotaskCallbacks: [() -> Void] = []
 
     var hasWorkScheduled: Bool { !rafCallbacks.isEmpty }
 
@@ -203,10 +205,37 @@ final class TestDOM: DOM.Interactor {
         rafCallbacks.append(callback)
     }
 
+    func setTimeout(_ callback: @escaping () -> Void, _ timeout: Double) {
+        timeoutCallbacks.append((callback, timeout))
+    }
+
+    func queueMicrotask(_ callback: @escaping () -> Void) {
+        queueMicrotaskCallbacks.append(callback)
+    }
+
     func runNextFrame() {
+        runScheduledWork()
         guard let callback = rafCallbacks.first else { return }
         rafCallbacks.removeFirst()
         callback(0)
+        runScheduledWork()
+    }
+
+    private func runScheduledWork() {
+        while !queueMicrotaskCallbacks.isEmpty {
+            queueMicrotaskCallbacks.removeFirst()()
+        }
+
+        var ti = 0
+        while ti < timeoutCallbacks.count {
+            let (callback, timeout) = timeoutCallbacks[ti]
+            if timeout == 0 {
+                callback()
+                timeoutCallbacks.remove(at: ti)
+            } else {
+                ti += 1
+            }
+        }
     }
 
     func clearOps() {
@@ -246,12 +275,14 @@ extension TestDOM.NodeRef.Kind: Equatable {
 func mountOps(@HTMLBuilder _ view: @escaping () -> some View) -> [TestDOM.Op] {
     let dom = TestDOM()
     dom.mount(view)
+    dom.runNextFrame()
     return dom.ops
 }
 
 func patchOps(@HTMLBuilder _ view: @escaping () -> some View, toggle: () -> Void) -> [TestDOM.Op] {
     let dom = TestDOM()
     dom.mount(view)
+    dom.runNextFrame()
     dom.clearOps()
     print("---- PATCHING ----")
     toggle()

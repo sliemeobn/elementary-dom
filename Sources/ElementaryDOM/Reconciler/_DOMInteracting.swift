@@ -35,11 +35,18 @@ public enum DOM {
         func insertChild(_ child: Node, before sibling: Node?, in parent: Node)
         func removeChild(_ child: Node, from parent: Node)
 
+        // TODO: these are more scheduling APIs, but they kind of fit here...
         func requestAnimationFrame(_ callback: @escaping (Double) -> Void)
+        func queueMicrotask(_ callback: @escaping () -> Void)
+        func setTimeout(_ callback: @escaping () -> Void, _ timeout: Double)
     }
 }
 
 extension DOM.Interactor {
+    func runNext(_ callback: @escaping () -> Void) {
+        setTimeout(callback, 0)
+    }
+
     func patchElementAttributes(
         _ node: DOM.Node,
         with attributes: _AttributeStorage,

@@ -23,19 +23,20 @@ struct CommitAction {
 
 public struct _RenderContext: ~Copyable {
     let scheduler: Scheduler
+    var commitPlan: CommitPlan
 
     private(set) var pendingFunctions: PendingFunctionQueue
     private(set) var parentElement: AnyParentElememnt?
     var depth: Int = 0
 
-    var commitPlan = CommitPlan()
-
     init(
         scheduler: Scheduler,
+        commitPlan: consuming CommitPlan,
         pendingFunctions: consuming PendingFunctionQueue = .init()
     ) {
         self.pendingFunctions = pendingFunctions
         self.scheduler = scheduler
+        self.commitPlan = commitPlan
 
         depth = 0
     }
@@ -65,12 +66,33 @@ public struct _RenderContext: ~Copyable {
 public struct _CommitContext: ~Copyable {
     let dom: any DOM.Interactor
 
+    private var prePaintActions: [() -> Void] = []
+    private var postPaintActions: [() -> Void] = []
+
     init(dom: any DOM.Interactor) {
         self.dom = dom
     }
 
+    mutating func addPrePaintAction(_ action: @escaping () -> Void) {
+        prePaintActions.append(action)
+    }
+
+    mutating func addPostPaintAction(_ action: @escaping () -> Void) {
+        postPaintActions.append(action)
+    }
+
     consuming func drain() {
-        // TODO: post flush event queue
+        for action in prePaintActions {
+            action()
+        }
+        prePaintActions.removeAll()
+
+        // TODO: make this better, clearer scheduling
+        dom.runNext { [postPaintActions] in
+            for action in consume postPaintActions {
+                action()
+            }
+        }
     }
 }
 
@@ -136,6 +158,7 @@ struct CommitPlan: ~Copyable {
         }
         placements.removeAll()
 
+        context.drain()
     }
 
     deinit {
@@ -176,71 +199,6 @@ public struct ContainerLayoutPass: ~Copyable {
         let reference: DOM.Node
     }
 }
-
-// // TODO: make this work... we need a cancel
-// public struct _PendingRemoval {
-//     fileprivate final class Tracker {
-//         private var deferralCount: Int = 0
-//         private var onCompleted: (() -> Void)?
-
-//         init(onCompleted: @escaping () -> Void) {
-//             self.onCompleted = onCompleted
-//         }
-
-//         func up() {
-//             deferralCount += 1
-//         }
-
-//         func down() {
-//             assert(
-//                 onCompleted != nil,
-//                 "Removal tracker was signaled without onCompleted, most likely after cancellation - not sure if this should happen"
-//             )
-//             deferralCount -= 1
-//             if deferralCount == 0 {
-//                 onCompleted?()
-//                 onCompleted = nil
-//             }
-//         }
-
-//         fileprivate func cancel() {
-//             onCompleted = nil
-//         }
-
-//         deinit {
-//             onCompleted?()
-//         }
-//     }
-
-//     private let tracker: Tracker
-
-//     init(onCompleted: @escaping () -> Void) {
-//         // maybe defer allocation somehow
-//         tracker = Tracker(onCompleted: onCompleted)
-//     }
-
-//     struct Deferral: ~Copyable {
-//         fileprivate let lifetime: Tracker
-
-//         fileprivate init(lifetime: Tracker) {
-//             self.lifetime = lifetime
-//             lifetime.up()
-//         }
-
-//         consuming func release() {
-//             lifetime.down()
-//         }
-//     }
-
-//     nonmutating func deferRemoval(onCancel: @escaping () -> Void) -> Deferral {
-//         Deferral(lifetime: tracker)
-//     }
-
-//     consuming func cancel() {
-//         // TODO: think about that....
-//         tracker.cancel()
-//     }
-// }
 
 struct ManagedDOMReference: ~Copyable {
     let reference: DOM.Node

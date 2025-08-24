@@ -248,6 +248,7 @@ struct ReconcilerPatchingTests {
         dom.mount {
             p { "\(state.number)" }
         }
+        dom.runNextFrame()
         dom.clearOps()
 
         state.number += 1

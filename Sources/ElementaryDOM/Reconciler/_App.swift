@@ -1,8 +1,10 @@
 // TODO: main-actor stuff very unclear at the moment, ideally not needed at all
 final class App<DOMInteractor: DOM.Interactor> {
-    private var root: AnyParentElememnt!
+    private var root: AnyParentElememnt?
     private var scheduler: Scheduler
 
+    // TODO: rethink this whole API - maybe once usage of async is clearer
+    // there should probably be a way to "unmount" the app
     init(dom: DOMInteractor) {
         self.scheduler = Scheduler(dom: dom)
         self.root = nil
@@ -15,29 +17,36 @@ final class App<DOMInteractor: DOM.Interactor> {
 
         // TODO: defer running to a "async run" function that hosts the run loop?
         // wait until async stuff is solid for embedded wasm case
-        var reconciler = _RenderContext(scheduler: scheduler)
-
-        self.root =
-            _ElementNode(
-                root: dom.root,
-                context: &reconciler,
-                makeChild: { [rootView] context in
-                    RootView._makeNode(
-                        rootView,
-                        context: _ViewContext(),
-                        reconciler: &context
-                    )
+        scheduler.scheduleFunction(
+            .init(
+                identifier: ObjectIdentifier(self),
+                depthInTree: 0,
+                runUpdate: { [self, rootView] context in
+                    self.root =
+                        _ElementNode(
+                            root: dom.root,
+                            context: &context,
+                            makeChild: { [rootView] context in
+                                RootView._makeNode(
+                                    rootView,
+                                    context: _ViewContext(),
+                                    reconciler: &context
+                                )
+                            }
+                        )
+                        .asParentRef
                 }
             )
-            .asParentRef
-
-        scheduler.commit(reconciler.drain())
+        )
     }
 }
 
+// TODO: this ain't such a great shape...
 final class Scheduler {
     private var dom: any DOM.Interactor
     private var pendingFunctionsQueue: PendingFunctionQueue = .init()
+    private var commitPlan: CommitPlan = .init()
+    private var isAnimationFramePending: Bool = false
 
     init(dom: any DOM.Interactor) {
         self.dom = dom
@@ -45,8 +54,7 @@ final class Scheduler {
 
     func scheduleFunction(_ function: AnyFunctionNode) {
         if pendingFunctionsQueue.isEmpty {
-            //TODO: use next microtask instead of requestAnimationFrame
-            dom.requestAnimationFrame { [self] _ in
+            dom.queueMicrotask { [self] in
                 self.reconcile()
             }
         }
@@ -54,20 +62,35 @@ final class Scheduler {
         pendingFunctionsQueue.registerFunctionForUpdate(function)
     }
 
-    func reconcile() {
+    private func reconcile() {
+        // TODO: this is awkward, refactor the reconciler API
         var functions = PendingFunctionQueue()
+        var plan = CommitPlan()
         swap(&pendingFunctionsQueue, &functions)
+        swap(&plan, &self.commitPlan)
 
-        let plan = _RenderContext(
+        self.commitPlan = _RenderContext(
             scheduler: self,
+            commitPlan: consume plan,
             pendingFunctions: consume functions,
         ).drain()
 
-        commit(consume plan)
+        requestFramePaint()
     }
 
-    // TODO: think about scheduling, rafs, multiple reconciler runs on the same commit plan, ...
-    func commit(_ plan: consuming CommitPlan) {
+    private func requestFramePaint() {
+        if !isAnimationFramePending {
+            isAnimationFramePending = true
+            dom.requestAnimationFrame { [self] _ in
+                isAnimationFramePending = false
+                flushCommitPlan()
+            }
+        }
+    }
+
+    private func flushCommitPlan() {
+        var plan = CommitPlan()
+        swap(&plan, &self.commitPlan)
         plan.flush(dom: &dom)
     }
 }

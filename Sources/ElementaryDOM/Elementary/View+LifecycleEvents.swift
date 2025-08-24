@@ -9,8 +9,6 @@ public extension View {
         _LifecycleEventView(wrapped: self, listener: .onUnmount(action))
     }
 
-    // _Concurrency / Task API not yet available for embedded wasm
-    @_unavailableInEmbedded
     func task(_ task: @escaping () async -> Void) -> _LifecycleEventView<Self> {
         _LifecycleEventView(wrapped: self, listener: .task(task))
     }
@@ -28,7 +26,11 @@ public struct _LifecycleEventView<Wrapped: View>: View {
         context: consuming _ViewContext,
         reconciler: inout _RenderContext
     ) -> _MountedNode {
-        .init(value: view.listener, child: Wrapped._makeNode(view.wrapped, context: context, reconciler: &reconciler))
+        .init(
+            value: view.listener,
+            child: Wrapped._makeNode(view.wrapped, context: context, reconciler: &reconciler),
+            context: &reconciler
+        )
     }
 
     public static func _patchNode(

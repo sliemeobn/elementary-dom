@@ -17,7 +17,10 @@ extension DOM.EventSink {
 }
 
 final class JSKitDOMInteractor: DOM.Interactor {
-    let document = JSObject.global.document
+    private let document = JSObject.global.document
+    private let setTimeout = JSObject.global.setTimeout.function!
+    private let requestAnimationFrame = JSObject.global.requestAnimationFrame.function!
+    private let queueMicrotask = JSObject.global.queueMicrotask.function!
 
     let root: DOM.Node
 
@@ -91,11 +94,31 @@ final class JSKitDOMInteractor: DOM.Interactor {
     }
 
     func requestAnimationFrame(_ callback: @escaping (Double) -> Void) {
-        _ = JSObject.global.requestAnimationFrame!(
-            JSClosure { args in
+        // TODO: optimize this
+        requestAnimationFrame(
+            JSOneshotClosure { args in
                 callback(args[0].number!)
                 return .undefined
             }.jsValue
+        )
+    }
+
+    func queueMicrotask(_ callback: @escaping () -> Void) {
+        queueMicrotask(
+            JSOneshotClosure { args in
+                callback()
+                return .undefined
+            }.jsValue
+        )
+    }
+
+    func setTimeout(_ callback: @escaping () -> Void, _ timeout: Double) {
+        setTimeout(
+            JSOneshotClosure { args in
+                callback()
+                return .undefined
+            }.jsValue,
+            timeout
         )
     }
 }
