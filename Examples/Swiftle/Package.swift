@@ -11,7 +11,7 @@ let package = Package(
     ],
     targets: [
         .executableTarget(
-            name: "EmbeddedApp",
+            name: "Swiftle",
             dependencies: [
                 .product(name: "ElementaryDOM", package: "elementary-dom"),
                 .product(name: "ElementaryCSS", package: "elementary-css"),
