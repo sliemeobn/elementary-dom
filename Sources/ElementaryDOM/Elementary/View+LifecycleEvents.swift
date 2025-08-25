@@ -1,6 +1,8 @@
 import Elementary
+import _Concurrency
 
 public extension View {
+    // TODO: make rename this to onAppear and onDisappear and reserve mounting lingo for DOM nodes?
     func onMount(_ action: @escaping () -> Void) -> _LifecycleEventView<Self> {
         _LifecycleEventView(wrapped: self, listener: .onMount(action))
     }
@@ -10,7 +12,10 @@ public extension View {
     }
 
     func task(_ task: @escaping () async -> Void) -> _LifecycleEventView<Self> {
-        _LifecycleEventView(wrapped: self, listener: .task(task))
+        _LifecycleEventView(
+            wrapped: self,
+            listener: .onMountReturningCancelFunction({ Task { await task() }.cancel })
+        )
     }
 }
 

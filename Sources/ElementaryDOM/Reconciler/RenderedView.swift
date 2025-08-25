@@ -3,7 +3,6 @@ import Elementary
 public enum _LifecycleHook {
     case onMount(() -> Void)
     case onUnmount(() -> Void)
-    case task(() async -> Void)
     case onMountReturningCancelFunction(() -> () -> Void)
     case __none
 }

@@ -307,7 +307,7 @@ extension _HTMLArray: _Mountable, View where Element: View {
         _MountedNode(
             view.value.enumerated().map { [context] (index, element) in
                 (
-                    key: _ViewKey(index.description),
+                    key: _ViewKey(String(index)),
                     node: Element._makeNode(element, context: context, reconciler: &reconciler)
                 )
             },
@@ -321,9 +321,10 @@ extension _HTMLArray: _Mountable, View where Element: View {
         node: inout _MountedNode,
         reconciler: inout _RenderContext
     ) {
-
         // maybe we can optimize this
-        let indexes = view.value.indices.map { _ViewKey($0.description) }
+        // NOTE: written with cast for this https://github.com/swiftlang/swift/issues/83895
+        let indexes = view.value.indices.map { _ViewKey(String($0 as Int)) }
+
         node.patch(
             indexes,
             context: &reconciler,

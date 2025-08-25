@@ -1,4 +1,6 @@
-public class _LifecycleNode<ChildNode: _Reconcilable> where ChildNode: ~Copyable {
+// import _Concurrency
+
+public class _LifecycleNode<ChildNode: _Reconcilable> {  // where ChildNode: ~Copyable
     private var value: _LifecycleHook
     var child: ChildNode
 
@@ -20,11 +22,6 @@ public class _LifecycleNode<ChildNode: _Reconcilable> where ChildNode: ~Copyable
             context.addPrePaintAction(onMount)
         case .onUnmount(let onUnmount):
             self.onUnmount = onUnmount
-        case .task(let task):
-            let t = Task {
-                await task()
-            }
-            self.onUnmount = t.cancel
         case .onMountReturningCancelFunction(let onMountReturningCancelFunction):
             context.addPrePaintAction {
                 self.onUnmount = onMountReturningCancelFunction()

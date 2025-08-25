@@ -7,6 +7,7 @@ let package = Package(
     dependencies: [
         .package(path: "../../"),
         .package(url: "https://github.com/sliemeobn/elementary-css", branch: "main"),
+        .package(url: "https://github.com/swiftwasm/JavaScriptKit.git", from: "0.33.1"),
     ],
     targets: [
         .executableTarget(
