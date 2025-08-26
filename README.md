@@ -11,10 +11,9 @@ For embedded builds, a recent main or 6.2 snapshot with matching *Swift SDKs for
 
 > [!IMPORTANT]
 > ElementaryDOM is a passion project under active development.\
-> Expect sharp
-> edges — APIs may change and things may break while we try to balance out performance, ergonomics and feature set.
+> Expect sharp edges, APIs may change, and things may break while I balance performance, ergonomics, and feature set.
 >
-> Nothing is stopping us from having a viable, fully featured, client-side web frontend library.
+> Nothing is stopping us from having a viable, fully featured, client-side web frontend library powered by Swift.
 > 
 > If you want to see this come to life, sponsorship is sincerely appreciated 🙏\
 > [![](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=%23fe8e86)](https://github.com/sponsors/sliemeobn)
@@ -40,7 +39,7 @@ For embedded builds, a recent main or 6.2 snapshot with matching *Swift SDKs for
 - embedded-friendly Browser APIs (Storage, History, maybe in swiftwasm package with new JavaScriptKit macros)
 - ~~think about how to deal with the lack of `Codable` in embedded (wait for new serialization macros)~~
 - ~~make printing work without WASI (maybe pipe putchar through to JavaScript?)~~
-- isolation and @MainActor stuff for reusable types (server-side-rendering and client apps - probably never quite possible to have same types render "multi-threaded" server side and stay single-threaded client side....)
+- isolation and @MainActor stuff for reusable types (server-side rendering and client apps - probably never quite possible to have same types render "multi-threaded" server side and stay single-threaded client side....)
 - ~~decide whether the current idea of `Views` flattening themselves into renderable types is even necessary, or if views should just "apply" themselves into the reconciler - might be a bit messier, but maybe faster and more flexible~~
 - move all elementary repos under one project roof and use a traits-based, single "ElementaryUI" top-level package (or similar)
 
