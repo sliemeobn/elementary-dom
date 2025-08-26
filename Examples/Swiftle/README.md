@@ -1,8 +1,10 @@
-# Embedded example
+# "Swiftle" Example
 
-Requires a recent main-snapshot toolchain (tested with main-snapshot-2025-04-03.)
+https://sliemeobn.github.io/elementary-dom/
 
-Do not use a SwiftWasm toolchain or a SwiftWasm SDK.
+## Run Locally
+
+Requires main or 6.2 snapshot with matching *Swift SDKs for WebAssembly* from [swift.org](https://www.swift.org/install).
 
 ```sh
 $ ./build.sh
@@ -10,5 +12,6 @@ $ npx serve Public
 ```
 
 ```sh
+# dev mode
 $ ./watch.sh
 ```

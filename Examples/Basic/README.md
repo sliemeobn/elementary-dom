@@ -1,28 +1,15 @@
-# Basic example
+# Basic Example
 
-Test project that builds for Embedded and "full Swift"
+Test project that builds for embedded.
 
-## Full Swift (6.1)
-
-using Swift WASM SDK, JavaScriptKit js plugin
-https://book.swiftwasm.org/getting-started/setup.html
+Requires main or 6.2 snapshot with matching *Swift SDKs for WebAssembly* from [swift.org](https://www.swift.org/install).
 
 ```sh
-# requires Swift SDK installed
-./build-wasi.sh
+./build.sh
 npx serve Public
 ```
 
 ```sh
-# Debug build + watch mode
-./watch.sh
-```
-
-## Embedded Swift (main)
-Requires a recent main snapshot. (but no WASM SDK)
-
-```sh
-# Tested with main-snapshot-2025-03-28
-./build-embedded.sh
-npx serve Public
+# dev mode
+$ ./watch.sh
 ```
