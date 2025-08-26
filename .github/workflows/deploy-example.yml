@@ -33,10 +33,9 @@ jobs:
       - name: Install Swift WASM SDK
         run: swift sdk install ${{ env.WASM_SDK_URL }} --checksum ${{ env.WASM_SDK_CHECKSUM }}
       - name: Install wasm-opt
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y binaryen
-          wasm-opt --version
+        uses: phi-ag/setup-binaryen@v1
+        with:
+          version: "123"
       - name: Build
         working-directory: Examples/Swiftle
         run: ./build.sh
