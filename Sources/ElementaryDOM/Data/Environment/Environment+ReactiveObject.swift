@@ -26,7 +26,7 @@ struct ObjectStorageReader<Value> {
             if let value = $0[propertyID] {
                 return value[as: Value.self]
             } else {
-                fatalError()
+                fatalError("No value for \(propertyID.description) in environment")
             }
         }
     }

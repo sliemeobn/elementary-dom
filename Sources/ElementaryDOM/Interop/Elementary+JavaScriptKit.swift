@@ -1,20 +1,35 @@
 import Elementary
 import JavaScriptKit
 
-final class JSKitDOMInteractor: DOMInteracting {
-    typealias Node = JSObject
-    typealias Event = JSObject
-    typealias EventSink = JSValue
+extension DOM.Node {
+    init(_ node: JSObject) { self.init(ref: node) }
+    var jsObject: JSObject { ref as! JSObject }
+}
 
-    let document = JSObject.global.document
-    let root: Node
+extension DOM.Event {
+    init(_ event: JSObject) { self.init(ref: event) }
+    var jsObject: JSObject { ref as! JSObject }
+}
 
-    init(root: Node) {
-        self.root = root
+extension DOM.EventSink {
+    init(_ sink: JSClosure) { self.init(ref: sink) }
+    var jsClosure: JSClosure { ref as! JSClosure }
+}
+
+final class JSKitDOMInteractor: DOM.Interactor {
+    private let document = JSObject.global.document
+    private let setTimeout = JSObject.global.setTimeout.function!
+    private let requestAnimationFrame = JSObject.global.requestAnimationFrame.function!
+    private let queueMicrotask = JSObject.global.queueMicrotask.function!
+
+    let root: DOM.Node
+
+    init(root: JSObject) {
+        self.root = .init(root)
     }
 
-    func makeEventSink(_ handler: @escaping (String, Event) -> Void) -> EventSink {
-        JSValue.object(
+    func makeEventSink(_ handler: @escaping (String, DOM.Event) -> Void) -> DOM.EventSink {
+        .init(
             JSClosure { arguments in
                 guard arguments.count >= 1 else { return .undefined }
 
@@ -22,97 +37,88 @@ final class JSKitDOMInteractor: DOMInteracting {
                     return .undefined
                 }
 
-                handler(type, event)
+                handler(type, .init(event))
                 return .undefined
             }
         )
     }
 
-    func createText(_ text: String) -> Node {
-        document.createTextNode(text.jsValue).object!
+    func createText(_ text: String) -> DOM.Node {
+        .init(document.createTextNode(text).object!)
     }
 
-    func createElement(_ element: String) -> Node {
-        document.createElement(element.jsValue).object!
+    func createElement(_ element: String) -> DOM.Node {
+        .init(document.createElement(element).object!)
     }
 
-    func patchElementAttributes(
-        _ node: Node,
-        with attributes: _AttributeStorage,
-        replacing: _AttributeStorage
-    ) {
-        // fast pass
-        guard attributes != .none || replacing != .none else { return }
-
-        var previous = replacing.flattened().reversed()
-        for attribute in attributes.flattened() {
-            let previousIndex = previous.firstIndex { $0.name.utf8Equals(attribute.name) }
-            if let previousValue = previousIndex {
-                let oldValue = previous.remove(at: previousValue)
-                if !oldValue.value.utf8Equals(attribute.value) {
-                    logTrace(
-                        "updating attribute \(attribute.name) from \(oldValue.value ?? "") to \(attribute.value ?? "")"
-                    )
-                    _ = node.setAttribute!(attribute.name.jsValue, attribute.value.jsValue)
-                }
-            } else {
-                logTrace("setting attribute \(attribute.name) to \(attribute.value ?? "")")
-                _ = node.setAttribute!(attribute.name.jsValue, attribute.value.jsValue)
-            }
-        }
-
-        for attribute in previous {
-            logTrace("removing attribute \(attribute.name)")
-            _ = node.removeAttribute!(attribute.name)
-        }
+    // Low-level DOM-like operations used by protocol extensions
+    func setAttribute(_ node: DOM.Node, name: String, value: String?) {
+        _ = node.jsObject.setAttribute!(name.jsValue, value.jsValue)
     }
 
-    func patchEventListeners(
-        _ node: Node,
-        with listers: _DomEventListenerStorage,
-        replacing: _DomEventListenerStorage,
-        sink: @autoclosure () -> EventSink
-    ) {
-        guard !(listers.listeners.isEmpty && replacing.listeners.isEmpty) else { return }
-
-        var previous = replacing.listeners.map { $0.event }
-
-        for event in listers.listeners.map({ $0.event }) {
-            let previousIndex = previous.firstIndex { $0.utf8Equals(event) }
-            if let previousIndex {
-                previous.remove(at: previousIndex)
-            } else {
-                logTrace("adding listener \(event)")
-                _ = node.addEventListener!(event.jsValue, sink().jsValue)
-            }
-        }
-
-        for event in previous {
-            logTrace("removing listener \(event)")
-            _ = node.removeEventListener!(event.jsValue, sink().jsValue)
-        }
+    func removeAttribute(_ node: DOM.Node, name: String) {
+        _ = node.jsObject.removeAttribute!(name)
     }
 
-    func patchText(_ node: Node, with text: String, replacing: String) {
-        guard !text.utf8Equals(replacing) else { return }
-        _ = node.textContent = text.jsValue
+    func addEventListener(_ node: DOM.Node, event: String, sink: DOM.EventSink) {
+        _ = node.jsObject.addEventListener!(event.jsValue, sink.jsClosure.jsValue)
     }
 
-    func replaceChildren(_ children: [Node], in parent: Node) {
+    func removeEventListener(_ node: DOM.Node, event: String, sink: DOM.EventSink) {
+        _ = node.jsObject.removeEventListener!(event.jsValue, sink.jsClosure.jsValue)
+    }
+
+    func patchText(_ node: DOM.Node, with text: String) {
+        _ = node.jsObject.textContent = text.jsValue
+    }
+
+    func replaceChildren(_ children: [DOM.Node], in parent: DOM.Node) {
         logTrace("setting \(children.count) children in \(parent)")
-        let function = parent.replaceChildren.function!
+        let function = parent.jsObject.replaceChildren.function!
         function.callAsFunction(
-            this: parent,
-            arguments: children.map { $0.jsValue }
+            this: parent.jsObject,
+            arguments: children.map { $0.jsObject.jsValue }
         )
+    }
+
+    func insertChild(_ child: DOM.Node, before sibling: DOM.Node?, in parent: DOM.Node) {
+        if let s = sibling {
+            _ = parent.jsObject.insertBefore!(child.jsObject.jsValue, s.jsObject.jsValue)
+        } else {
+            _ = parent.jsObject.appendChild!(child.jsObject.jsValue)
+        }
+    }
+
+    func removeChild(_ child: DOM.Node, from parent: DOM.Node) {
+        _ = parent.jsObject.removeChild!(child.jsObject.jsValue)
     }
 
     func requestAnimationFrame(_ callback: @escaping (Double) -> Void) {
-        _ = JSObject.global.requestAnimationFrame!(
-            JSClosure { args in
+        // TODO: optimize this
+        requestAnimationFrame(
+            JSOneshotClosure { args in
                 callback(args[0].number!)
                 return .undefined
             }.jsValue
+        )
+    }
+
+    func queueMicrotask(_ callback: @escaping () -> Void) {
+        queueMicrotask(
+            JSOneshotClosure { args in
+                callback()
+                return .undefined
+            }.jsValue
+        )
+    }
+
+    func setTimeout(_ callback: @escaping () -> Void, _ timeout: Double) {
+        setTimeout(
+            JSOneshotClosure { args in
+                callback()
+                return .undefined
+            }.jsValue,
+            timeout
         )
     }
 }

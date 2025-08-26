@@ -4,4 +4,4 @@
 /*.xcodeproj
 xcuserdata/
 Package.resolved
-Public/app.wasm
+Public/lib

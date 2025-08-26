@@ -7,10 +7,11 @@ let package = Package(
     dependencies: [
         .package(path: "../../"),
         .package(url: "https://github.com/sliemeobn/elementary-css", branch: "main"),
+        .package(url: "https://github.com/swiftwasm/JavaScriptKit.git", .upToNextMinor(from: "0.33.1")),
     ],
     targets: [
         .executableTarget(
-            name: "EmbeddedApp",
+            name: "Swiftle",
             dependencies: [
                 .product(name: "ElementaryDOM", package: "elementary-dom"),
                 .product(name: "ElementaryCSS", package: "elementary-css"),

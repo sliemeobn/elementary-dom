@@ -85,6 +85,6 @@ struct StateTests {
     }
 }
 
-class TestState {
+private class TestState {
     var value: Int = 42
 }

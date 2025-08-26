@@ -90,7 +90,7 @@ struct EnvionmentTests {
 
     @Test
     func loadsValueInView() {
-        var context = _ViewRenderingContext()
+        var context = _ViewContext()
 
         var view = TestView()
         context.environment.bar = 42

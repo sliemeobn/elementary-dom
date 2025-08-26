@@ -9,13 +9,29 @@ public extension View {
 }
 
 public struct _EnvironmentView<V, Wrapped: View>: View {
+    public typealias _MountedNode = Wrapped._MountedNode
+
     public typealias Tag = Wrapped.Tag
     let wrapped: Wrapped
     let key: EnvironmentValues._Key<V>
     let value: V
 
-    public static func _renderView(_ view: consuming Self, context: consuming _ViewRenderingContext) -> _RenderedView {
+    public static func _makeNode(
+        _ view: consuming Self,
+        context: consuming _ViewContext,
+        reconciler: inout _RenderContext
+    ) -> _MountedNode {
         context.environment[view.key] = view.value
-        return Wrapped._renderView(view.wrapped, context: context)
+        return Wrapped._makeNode(view.wrapped, context: context, reconciler: &reconciler)
+    }
+
+    public static func _patchNode(
+        _ view: consuming Self,
+        context: consuming _ViewContext,
+        node: inout _MountedNode,
+        reconciler: inout _RenderContext
+    ) {
+        context.environment[view.key] = view.value
+        Wrapped._patchNode(view.wrapped, context: context, node: &node, reconciler: &reconciler)
     }
 }

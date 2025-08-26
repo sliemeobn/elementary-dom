@@ -7,9 +7,8 @@
 
   <body>
     <script type="module">
-      await import("./runtime-js/load-wasi-app.js").then((m) =>
-        m.loadWasiApp("app.wasm")
-      );
+      const module = await import("./lib/example/index.js");
+      module.init();
     </script>
   </body>
 </html>

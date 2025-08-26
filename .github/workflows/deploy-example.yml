@@ -5,14 +5,11 @@ on:
     branches: ["main"]
   workflow_dispatch:
 
-# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
-# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
 concurrency:
   group: "pages"
   cancel-in-progress: false
@@ -23,19 +20,21 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-    container:
-      image: "swift:6.1"
+    env:
+      SWIFT_VERSION: 6.2-snapshot-2025-08-21
+      WASM_SDK_URL: https://download.swift.org/swift-6.2-branch/wasm-sdk/swift-6.2-DEVELOPMENT-SNAPSHOT-2025-08-21-a/swift-6.2-DEVELOPMENT-SNAPSHOT-2025-08-21-a_wasm.artifactbundle.tar.gz
+      WASM_SDK_CHECKSUM: 46984066d3c93add1ef2e12914fc5af3814b722ada26aa13690def663236e675
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - uses: beeauvin/swiftly-swift@v1
+        with:
+          swift-version: ${{ env.SWIFT_VERSION }}
+      - name: Install Swift WASM SDK
+        run: swift sdk install ${{ env.WASM_SDK_URL }} --checksum ${{ env.WASM_SDK_CHECKSUM }}
       - name: Build
         working-directory: Examples/Swiftle
         run: ./build.sh
-      # - name: Optimize Wasm
-      #   uses: NiklasEi/wasm-opt-action@v2
-      #   with:
-      #     file: Examples/Swiftle/Public/app.wasm
-      #     output: Examples/Swiftle/Public/app.wasm
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact

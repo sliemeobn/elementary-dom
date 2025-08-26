@@ -19,6 +19,7 @@ extension ViewMacro: ExtensionMacro {
 
         let needsView = protocols.contains { $0.trimmed.description == "View" }
         let needsStatefulView = protocols.contains { $0.trimmed.description == "_StatefulView" }
+        let needsFunctionView = protocols.contains { $0.trimmed.description == "_FunctionView" }
         let members = declaration.memberBlock.members.compactMap { $0.decl.as(VariableDeclSyntax.self) }
 
         // add View conformance if not already present
@@ -34,7 +35,8 @@ extension ViewMacro: ExtensionMacro {
 
             let decl: DeclSyntax = """
                 extension \(raw: type.trimmedDescription): View {
-                    static func __applyContext(_ context: borrowing _ViewRenderingContext, to view: inout Self) {
+                    typealias _MountedNode = _FunctionNode<Content._MountedNode>
+                    static func __applyContext(_ context: borrowing _ViewContext, to view: inout Self) {
                         \(raw: environmentLoads.map { $0.description }.joined(separator: "\n"))
                     }
                 }
@@ -70,6 +72,13 @@ extension ViewMacro: ExtensionMacro {
                     static func __restoreState(_ storage: _ViewStateStorage, in view: inout Self) {
                         \(raw: restoreCalls.map { $0.description }.joined(separator: "\n"))
                     }
+                }
+                """
+
+            result.append(decl.cast(ExtensionDeclSyntax.self))
+        } else if needsFunctionView {
+            let decl: DeclSyntax = """
+                extension \(raw: type.trimmedDescription): _FunctionView {
                 }
                 """
 
