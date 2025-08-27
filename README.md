@@ -28,6 +28,8 @@ For embedded builds, a recent main or 6.2 snapshot with matching *Swift SDKs for
 - ~~dependencies on versioned packages (i.e., build without unsafe flags)~~
 - ~~fix DOM not child-diffing to preserve animations/nodes (the current solution based on `replaceChildren` will not work, it seems)~~
 - "model-bindings" for inputs (i.e., bind a @Binding<String> to a text box, or bind a @Binding<Bool> to a checkbox)
+- view value comparing (Equatable and/or memcmp if possible)
+- different handling of environment (individual reactivity needed)
 - transitions and animations (ideally CSS-based, probably svelte-like custom easing functions applied through WAAPI)
 - proper unit testing (once APIs firm up a bit more)
 - split out JavaScriptKit stuff in separate module to contain spread, maybe one day we can switch to faster interop somehow
