@@ -1,10 +1,12 @@
 // TODO: find a better name for this, "function node" is weird terminology
-public final class _FunctionNode<Value: __FunctionView> {
-    public typealias ChildNode = Value.Content._MountedNode
 
-    private var state: Value.__ViewState!
-    private var value: Value!
-    private var context: _ViewContext!
+// NOTE: ChildNode must be specified as extra argument to avoid a compiler error in embedded
+// FIXME: try with embedded main-snapshot build, revert extra argument if it works
+public final class _FunctionNode<Value, ChildNode>
+where Value: __FunctionView, ChildNode: _Reconcilable, ChildNode == Value.Content._MountedNode {
+    private var state: Value.__ViewState?
+    private var value: Value?
+    private var context: _ViewContext?
 
     var parentElement: AnyParentElememnt!
     public var depthInTree: Int
@@ -15,7 +17,7 @@ public final class _FunctionNode<Value: __FunctionView> {
         "\(depthInTree):\(ObjectIdentifier(self).hashValue)"
     }
 
-    var child: ChildNode?
+    var child: Value.Content._MountedNode?
 
     init(
         value: consuming Value,
@@ -32,7 +34,7 @@ public final class _FunctionNode<Value: __FunctionView> {
         // TODO: track environment access
         self.state = Value.__initializeState(from: value)
         Value.__applyContext(context, to: &value)
-        Value.__restoreState(state, in: &value)
+        Value.__restoreState(state!, in: &value)
         self.value = value
         self.context = context
 
@@ -45,13 +47,16 @@ public final class _FunctionNode<Value: __FunctionView> {
     }
 
     func patch(_ value: consuming Value, _ viewContext: consuming _ViewContext, context: inout _RenderContext) {
+        precondition(self.value != nil, "value must be set")
+        precondition(self.context != nil, "context must be set")
+
         let needsRerender =
-            !Value.__isEqual(a: value, b: self.value)
-            || !_ViewContext.areEqualEnoughToSkipRerender(a: viewContext, b: self.context)
+            !Value.__isEqual(a: value, b: self.value!)
+            || !_ViewContext.areEqualEnoughToSkipRerender(a: viewContext, b: self.context!)
 
         // NOTE: the idea is that way always store a "wired-up" value, so that we can re-run the function for free
         Value.__applyContext(viewContext, to: &value)
-        Value.__restoreState(state, in: &value)
+        Value.__restoreState(state!, in: &value)
         self.value = value
         self.context = viewContext
 
@@ -63,15 +68,18 @@ public final class _FunctionNode<Value: __FunctionView> {
     func runFunction(reconciler: inout _RenderContext) {
         reconciler.depth = depthInTree + 1
 
+        precondition(self.value != nil, "value must be set")
+        precondition(self.context != nil, "context must be set")
+
         // TODO: expose cancellation mechanism of reactivity and keep track of it
         // canceling on unmount/recalc maybe important for retain cycles
 
         reconciler.withCurrentLayoutContainer(parentElement) { reconciler in
             withReactiveTracking {
                 if child == nil {
-                    self.child = Value.Content._makeNode(value.content, context: context, reconciler: &reconciler)
+                    self.child = Value.Content._makeNode(self.value!.content, context: context!, reconciler: &reconciler)
                 } else {
-                    Value.Content._patchNode(value.content, context: context, node: &child!, reconciler: &reconciler)
+                    Value.Content._patchNode(self.value!.content, context: context!, node: &child!, reconciler: &reconciler)
                 }
             } onChange: { [scheduler = reconciler.scheduler, asFunctionNode] in
                 // TODO: hack in there that environment access is schedule in-reconciler
@@ -103,7 +111,7 @@ extension _FunctionNode: _Reconcilable {
 }
 
 extension AnyFunctionNode {
-    init(_ function: _FunctionNode<some __FunctionView>) {
+    init(_ function: _FunctionNode<some __FunctionView, some _Reconcilable>) {
         self.identifier = ObjectIdentifier(function)
         self.depthInTree = function.depthInTree
         self.runUpdate = function.runFunction
@@ -113,7 +121,7 @@ extension AnyFunctionNode {
 extension _ViewContext {
     // TODO: are we sure about this?
     static func areEqualEnoughToSkipRerender(a: Self, b: Self) -> Bool {
-        // TODO: check event listeners and stuff....
-        a.attributes == b.attributes
+        // TODO: actually compare attributes, check event listeners and stuff....
+        a.attributes.isEmpty && b.attributes.isEmpty
     }
 }

@@ -11,14 +11,14 @@ struct App {
     @State var data = SomeData()
 
     var content: some View {
-        TextField(value: #Binding(data.name))
-        div {
-            p { "Via Binding: \(data.name)" }
-            p { TestValueView() }
-            p { TestObjectView() }
-        }
-        .environment(#Key(\.myText), data.name)
-        .environment(data)
+        // TextField(value: #Binding(data.name))
+        // div {
+        //     p { "Via Binding: \(data.name)" }
+        //     p { TestValueView() }
+        //     p { TestObjectView() }
+        // }
+        //.environment(#Key(\.myText), data.name)
+        //.environment(data)
 
         hr()
 
@@ -91,18 +91,18 @@ struct Counter {
     }
 }
 
-@View
-struct TextField {
-    @Binding var value: String
+// @View
+// struct TextField {
+//     @Binding var value: String
 
-    var content: some View {
-        // TODO: make proper two-way binding for DOM elements
-        input(.type(.text))
-            .onInput { event in
-                value = event.targetValue ?? ""
-            }
-    }
-}
+//     var content: some View {
+//         // TODO: make proper two-way binding for DOM elements
+//         input(.type(.text))
+//             .onInput { event in
+//                 value = event.targetValue ?? ""
+//             }
+//     }
+// }
 
 @Reactive
 final class SomeData {
@@ -122,12 +122,12 @@ struct TestValueView {
 @View
 struct TestObjectView {
     @Environment<SomeData>() var data
-    @Environment<SomeData?>() var optionalData
+    //@Environment<SomeData?>() var optionalData
 
     var content: some View {
         span { "Via environment object: \(data.name)" }
         // TODO: figure out how to make optional environment object work in embedded
         br()
-        span { "Via optional environment object: \(optionalData?.name ?? "")" }
+        //span { "Via optional environment object: \(optionalData?.name ?? "")" }
     }
 }

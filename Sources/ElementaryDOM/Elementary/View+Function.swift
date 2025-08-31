@@ -77,7 +77,7 @@ public extension __FunctionView where __ViewState == Void {
     static func __restoreState(_ storage: __ViewState, in view: inout Self) {}
 }
 
-public extension __FunctionView where _MountedNode == _FunctionNode<Self> {
+public extension __FunctionView where _MountedNode == _FunctionNode<Self, Self.Content._MountedNode> {
 
     static func _makeNode(
         _ view: consuming Self,
