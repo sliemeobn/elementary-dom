@@ -4,7 +4,7 @@ import Reactivity
 public final class _ViewStateStorage {
     // TODO: maybe we can store AnyObjects directly instread of double-boxing them
     @ReactiveIgnored
-    private var values: [StoredValue] = []
+    private var values: [AnyValueBox] = []
 
     public init() {}
 
@@ -14,12 +14,12 @@ public final class _ViewStateStorage {
 
     public func initializeValueStorage<V>(initialValue: V, index: Int) {
         precondition(index == values.count, "State storage must be initialized in order")
-        values.append(StoredValue(initialValue))
+        values.append(AnyValueBox(initialValue))
     }
 
     public func initializeValueStorage<V: AnyObject>(initialValue: V, index: Int) {
         precondition(index == values.count, "State storage must be initialized in order")
-        values.append(StoredValue(initialValue))
+        values.append(AnyValueBox(initialValue))
     }
 
     public subscript<V>(_ index: Int, as type: V.Type = V.self) -> V {

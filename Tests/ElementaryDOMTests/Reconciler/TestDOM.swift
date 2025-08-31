@@ -213,18 +213,22 @@ final class TestDOM: DOM.Interactor {
         queueMicrotaskCallbacks.append(callback)
     }
 
-    func runNextFrame() {
-        runScheduledWork()
-        guard let callback = rafCallbacks.first else { return }
-        rafCallbacks.removeFirst()
-        callback(0)
-        runScheduledWork()
-    }
-
-    private func runScheduledWork() {
+    func flushMicrotasks() {
         while !queueMicrotaskCallbacks.isEmpty {
             queueMicrotaskCallbacks.removeFirst()()
         }
+    }
+
+    func runNextFrame() {
+        runAllScheduledWork()
+        guard let callback = rafCallbacks.first else { return }
+        rafCallbacks.removeFirst()
+        callback(0)
+        runAllScheduledWork()
+    }
+
+    private func runAllScheduledWork() {
+        flushMicrotasks()
 
         var ti = 0
         while ti < timeoutCallbacks.count {
@@ -288,6 +292,25 @@ func patchOps(@HTMLBuilder _ view: @escaping () -> some View, toggle: () -> Void
     toggle()
     dom.runNextFrame()
     return dom.ops
+}
+
+func trackMounting(@HTMLBuilder _ view: @escaping () -> some View) -> [String] {
+    let dom = TestDOM()
+    let tracker = RenderTracker()
+    dom.mount { view().environment(#Key(\.tracker), tracker) }
+    dom.flushMicrotasks()
+    return tracker.calls
+}
+
+func trackUpdating(@HTMLBuilder _ view: @escaping () -> some View, toggle: () -> Void) -> [String] {
+    let dom = TestDOM()
+    let tracker = RenderTracker()
+    dom.mount { view().environment(#Key(\.tracker), tracker) }
+    dom.flushMicrotasks()
+    tracker.reset()
+    toggle()
+    dom.runNextFrame()
+    return tracker.calls
 }
 
 extension TestDOM {

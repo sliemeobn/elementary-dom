@@ -22,7 +22,7 @@ public struct _StorageKey<Storage: _ValueStorage, Value>: Sendable {
         defaultValueClosure = defaultValue
     }
 
-    init(_ propertyID: PropertyID) {
+    public init(_ propertyID: PropertyID) {
         self.propertyID = propertyID
         defaultValueClosure = nil
     }

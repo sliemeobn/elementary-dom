@@ -1,10 +1,10 @@
 @attached(
     extension,
-    conformances: View,
-    _StatefulView,
+    conformances: __FunctionView,
     names: named(__initializeState),
     named(__restoreState),
     named(__applyContext),
+    named(__ViewState),
     named(_MountedNode)
 )
 @attached(memberAttribute)

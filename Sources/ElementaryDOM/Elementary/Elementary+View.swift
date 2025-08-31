@@ -3,9 +3,6 @@ import Elementary
 // TODO: maybe this should not derive from HTML at all, or maybe HTML should already be "View" and _Mountable is an extra requirement for mounting?
 // TODO: think about how the square MainActor-isolation with server side usage
 public protocol View: HTML & _Mountable where Content: HTML & _Mountable {
-
-    // TODO: maybe this can be generalized somehow and moved to an extra trait? maybe a combined "__View" trait that mounts as a function?
-    static func __applyContext(_ context: borrowing _ViewContext, to view: inout Self)
 }
 
 public protocol _Mountable {
@@ -23,11 +20,6 @@ public protocol _Mountable {
         node: inout _MountedNode,
         reconciler: inout _RenderContext
     )
-}
-
-public protocol _StatefulView: View {
-    static func __initializeState(from view: borrowing Self) -> _ViewStateStorage
-    static func __restoreState(_ storage: _ViewStateStorage, in view: inout Self)
 }
 
 public extension View where Content == Never {

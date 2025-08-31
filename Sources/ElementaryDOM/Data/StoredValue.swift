@@ -1,4 +1,4 @@
-struct StoredValue {
+struct AnyValueBox {
     private final class Box<V> {
         var value: V
 
@@ -17,10 +17,10 @@ struct StoredValue {
         get {
             (storage as! Box<T>).value
         }
-        set {
+        nonmutating set {
             (storage as! Box<T>).value = newValue
         }
-        _modify {
+        nonmutating _modify {
             yield &((storage as! Box<T>).value)
         }
     }
