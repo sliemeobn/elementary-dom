@@ -56,7 +56,7 @@ public extension __FunctionView {
     static func __isEqual(a: borrowing Self, b: Self) -> Bool where Self: BitwiseCopyable {
         withUnsafeBytes(of: a) { aBytes in
             withUnsafeBytes(of: b) { bBytes in
-
+                // TODO: memcmp?
                 aBytes.elementsEqual(bBytes)
             }
         }

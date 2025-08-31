@@ -54,9 +54,16 @@ public struct _EnvironmentView<V, Wrapped: View>: View {
         if view.isEqual?(node.state._value, view.value) ?? true {
             node.state._value = view.value
         } else {
-            node.state.value = view.value
+            // NOTE: a bit of a hack to allow dependent functions to run in the same reconciler run
+            reconciler.scheduler.withAmbientRenderContext(
+                &reconciler,
+                {
+                    node.state.value = view.value
+                }
+            )
         }
 
+        context.environment.boxes[view.key.propertyID] = node.state
         Wrapped._patchNode(view.wrapped, context: context, node: &node.child, reconciler: &reconciler)
     }
 }

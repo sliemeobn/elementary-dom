@@ -35,11 +35,26 @@ struct ReconcilerUpdateTests {
 
         #expect(calls == ["Outer"])
     }
+
+    @Test
+    func runsUpdatedFunctionOnlyOnce() {
+        let state = State()
+
+        let calls = trackUpdating {
+            Outer(state: state)
+        } toggle: {
+            state.envValue += 1
+            state.directValue += 1
+        }
+
+        #expect(calls == ["Outer", "Inner", "value: 1"])
+    }
 }
 
 @Reactive
 private class State {
     var envValue: Int = 0
+    var directValue: Int = 0
     var toggle: Bool = false
 }
 
@@ -49,7 +64,7 @@ private struct Outer {
 
     var content: some View {
         Track(name: "Outer") {
-            Inner()
+            InnerBitwise(value: state.directValue)
             let _ = state.toggle
         }
         .environment(#Key(\.testValue), state.envValue)
@@ -57,7 +72,9 @@ private struct Outer {
 }
 
 @View
-private struct Inner {
+private struct InnerBitwise {
+    var value: Int
+
     var content: some View {
         Track(name: "Inner") {
             ValueView()
