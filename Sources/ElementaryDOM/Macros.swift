@@ -1,11 +1,13 @@
 @attached(
     extension,
     conformances: __FunctionView,
+    __ViewEquatable,
     names: named(__initializeState),
     named(__restoreState),
     named(__applyContext),
     named(__ViewState),
-    named(_MountedNode)
+    named(_MountedNode),
+    named(__arePropertiesEqual)
 )
 @attached(memberAttribute)
 public macro View() = #externalMacro(module: "ElementaryDOMMacros", type: "ViewMacro")

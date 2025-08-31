@@ -51,7 +51,7 @@ where Value: __FunctionView, ChildNode: _Reconcilable, ChildNode == Value.Conten
         precondition(self.context != nil, "context must be set")
 
         let needsRerender =
-            !Value.__isEqual(a: value, b: self.value!)
+            !Value.__areEqual(a: value, b: self.value!)
             || !_ViewContext.areEqualEnoughToSkipRerender(a: viewContext, b: self.context!)
 
         // NOTE: the idea is that way always store a "wired-up" value, so that we can re-run the function for free

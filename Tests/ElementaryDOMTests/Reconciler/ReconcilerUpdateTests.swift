@@ -64,7 +64,7 @@ private struct Outer {
 
     var content: some View {
         Track(name: "Outer") {
-            InnerBitwise(value: state.directValue)
+            Inner(value: state.directValue)
             let _ = state.toggle
         }
         .environment(#Key(\.testValue), state.envValue)
@@ -72,7 +72,7 @@ private struct Outer {
 }
 
 @View
-private struct InnerBitwise {
+private struct Inner {
     var value: Int
 
     var content: some View {

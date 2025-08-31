@@ -5,6 +5,12 @@ import SwiftSyntaxMacros
 
 public enum ViewMacro {}
 
+let skippableAttributesForEquating = Set<String>([
+    "Environment",
+    "State",
+    "ViewEquatableIgnored",
+])
+
 extension ViewMacro: ExtensionMacro {
     public static func expansion(
         of node: AttributeSyntax,
@@ -18,9 +24,8 @@ extension ViewMacro: ExtensionMacro {
         var result: [ExtensionDeclSyntax] = []
 
         let needsFunctionView = protocols.contains { $0.trimmed.description == "__FunctionView" }
+        let needsViewEquatable = protocols.contains { $0.trimmed.description == "__ViewEquatable" }
         let members = declaration.memberBlock.members.compactMap { $0.decl.as(VariableDeclSyntax.self) }
-
-        let stateMembers = members.filter { $0.isStateProperty }
 
         // add _StatefulView conformance if any @State member is declared
         if needsFunctionView {
@@ -38,13 +43,15 @@ extension ViewMacro: ExtensionMacro {
             decls.append(
                 DeclSyntax(
                     """
-                        static func __applyContext(_ context: borrowing _ViewContext, to view: inout Self) {
-                            \(raw: environmentLoads.map { $0.description }.joined(separator: "\n"))
-                        }
+                    static func __applyContext(_ context: borrowing _ViewContext, to view: inout Self) {
+                        \(raw: environmentLoads.map { $0.description }.joined(separator: "\n"))
+                    }
                     """
                 )
             )
 
+            // add state members
+            let stateMembers = members.filter { $0.isStateProperty }
             if !stateMembers.isEmpty {
                 var initCalls: [DeclSyntax] = []
                 var restoreCalls: [DeclSyntax] = []
@@ -89,13 +96,42 @@ extension ViewMacro: ExtensionMacro {
 
             let extensionDecl: DeclSyntax = """
                 extension \(raw: type.trimmedDescription): __FunctionView {
-                    typealias _MountedNode = _FunctionNode<Self, Self.Content._MountedNode>
+                    //typealias _MountedNode = _FunctionNode<Self, Self.Content._MountedNode>
                     
                     \(raw: decls.map { $0.description }.joined(separator: "\n"))
                 }
                 """
 
             result.append(extensionDecl.cast(ExtensionDeclSyntax.self))
+        }
+
+        if needsViewEquatable {
+            let properties = members
+                .lazy
+                .filter { $0.isStoredProperty }
+                .filter { !$0.hasAnyAttribute(named: skippableAttributesForEquating) }
+
+            let shouldNotEvenTry = properties.contains(where: { $0.isKnownToBeClosure })
+
+            if !shouldNotEvenTry {
+                let propDecls = properties.map { property in
+                    let name = property.trimmedIdentifier!.text
+                    return DeclSyntax("&& __ViewProperty.areKnownEqual(a.\(raw: name), b.\(raw: name))")
+                }
+
+                try result.append(
+                    ExtensionDeclSyntax(
+                        """
+                        extension \(raw: type.trimmedDescription): __ViewEquatable {
+                            static func __arePropertiesEqual(a: Self, b: Self) -> Bool {
+                                return true 
+                                \(raw: propDecls.map { $0.description }.joined(separator: "\n"))
+                            }
+                        }
+                        """
+                    )
+                )
+            }
         }
 
         return result
@@ -140,8 +176,57 @@ extension VariableDeclSyntax {
         isVar && hasAttribute(named: "Environment")
     }
 
+    var isInstance: Bool {
+        for modifier in modifiers {
+            for token in modifier.tokens(viewMode: .all) {
+                if token.tokenKind == .keyword(.static) || token.tokenKind == .keyword(.class) {
+                    return false
+                }
+            }
+        }
+        return true
+    }
+
+    var isStoredProperty: Bool {
+        guard isInstance else { return false }
+
+        for binding in bindings {
+            if let accessorBlock = binding.accessorBlock {
+                switch accessorBlock.accessors {
+                case .getter:
+                    return false
+                case .accessors(let accessorList):
+                    for accessor in accessorList {
+                        let specifier = accessor.accessorSpecifier.trimmed.text
+                        if specifier == "get" || specifier == "set" {
+                            return false
+                        }
+                    }
+                    continue
+                }
+            }
+        }
+        return true
+    }
+
+    var isKnownToBeClosure: Bool {
+        guard var type = bindings.first?.typeAnnotation?.type else { return false }
+
+        if let optType = type.as(OptionalTypeSyntax.self) {
+            type = optType.wrappedType
+        } else if let optType = type.as(ImplicitlyUnwrappedOptionalTypeSyntax.self) {
+            type = optType.wrappedType
+        }
+
+        return type.is(FunctionTypeSyntax.self)
+    }
+
     func hasAttribute(named name: String) -> Bool {
         attributes.contains { a in a.as(AttributeSyntax.self)?.trimmedName == name }
+    }
+
+    func hasAnyAttribute(named name: Set<String>) -> Bool {
+        attributes.contains { a in name.contains(a.as(AttributeSyntax.self)?.trimmedName ?? "") }
     }
 }
 
