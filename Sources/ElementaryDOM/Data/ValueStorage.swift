@@ -1,10 +1,4 @@
-public protocol _ValueStorage {
-    typealias _Key<Value> = _StorageKey<Self, Value>
-    // TODO: get rid of this public thing
-    subscript<Value>(key: _Key<Value>) -> Value { get set }
-}
-
-public struct _StorageKey<Storage: _ValueStorage, Value>: Sendable {
+public struct _StorageKey<Container, Value>: Sendable {
     private let defaultValueClosure: (@Sendable () -> sending Value)?
     public let propertyID: PropertyID
 

@@ -82,7 +82,6 @@ where Value: __FunctionView, ChildNode: _Reconcilable, ChildNode == Value.Conten
                     Value.Content._patchNode(self.value!.content, context: context!, node: &child!, reconciler: &reconciler)
                 }
             } onChange: { [scheduler = reconciler.scheduler, asFunctionNode] in
-                // TODO: hack in there that environment access is schedule in-reconciler
                 scheduler.scheduleFunction(asFunctionNode)
             }
         }

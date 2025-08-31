@@ -42,6 +42,4 @@ extension ReactivityRegistrar: Hashable {
     public func hash(into hasher: inout Hasher) {}
 }
 
-public protocol ReactiveObject: AnyObject {
-    static var _$typeID: PropertyID { get }
-}
+public protocol ReactiveObject: AnyObject {}

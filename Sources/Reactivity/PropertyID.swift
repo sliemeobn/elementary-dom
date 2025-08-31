@@ -3,6 +3,7 @@ public struct PropertyID: Hashable, Sendable, CustomStringConvertible {
     enum _Storage: Hashable, Sendable {
         case index(Int)
         case name([UInt8])
+        case objectIdentifier(ObjectIdentifier)
     }
 
     @usableFromInline
@@ -18,12 +19,19 @@ public struct PropertyID: Hashable, Sendable, CustomStringConvertible {
         id = .index(index)
     }
 
+    @inlinable
+    public init(_ index: ObjectIdentifier) {
+        id = .objectIdentifier(index)
+    }
+
     public var description: String {
         switch id {
         case let .index(index):
             return "\(index)"
         case let .name(name):
             return String(decoding: name, as: UTF8.self)
+        case let .objectIdentifier(identifier):
+            return "\(identifier)"
         }
     }
 }

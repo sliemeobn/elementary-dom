@@ -44,13 +44,22 @@ public struct Environment<V> {
             }
         case let .objectReader(reader, _):
             storage = .objectReader(reader, values.boxes[reader.propertyID])
+            #if hasFeature(Embedded)
+            // FIXME: embedded - create issue and check with main
+            if __omg_this_was_annoying_I_am_false {
+                // NOTE: this is only to force inclusion of the the box type for V
+                storage = .valueBox(EnvironmentValues._Box<V>(reader.read(values.boxes[reader.propertyID])))
+            }
+            #endif
         default:
             fatalError("Cannot load environment value twice")
         }
     }
 }
 
-public struct EnvironmentValues: _ValueStorage {
+public struct EnvironmentValues {
+    public typealias _Key<Value> = _StorageKey<Self, Value>
+
     var boxes: [PropertyID: AnyObject] = [:]
 
     public subscript<Value>(key: _Key<Value>) -> Value {

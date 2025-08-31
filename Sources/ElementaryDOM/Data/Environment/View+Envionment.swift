@@ -8,6 +8,10 @@ public extension View {
         _EnvironmentView(wrapped: self, key: key, value: value, isEqual: ==)
     }
 
+    consuming func environment(_ key: EnvironmentValues._Key<String>, _ value: String) -> _EnvironmentView<String, Self> {
+        _EnvironmentView(wrapped: self, key: key, value: value, isEqual: String.utf8Equals)
+    }
+
     consuming func environment<V>(_ key: EnvironmentValues._Key<V>, _ value: V) -> _EnvironmentView<V, Self>
     where V: Equatable & AnyObject {
         _EnvironmentView(wrapped: self, key: key, value: value, isEqual: ===)

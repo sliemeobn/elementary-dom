@@ -1,7 +1,7 @@
 import ElementaryDOM
 
 extension EnvironmentValues {
-    @Entry var myText = ""
+    @Entry var myText: String = ""
 }
 
 @View
@@ -11,14 +11,14 @@ struct App {
     @State var data = SomeData()
 
     var content: some View {
-        // TextField(value: #Binding(data.name))
-        // div {
-        //     p { "Via Binding: \(data.name)" }
-        //     p { TestValueView() }
-        //     p { TestObjectView() }
-        // }
-        //.environment(#Key(\.myText), data.name)
-        //.environment(data)
+        TextField(value: Binding(get: { data.name }, set: { data.name = $0 }))
+        div {
+            p { "Via Binding: \(data.name)" }
+            p { TestValueView() }
+            p { TestObjectView() }
+        }
+        .environment(#Key(\.myText), data.name)
+        .environment(data)
 
         hr()
 
@@ -91,18 +91,20 @@ struct Counter {
     }
 }
 
-// @View
-// struct TextField {
-//     @Binding var value: String
+@View
+struct TextField {
+    @Binding<String> var value: String
 
-//     var content: some View {
-//         // TODO: make proper two-way binding for DOM elements
-//         input(.type(.text))
-//             .onInput { event in
-//                 value = event.targetValue ?? ""
-//             }
-//     }
-// }
+    var content: some View {
+        // // TODO: make proper two-way binding for DOM elements
+        input(.type(.text))
+            .onInput { event in
+                let text: String = event.targetValue ?? ""
+                print(event.targetValue ?? "No target value")
+                _value.wrappedValue = text
+            }
+    }
+}
 
 @Reactive
 final class SomeData {
@@ -121,8 +123,8 @@ struct TestValueView {
 
 @View
 struct TestObjectView {
-    @Environment<SomeData>() var data
-    //@Environment<SomeData?>() var optionalData
+    @Environment(SomeData.self) var data: SomeData
+    @Environment(SomeData.self) var optionalData: SomeData?
 
     var content: some View {
         span { "Via environment object: \(data.name)" }

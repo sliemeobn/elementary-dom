@@ -1,6 +1,10 @@
-public extension ReactiveObject {
+internal extension ReactiveObject {
     static var environmentKey: EnvironmentValues._Key<Self> {
         EnvironmentValues._Key(_$typeID)
+    }
+
+    static var _$typeID: PropertyID {
+        .init(ObjectIdentifier(self))
     }
 }
 
