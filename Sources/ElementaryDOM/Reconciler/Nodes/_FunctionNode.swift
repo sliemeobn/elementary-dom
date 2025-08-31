@@ -81,7 +81,7 @@ where Value: __FunctionView, ChildNode: _Reconcilable, ChildNode == Value.Conten
                 } else {
                     Value.Content._patchNode(self.value!.content, context: context!, node: &child!, reconciler: &reconciler)
                 }
-            } onChange: { [scheduler = reconciler.scheduler, asFunctionNode] in
+            } onChange: { [scheduler = reconciler.scheduler, asFunctionNode = asFunctionNode!] in
                 scheduler.scheduleFunction(asFunctionNode)
             }
         }
