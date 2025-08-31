@@ -1,7 +1,7 @@
 import ElementaryDOM
 
 extension EnvironmentValues {
-    @Entry var myText = ""
+    @Entry var myText: String = ""
 }
 
 @View
@@ -11,7 +11,7 @@ struct App {
     @State var data = SomeData()
 
     var content: some View {
-        TextField(value: #Binding(data.name))
+        TextField(value: Binding(get: { data.name }, set: { data.name = $0 }))
         div {
             p { "Via Binding: \(data.name)" }
             p { TestValueView() }
@@ -93,13 +93,15 @@ struct Counter {
 
 @View
 struct TextField {
-    @Binding var value: String
+    @Binding<String> var value: String
 
     var content: some View {
-        // TODO: make proper two-way binding for DOM elements
+        // // TODO: make proper two-way binding for DOM elements
         input(.type(.text))
             .onInput { event in
-                value = event.targetValue ?? ""
+                let text: String = event.targetValue ?? ""
+                print(event.targetValue ?? "No target value")
+                _value.wrappedValue = text
             }
     }
 }
@@ -121,13 +123,13 @@ struct TestValueView {
 
 @View
 struct TestObjectView {
-    //@Environment<SomeData>() var data
-    // @Environment<SomeData?>() var optionalData
+    @Environment(SomeData.self) var data: SomeData
+    @Environment(SomeData.self) var optionalData: SomeData?
 
     var content: some View {
-        //span { "Via environment object: \(data.name)" }
+        span { "Via environment object: \(data.name)" }
         // TODO: figure out how to make optional environment object work in embedded
-        // br()
-        // span { "Via optional environment object: \(optionalData?.name ?? "")" }
+        br()
+        //span { "Via optional environment object: \(optionalData?.name ?? "")" }
     }
 }

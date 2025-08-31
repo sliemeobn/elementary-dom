@@ -1,7 +1,7 @@
 import ElementaryDOM
 import Testing
 
-struct ReconcilerPatchingTests {
+struct DOMPatchingTests {
     @Test
     func patchesText() {
         let state = ToggleState()

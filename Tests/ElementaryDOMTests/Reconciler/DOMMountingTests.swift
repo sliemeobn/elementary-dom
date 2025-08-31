@@ -1,7 +1,7 @@
 import ElementaryDOM
 import Testing
 
-struct ReconcilerMountingTests {
+struct DOMMountingTests {
     @Test
     func mountsAnElement() {
         let ops = mountOps { div { "Hello" } }

@@ -1,18 +1,15 @@
-// NOTE: using the correct render function depends on complie-time overload resolution
-// it is a bit fragile and won't scale to many more cases, but for now it feels like a good compromise
-public extension View where _MountedNode == _FunctionNode<Content._MountedNode> {
+public protocol __FunctionView: View where _MountedNode == _FunctionNode<Self, Self.Content._MountedNode> {
+    associatedtype __ViewState
 
-    private consuming func makeValue(context: consuming _ViewContext) -> _MountedNode.Value {
-        .init(
-            makeOrPatch: { [self, context] state, node, reconciler in
-                if node != nil {
-                    Content._patchNode(content, context: context, node: &node!, reconciler: &reconciler)
-                } else {
-                    node = Content._makeNode(content, context: context, reconciler: &reconciler)
-                }
-            }
-        )
-    }
+    static func __initializeState(from view: borrowing Self) -> __ViewState
+    static func __restoreState(_ storage: __ViewState, in view: inout Self)
+
+    static func __applyContext(_ context: borrowing _ViewContext, to view: inout Self)
+
+    static func __areEqual(a: borrowing Self, b: borrowing Self) -> Bool
+}
+
+public extension __FunctionView {
 
     static func _makeNode(
         _ view: consuming Self,
@@ -20,8 +17,8 @@ public extension View where _MountedNode == _FunctionNode<Content._MountedNode> 
         reconciler: inout _RenderContext
     ) -> _MountedNode {
         .init(
-            state: nil,
-            value: view.makeValue(context: context),
+            value: view,
+            context: context,
             reconciler: &reconciler
         )
     }
@@ -32,45 +29,30 @@ public extension View where _MountedNode == _FunctionNode<Content._MountedNode> 
         node: inout _MountedNode,
         reconciler: inout _RenderContext
     ) {
-        node.patch(view.makeValue(context: context), context: &reconciler)
+        node.patch(view, context, context: &reconciler)
     }
 }
 
-public extension _StatefulView where _MountedNode == _FunctionNode<Content._MountedNode> {
-    private consuming func makeValue(
-        context: consuming _ViewContext,
-    ) -> _MountedNode.Value {
-        Self.__applyContext(context, to: &self)
-        return .init(
-            makeOrPatch: { [context] state, node, reconciler in
-                Self.__restoreState(state as! _ViewStateStorage, in: &self)
-                if node != nil {
-                    Content._patchNode(self.content, context: context, node: &node!, reconciler: &reconciler)
-                } else {
-                    node = Content._makeNode(self.content, context: context, reconciler: &reconciler)
-                }
-            }
-        )
+public extension __FunctionView where __ViewState == Void {
+    static func __initializeState(from view: borrowing Self) {}
+    static func __restoreState(_ storage: __ViewState, in view: inout Self) {}
+}
+
+public extension __FunctionView {
+    static func __areEqual(a: borrowing Self, b: borrowing Self) -> Bool where Self: Equatable {
+        a == b
     }
 
-    static func _makeNode(
-        _ view: consuming Self,
-        context: consuming _ViewContext,
-        reconciler: inout _RenderContext
-    ) -> _MountedNode {
-        .init(
-            state: Self.__initializeState(from: view),
-            value: view.makeValue(context: context),
-            reconciler: &reconciler
-        )
+    static func __areEqual(a: borrowing Self, b: Self) -> Bool where Self: __ViewEquatable {
+        Self.__arePropertiesEqual(a: a, b: b)
     }
 
-    static func _patchNode(
-        _ view: consuming Self,
-        context: consuming _ViewContext,
-        node: inout _MountedNode,
-        reconciler: inout _RenderContext
-    ) {
-        node.patch(view.makeValue(context: context), context: &reconciler)
+    static func __areEqual(a: borrowing Self, b: borrowing Self) -> Bool where Self: Equatable & __ViewEquatable {
+        // that is the question.... but I think if explicit equality is provided, we should use it
+        a == b
+    }
+
+    static func __areEqual(a: borrowing Self, b: borrowing Self) -> Bool {
+        false
     }
 }

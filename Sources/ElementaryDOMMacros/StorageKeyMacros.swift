@@ -38,8 +38,7 @@ extension EntryMacro: PeerMacro {
         guard let property = declaration.as(VariableDeclSyntax.self),
             property.isValidEntry,
             let identifier = property.trimmedIdentifier,
-            let binding = property.bindings.first,
-            let initializer = binding.initializer
+            let binding = property.bindings.first
         else {
             return []
         }
@@ -53,15 +52,28 @@ extension EntryMacro: PeerMacro {
             keyType = "_Key"
         }
 
-        let storageKeySyntax = DeclSyntax(
-            """
-            \(property.modifiers) static let \(raw: keyName(for: identifier.text)) = \(keyType)(
-                PropertyID("\(uniqueName)"), 
-                defaultValue: \(initializer.value)
-            )
-            """
-        )
-        return [storageKeySyntax]
+        if let initializer = binding.initializer {
+            return [
+                DeclSyntax(
+                    """
+                    \(property.modifiers) static let \(raw: keyName(for: identifier.text)) = \(keyType)(
+                        PropertyID("\(uniqueName)"), 
+                        defaultValue: \(initializer.value)
+                    )
+                    """
+                )
+            ]
+        } else {
+            return [
+                DeclSyntax(
+                    """
+                    \(property.modifiers) static let \(raw: keyName(for: identifier.text)) = \(keyType)(
+                        PropertyID("\(uniqueName)")
+                    )
+                    """
+                )
+            ]
+        }
     }
 }
 

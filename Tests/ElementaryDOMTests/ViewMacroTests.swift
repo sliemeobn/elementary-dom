@@ -4,7 +4,7 @@ import Testing
 @Suite
 struct ViewMacroTests {
     @Test
-    func testViewMacro() {
+    func viewMacro() {
         let view = MyView(number: 2)
         let storage = MyView.__initializeState(from: view)
 
@@ -14,7 +14,7 @@ struct ViewMacroTests {
     }
 
     // @Test
-    // func testStatelessView() {
+    // func statelessView() {
     //     let view = StatelessView()
     //     StatelessView._makeNode(view, context: .empty, reconciler: _ReconcilerBatch)
     // }

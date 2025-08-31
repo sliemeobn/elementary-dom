@@ -48,18 +48,34 @@ final class Scheduler {
     private var commitPlan: CommitPlan = .init()
     private var isAnimationFramePending: Bool = false
 
+    private var ambientRenderContext: _RenderContext?
+
     init(dom: any DOM.Interactor) {
         self.dom = dom
     }
 
     func scheduleFunction(_ function: AnyFunctionNode) {
-        if pendingFunctionsQueue.isEmpty {
-            dom.queueMicrotask { [self] in
-                self.reconcile()
+        // NOTE: this is a bit of a hack to scheduel function in the same reconciler run if environment values change
+        // we currently uses the same Reactivity tracking for environment changes, but they always happen during reconciliation
+        if ambientRenderContext != nil {
+            ambientRenderContext!.addFunction(function)
+            return
+        } else {
+            if pendingFunctionsQueue.isEmpty {
+                dom.queueMicrotask { [self] in
+                    self.reconcile()
+                }
             }
-        }
 
-        pendingFunctionsQueue.registerFunctionForUpdate(function)
+            pendingFunctionsQueue.registerFunctionForUpdate(function)
+        }
+    }
+
+    func withAmbientRenderContext(_ context: inout _RenderContext, _ block: () -> Void) {
+        precondition(ambientRenderContext == nil, "ambient reconciliation already exists")
+        ambientRenderContext = consume context
+        block()
+        context = ambientRenderContext.take()!
     }
 
     private func reconcile() {

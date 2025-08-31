@@ -28,15 +28,16 @@ For embedded builds, a recent main or 6.2 snapshot with matching *Swift SDKs for
 - ~~dependencies on versioned packages (i.e., build without unsafe flags)~~
 - ~~fix DOM not child-diffing to preserve animations/nodes (the current solution based on `replaceChildren` will not work, it seems)~~
 - "model-bindings" for inputs (i.e., bind a @Binding<String> to a text box, or bind a @Binding<Bool> to a checkbox)
-- view value comparing (Equatable and/or memcmp if possible)
-- different handling of environment (individual reactivity needed)
+- ~~view value comparing (generated comparing and custom equatable support)~~
+- ~~different handling of environment (individual reactivity needed)~~
 - transitions and animations (ideally CSS-based, probably svelte-like custom easing functions applied through WAAPI)
-- proper unit testing (once APIs firm up a bit more)
+- proper unit testing (once APIs firm up a bit more, partially started)
+- implement @ViewEquatableIgnored
 - split out JavaScriptKit stuff in separate module to contain spread, maybe one day we can switch to faster interop somehow
 - add basic docs, a good intro readme, and push a 0.1 out the door! (probably best to wait for Swift 6.2 to drop)
 - a router implementation (probably in extra module?)
 - maybe conditionally support @Observable for non-embedded builds?
-- figure out why `@Environment` with optional `ReactiveObject` does not build in embedded
+- ~~figure out why `@Environment` with optional `ReactiveObject` does not build in embedded~~
 - preference system (i.e., bubbling up values)
 - embedded-friendly Browser APIs (Storage, History, maybe in swiftwasm package with new JavaScriptKit macros)
 - ~~think about how to deal with the lack of `Codable` in embedded (wait for new serialization macros)~~
