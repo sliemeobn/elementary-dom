@@ -50,3 +50,14 @@ public struct Binding<V> {
         )
     }
 }
+
+extension Binding: Equatable {
+    public static func == (lhs: Binding<V>, rhs: Binding<V>) -> Bool {
+        switch (lhs.storage, rhs.storage) {
+        case (.stateAccessor(let lhsAccessor), .stateAccessor(let rhsAccessor)):
+            return lhsAccessor == rhsAccessor
+        default:
+            return false
+        }
+    }
+}

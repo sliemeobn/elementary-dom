@@ -35,6 +35,19 @@ struct ViewEquatingTests {
         #expect(areEqual(ViewWithState(state: state), ViewWithState(state: state)))
         #expect(!areEqual(ViewWithState(state: state), ViewWithState(state: state2)))
     }
+
+    @Test
+    func ignoresStateBindings() {
+        let closureBinding = Binding(get: { 42 }, set: { _ in })
+        @State var state = 42
+        let storage = _ViewStateStorage()
+        _state.__initializeState(storage: storage, index: 0)
+        _state.__restoreState(storage: storage, index: 0)
+
+        #expect(areEqual(ViewWithBinding(binding: $state), ViewWithBinding(binding: $state)))
+        #expect(!areEqual(ViewWithBinding(binding: closureBinding), ViewWithBinding(binding: closureBinding)))
+        #expect(!areEqual(ViewWithBinding(binding: closureBinding), ViewWithBinding(binding: $state)))
+    }
 }
 
 private func areEqual<V: __FunctionView>(_ a: V, _ b: V) -> Bool {
@@ -89,6 +102,11 @@ private struct ViewWithState {
 
     var content: some View {
     }
+}
+
+@View
+private struct ViewWithBinding {
+    @Binding var binding: Int
 }
 
 @Reactive

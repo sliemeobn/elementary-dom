@@ -11,6 +11,10 @@ let skippableAttributesForEquating = Set<String>([
     "ViewEquatableIgnored",
 ])
 
+let wrappingAttributesForEquating = Set<String>([
+    "Binding"
+])
+
 extension ViewMacro: ExtensionMacro {
     public static func expansion(
         of node: AttributeSyntax,
@@ -115,7 +119,9 @@ extension ViewMacro: ExtensionMacro {
 
             if !shouldNotEvenTry {
                 let propDecls = properties.map { property in
-                    let name = property.trimmedIdentifier!.text
+                    let shouldUnderscore = property.hasAnyAttribute(named: wrappingAttributesForEquating)
+
+                    let name = shouldUnderscore ? "_\(property.trimmedIdentifier!.text)" : property.trimmedIdentifier!.text
                     return DeclSyntax("&& __ViewProperty.areKnownEqual(a.\(raw: name), b.\(raw: name))")
                 }
 
