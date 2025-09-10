@@ -208,7 +208,7 @@ struct NumberBindingConfiguration: BindingConfiguration {
     }
     static func writeValue(_ value: Value) -> DOM.PropertyValue? {
         guard let value, !value.isNaN else {
-            return .null
+            return .undefined
         }
 
         return .number(value)
