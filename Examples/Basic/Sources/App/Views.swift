@@ -9,22 +9,37 @@ struct App {
     @State var counters: [Int] = [1]
     @State var nextCounterName = 1
     @State var data = SomeData()
+    @State var checked = false
+    @State var value: Double?
 
     var content: some View {
-        TextField(value: Binding(get: { data.name }, set: { data.name = $0 }))
         div {
-            p { "Via Binding: \(data.name)" }
-            p { TestValueView() }
-            p { TestObjectView() }
-        }
-        .environment(#Key(\.myText), data.name)
-        .environment(data)
+            TextField(value: Binding(get: { data.name }, set: { data.name = $0 }))
 
-        button { "Reset" }
-            .onClick { _ in
-                data.name = "Hello"
+            div {
+                p { "Via Binding: \(data.name)" }
+                p { TestValueView() }
+                p { TestObjectView() }
+            }
+            .environment(#Key(\.myText), data.name)
+            .environment(data)
+
+            input(.type(.checkbox))
+                .bindChecked($checked)
+            p { "Checked: \(checked)" }
+
+            div {
+                input(.type(.number))
+                    .bindValue($value)
+                p { "Value: \(value.map { "\($0)" } ?? "nil")" }
             }
 
+            button { "Reset" }
+                .onClick { _ in
+                    data.name = "Hello"
+                    value = nil
+                }
+        }
         hr()
 
         // TODE: replaceChildren does not keep animations and similar going....
@@ -102,7 +117,7 @@ struct TextField {
 
     var content: some View {
         input(.type(.text))
-            .bind($value)
+            .bindValue($value)
     }
 }
 

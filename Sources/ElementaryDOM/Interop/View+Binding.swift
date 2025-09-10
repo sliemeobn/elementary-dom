@@ -1,8 +1,16 @@
 import Elementary
 
 public extension View where Tag == HTMLTag.input {
-    consuming func bind(_ value: Binding<String>) -> some View {
-        DOMEffectView<TextBindingModifier, Self>(value: value, wrapped: self)
+    consuming func bindValue(_ value: Binding<String>) -> some View {
+        DOMEffectView<BindingModifier<TextBindingConfiguration>, Self>(value: value, wrapped: self)
+    }
+
+    consuming func bindValue(_ value: Binding<Double?>) -> some View {
+        DOMEffectView<BindingModifier<NumberBindingConfiguration>, Self>(value: value, wrapped: self)
+    }
+
+    consuming func bindChecked(_ value: Binding<Bool>) -> some View {
+        DOMEffectView<BindingModifier<CheckboxBindingConfiguration>, Self>(value: value, wrapped: self)
     }
 }
 
