@@ -133,6 +133,10 @@ final class TestDOM: DOM.Interactor {
         .init(EventSink(handler))
     }
 
+    func makePropertyAccessor(_ node: DOM.Node, name: String) -> DOM.PropertyAccessor {
+        fatalError("Not implemented")
+    }
+
     func createText(_ text: String) -> DOM.Node {
         ops.append(.createText(text))
         return DOM.Node(NodeRef(kind: .text(text)))

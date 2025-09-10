@@ -10,11 +10,14 @@ public final class _ElementNode<ChildNode>: _Reconcilable where ChildNode: _Reco
         let tagName: String
         var attributes: _AttributeStorage
         var listerners: _DomEventListenerStorage
+        var directives: [any DOMElementDirective]
     }
 
-    var domNode: ManagedDOMReference?
     var value: Value
     var child: ChildNode!
+
+    var domNode: ManagedDOMReference?
+    var mountedDirectives: [any MountedDOMNodeDirective]?
 
     var eventSink: DOM.EventSink?
     var childrenLayoutStatus: ChildrenLayoutStatus = .init()
@@ -54,7 +57,7 @@ public final class _ElementNode<ChildNode>: _Reconcilable where ChildNode: _Reco
         makeChild: (inout _RenderContext) -> ChildNode
     ) {
         self.domNode = .init(reference: root, status: .unchanged)
-        self.value = .init(tagName: "<root>", attributes: .none, listerners: .none)
+        self.value = .init(tagName: "<root>", attributes: .none, listerners: .none, directives: .init())
         self.eventSink = nil
         self.scheduler = context.scheduler
         self.identifier = "\("_root_"):\(ObjectIdentifier(self))"
@@ -109,8 +112,6 @@ public final class _ElementNode<ChildNode>: _Reconcilable where ChildNode: _Reco
         let ref = context.dom.createElement(value.tagName)
         self.domNode = ManagedDOMReference(reference: ref, status: .added)
 
-        context.dom.patchElementAttributes(ref, with: value.attributes, replacing: value.attributes)
-
         context.dom.patchElementAttributes(
             ref,
             with: value.attributes,
@@ -126,6 +127,10 @@ public final class _ElementNode<ChildNode>: _Reconcilable where ChildNode: _Reco
                 replacing: .none,
                 sink: eventSink!
             )
+        }
+
+        self.mountedDirectives = value.directives.map {
+            $0.mount(ref, &context)
         }
     }
 
@@ -168,6 +173,11 @@ public final class _ElementNode<ChildNode>: _Reconcilable where ChildNode: _Reco
     public consuming func unmount(_ context: inout _CommitContext) {
         let c = self.child.take()!
         c.unmount(&context)
+
+        if let domNode = self.domNode?.reference {
+            mountedDirectives?.forEach { $0.unmount(domNode, &context) }
+            mountedDirectives = nil
+        }
 
         self.domNode = nil
         self.eventSink = nil

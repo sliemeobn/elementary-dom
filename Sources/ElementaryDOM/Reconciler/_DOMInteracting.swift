@@ -1,4 +1,5 @@
 import Elementary
+import JavaScriptKit
 
 // Type-erased node reference
 public enum DOM {
@@ -14,11 +15,43 @@ public enum DOM {
         let ref: AnyObject
     }
 
+    public enum PropertyValue {
+        case string(String)
+        case number(Double)
+        case boolean(Bool)
+        case stringArray([String])
+        case null
+        case undefined
+    }
+
+    public struct PropertyAccessor {
+        let _get: () -> PropertyValue?
+        let _set: (PropertyValue) -> Void
+
+        init(
+            get: @escaping () -> PropertyValue?,
+            set: @escaping (PropertyValue) -> Void
+        ) {
+            self._get = get
+            self._set = set
+        }
+
+        func get() -> PropertyValue? {
+            _get()
+        }
+
+        func set(_ value: PropertyValue) {
+            _set(value)
+        }
+    }
+
     // TODO: remove anyobject and make reconcier runs generic over this
     public protocol Interactor: AnyObject {
         var root: Node { get }
 
         func makeEventSink(_ handler: @escaping (String, Event) -> Void) -> EventSink
+
+        func makePropertyAccessor(_ node: Node, name: String) -> PropertyAccessor
 
         func createText(_ text: String) -> Node
         func createElement(_ element: String) -> Node
