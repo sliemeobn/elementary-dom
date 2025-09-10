@@ -2,11 +2,11 @@ import Elementary
 
 public extension View where Tag == HTMLTag.input {
     consuming func bind(_ value: Binding<String>) -> some View {
-        DOMEffectView<TextBindingDirective, Self>(value: value, wrapped: self)
+        DOMEffectView<TextBindingModifier, Self>(value: value, wrapped: self)
     }
 }
 
-struct DOMEffectView<Effect: DOMElementDirective, Wrapped: View>: View {
+struct DOMEffectView<Effect: DOMElementModifier, Wrapped: View>: View {
     var value: Effect.Value
     var wrapped: Wrapped
 

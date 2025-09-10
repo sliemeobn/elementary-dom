@@ -55,7 +55,7 @@ public struct _ViewContext {
     var attributes: _AttributeStorage = .none
 
     var environment: EnvironmentValues = .init()
-    var directives: DOMElementDirectives = .init()
+    var directives: DOMElementModifiers = .init()
 
     mutating func takeAttributes() -> _AttributeStorage {
         let attributes = self.attributes
@@ -69,8 +69,8 @@ public struct _ViewContext {
         return listeners
     }
 
-    mutating func takeDirectives() -> [AnyDOMDirective] {
-        directives.takeDirectives()
+    mutating func takeDirectives() -> [any DOMElementModifier] {
+        directives.takeModifiers()
     }
 
     public static var empty: Self {
@@ -89,7 +89,7 @@ extension HTMLElement: _Mountable, View where Content: _Mountable {
             tagName: Tag.name,
             attributes: attributes,
             listerners: context.takeListeners(),
-            directives: context.takeDirectives()
+            modifiers: context.takeDirectives()
         )
     }
 
@@ -138,7 +138,7 @@ extension HTMLVoidElement: _Mountable, View {
             tagName: Tag.name,
             attributes: attributes,
             listerners: context.takeListeners(),
-            directives: context.takeDirectives()
+            modifiers: context.takeDirectives()
         )
     }
 

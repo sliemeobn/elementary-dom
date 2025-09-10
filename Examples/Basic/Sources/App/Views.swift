@@ -20,6 +20,11 @@ struct App {
         .environment(#Key(\.myText), data.name)
         .environment(data)
 
+        button { "Reset" }
+            .onClick { _ in
+                data.name = "Hello"
+            }
+
         hr()
 
         // TODE: replaceChildren does not keep animations and similar going....

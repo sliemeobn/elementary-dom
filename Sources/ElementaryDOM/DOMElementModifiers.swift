@@ -1,8 +1,26 @@
-import JavaScriptKit
-import Reactivity
+protocol DOMElementModifier: AnyObject {
+    associatedtype Value
 
-struct DOMElementDirectives {
-    struct Key<Directive: DOMElementDirective> {
+    static var key: DOMElementModifiers.Key<Self> { get }
+
+    init(value: consuming Value, upstream: Self?, _ context: inout _RenderContext)
+    func updateValue(_ value: consuming Value, _ context: inout _RenderContext)
+
+    func mount(_ node: DOM.Node, _ context: inout _CommitContext) -> AnyUnmountable
+}
+
+extension DOMElementModifier {
+    static var key: DOMElementModifiers.Key<Self> {
+        DOMElementModifiers.Key(Self.self)
+    }
+}
+
+protocol Unmountable: AnyObject {
+    func unmount(_ context: inout _CommitContext)
+}
+
+struct DOMElementModifiers {
+    struct Key<Directive: DOMElementModifier> {
         let typeID: ObjectIdentifier
 
         init(_: Directive.Type) {
@@ -10,57 +28,41 @@ struct DOMElementDirectives {
         }
     }
 
-    private var storage: [ObjectIdentifier: AnyDOMDirective] = [:]
+    private var storage: [ObjectIdentifier: any DOMElementModifier] = [:]
 
-    subscript<Directive: DOMElementDirective>(_ key: Key<Directive>) -> Directive? {
+    subscript<Directive: DOMElementModifier>(_ key: Key<Directive>) -> Directive? {
         get {
-            storage[key.typeID]?.ref as? Directive
+            storage[key.typeID] as? Directive
         }
         set {
             if let newValue = newValue {
-                storage[key.typeID] = AnyDOMDirective(newValue)
+                storage[key.typeID] = newValue
             } else {
                 storage.removeValue(forKey: key.typeID)
             }
         }
     }
 
-    consuming func takeDirectives() -> [AnyDOMDirective] {
+    consuming func takeModifiers() -> [any DOMElementModifier] {
         let directives = Array(storage.values)
         storage.removeAll()
         return directives
     }
 }
 
-struct AnyDOMDirective {
-    fileprivate let ref: AnyObject
-    private let _mount: (DOM.Node, inout _CommitContext) -> AnyMountedDOMDirective
+struct AnyUnmountable {
+    private let _unmount: (inout _CommitContext) -> Void
 
-    init<Directive: DOMElementDirective>(_ directive: Directive) {
-        self.ref = directive
-        self._mount = { node, context in
-            AnyMountedDOMDirective(directive.mount(node, &context))
-        }
+    init(_ unmountable: some Unmountable) {
+        self._unmount = unmountable.unmount(_:)
     }
 
-    func mount(_ node: DOM.Node, _ context: inout _CommitContext) -> AnyMountedDOMDirective {
-        _mount(node, &context)
+    func unmount(_ context: inout _CommitContext) {
+        _unmount(&context)
     }
 }
 
-struct AnyMountedDOMDirective {
-    private let _unmount: (DOM.Node, inout _CommitContext) -> Void
-
-    init<Mounted: MountedDOMNodeDirective>(_ directive: Mounted) {
-        self._unmount = directive.unmount(_:_:)
-    }
-
-    func unmount(_ node: DOM.Node, _ context: inout _CommitContext) {
-        _unmount(node, &context)
-    }
-}
-
-final class TextBindingDirective: DOMElementDirective, MountedDOMNodeDirective {
+final class TextBindingModifier: DOMElementModifier, Unmountable {
     typealias Value = Binding<String>
     private var lastValue: String
     var binding: Value
@@ -70,7 +72,7 @@ final class TextBindingDirective: DOMElementDirective, MountedDOMNodeDirective {
     var accessor: DOM.PropertyAccessor?
     var isDirty: Bool = false
 
-    init(value: consuming Value, upstream: TextBindingDirective?, _ context: inout _RenderContext) {
+    init(value: consuming Value, upstream: TextBindingModifier?, _ context: inout _RenderContext) {
         self.binding = value
         self.lastValue = value.wrappedValue
     }
@@ -95,14 +97,15 @@ final class TextBindingDirective: DOMElementDirective, MountedDOMNodeDirective {
 
     private func updateDOMNode(_ context: inout _CommitContext) {
         guard let accessor = self.accessor else { return }
+        logTrace("setting value \(lastValue) to accessor")
         accessor.set(.string(lastValue))
         isDirty = false
     }
 
-    func mount(_ node: DOM.Node, _ context: inout _CommitContext) -> some MountedDOMNodeDirective {
+    func mount(_ node: DOM.Node, _ context: inout _CommitContext) -> AnyUnmountable {
         if mountedNode != nil {
             assertionFailure("Binding effect can only be mounted on a single element")
-            self.unmount(mountedNode!, &context)
+            self.unmount(&context)
         }
 
         self.mountedNode = node
@@ -126,10 +129,10 @@ final class TextBindingDirective: DOMElementDirective, MountedDOMNodeDirective {
         }
 
         context.dom.addEventListener(node, event: "input", sink: sink)
-        return self
+        return AnyUnmountable(self)
     }
 
-    func unmount(_ node: DOM.Node, _ context: inout _CommitContext) {
+    func unmount(_ context: inout _CommitContext) {
         guard let sink = self.sink, let node = self.mountedNode else {
             assertionFailure("Binding effect can only be unmounted on a mounted element")
             return
@@ -161,26 +164,4 @@ struct DependencyList: ~Copyable {
             downstream()
         }
     }
-}
-
-protocol DOMElementDirective: AnyObject {
-    associatedtype Value
-    associatedtype MountedDirective: MountedDOMNodeDirective
-
-    static var key: DOMElementDirectives.Key<Self> { get }
-
-    init(value: consuming Value, upstream: Self?, _ context: inout _RenderContext)
-    func updateValue(_ value: consuming Value, _ context: inout _RenderContext)
-
-    func mount(_ node: DOM.Node, _ context: inout _CommitContext) -> MountedDirective
-}
-
-extension DOMElementDirective {
-    static var key: DOMElementDirectives.Key<Self> {
-        DOMElementDirectives.Key(Self.self)
-    }
-}
-
-protocol MountedDOMNodeDirective: AnyObject {
-    func unmount(_ node: DOM.Node, _ context: inout _CommitContext)
 }

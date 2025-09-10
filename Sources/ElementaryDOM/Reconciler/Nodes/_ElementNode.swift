@@ -10,14 +10,14 @@ public final class _ElementNode<ChildNode>: _Reconcilable where ChildNode: _Reco
         let tagName: String
         var attributes: _AttributeStorage
         var listerners: _DomEventListenerStorage
-        var directives: [AnyDOMDirective]
+        var modifiers: [any DOMElementModifier]
     }
 
     var value: Value
     var child: ChildNode!
 
     var domNode: ManagedDOMReference?
-    var mountedDirectives: [AnyMountedDOMDirective]?
+    var mountedModifieres: [AnyUnmountable]?
 
     var eventSink: DOM.EventSink?
     var childrenLayoutStatus: ChildrenLayoutStatus = .init()
@@ -57,7 +57,7 @@ public final class _ElementNode<ChildNode>: _Reconcilable where ChildNode: _Reco
         makeChild: (inout _RenderContext) -> ChildNode
     ) {
         self.domNode = .init(reference: root, status: .unchanged)
-        self.value = .init(tagName: "<root>", attributes: .none, listerners: .none, directives: .init())
+        self.value = .init(tagName: "<root>", attributes: .none, listerners: .none, modifiers: .init())
         self.eventSink = nil
         self.scheduler = context.scheduler
         self.identifier = "\("_root_"):\(ObjectIdentifier(self))"
@@ -129,7 +129,7 @@ public final class _ElementNode<ChildNode>: _Reconcilable where ChildNode: _Reco
             )
         }
 
-        self.mountedDirectives = value.directives.map {
+        self.mountedModifieres = value.modifiers.map {
             $0.mount(ref, &context)
         }
     }
@@ -174,10 +174,8 @@ public final class _ElementNode<ChildNode>: _Reconcilable where ChildNode: _Reco
         let c = self.child.take()!
         c.unmount(&context)
 
-        if let domNode = self.domNode?.reference {
-            mountedDirectives?.forEach { $0.unmount(domNode, &context) }
-            mountedDirectives = nil
-        }
+        mountedModifieres?.forEach { $0.unmount(&context) }
+        mountedModifieres = nil
 
         self.domNode = nil
         self.eventSink = nil
