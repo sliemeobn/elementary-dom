@@ -26,6 +26,13 @@ final class JSKitDOMInteractor: DOM.Interactor {
 
     init(root: JSObject) {
         self.root = .init(root)
+
+        #if hasFeature(Embedded)
+        if __omg_this_was_annoying_I_am_false {
+            // NOTE: this is just to force inclusion of some types that would otherwise crash the 6.2 compiler
+            _ = JSClosure { _ in .undefined }
+        }
+        #endif
     }
 
     func makeEventSink(_ handler: @escaping (String, DOM.Event) -> Void) -> DOM.EventSink {
