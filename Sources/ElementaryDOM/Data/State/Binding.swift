@@ -42,6 +42,10 @@ public struct Binding<V> {
         }
     }
 
+    public var projectedValue: Binding<V> {
+        self
+    }
+
     @_unavailableInEmbedded
     public subscript<P>(dynamicMember keypath: WritableKeyPath<V, P>) -> Binding<P> {
         Binding<P>(

@@ -10,14 +10,14 @@ public final class _ElementNode<ChildNode>: _Reconcilable where ChildNode: _Reco
         let tagName: String
         var attributes: _AttributeStorage
         var listerners: _DomEventListenerStorage
-        var directives: [any DOMElementDirective]
+        var directives: [AnyDOMDirective]
     }
 
     var value: Value
     var child: ChildNode!
 
     var domNode: ManagedDOMReference?
-    var mountedDirectives: [any MountedDOMNodeDirective]?
+    var mountedDirectives: [AnyMountedDOMDirective]?
 
     var eventSink: DOM.EventSink?
     var childrenLayoutStatus: ChildrenLayoutStatus = .init()

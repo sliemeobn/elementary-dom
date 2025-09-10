@@ -96,13 +96,8 @@ struct TextField {
     @Binding<String> var value: String
 
     var content: some View {
-        // // TODO: make proper two-way binding for DOM elements
         input(.type(.text))
-            .onInput { event in
-                let text: String = event.targetValue ?? ""
-                print(event.targetValue ?? "No target value")
-                _value.wrappedValue = text
-            }
+            .bind($value)
     }
 }
 

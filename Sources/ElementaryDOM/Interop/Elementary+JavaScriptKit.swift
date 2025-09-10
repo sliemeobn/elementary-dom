@@ -70,6 +70,10 @@ final class JSKitDOMInteractor: DOM.Interactor {
         if __omg_this_was_annoying_I_am_false {
             // NOTE: this is just to force inclusion of some types that would otherwise crash the 6.2 compiler
             _ = JSClosure { _ in .undefined }
+            _ = JSFunction()
+            _ = JSFunction?(nil)
+            _ = JSArray.constructor?.jsValue
+            // _ = JSClosure?(nil)
         }
         #endif
     }

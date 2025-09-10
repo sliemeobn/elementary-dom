@@ -69,7 +69,7 @@ public struct _ViewContext {
         return listeners
     }
 
-    mutating func takeDirectives() -> [any DOMElementDirective] {
+    mutating func takeDirectives() -> [AnyDOMDirective] {
         directives.takeDirectives()
     }
 

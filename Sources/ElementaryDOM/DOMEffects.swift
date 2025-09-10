@@ -1,3 +1,4 @@
+import JavaScriptKit
 import Reactivity
 
 struct DOMElementDirectives {
@@ -9,25 +10,53 @@ struct DOMElementDirectives {
         }
     }
 
-    private var storage: [ObjectIdentifier: any DOMElementDirective] = [:]
+    private var storage: [ObjectIdentifier: AnyDOMDirective] = [:]
 
     subscript<Directive: DOMElementDirective>(_ key: Key<Directive>) -> Directive? {
         get {
-            storage[key.typeID] as? Directive
+            storage[key.typeID]?.ref as? Directive
         }
         set {
             if let newValue = newValue {
-                storage[key.typeID] = newValue
+                storage[key.typeID] = AnyDOMDirective(newValue)
             } else {
                 storage.removeValue(forKey: key.typeID)
             }
         }
     }
 
-    consuming func takeDirectives() -> [any DOMElementDirective] {
+    consuming func takeDirectives() -> [AnyDOMDirective] {
         let directives = Array(storage.values)
         storage.removeAll()
         return directives
+    }
+}
+
+struct AnyDOMDirective {
+    fileprivate let ref: AnyObject
+    private let _mount: (DOM.Node, inout _CommitContext) -> AnyMountedDOMDirective
+
+    init<Directive: DOMElementDirective>(_ directive: Directive) {
+        self.ref = directive
+        self._mount = { node, context in
+            AnyMountedDOMDirective(directive.mount(node, &context))
+        }
+    }
+
+    func mount(_ node: DOM.Node, _ context: inout _CommitContext) -> AnyMountedDOMDirective {
+        _mount(node, &context)
+    }
+}
+
+struct AnyMountedDOMDirective {
+    private let _unmount: (DOM.Node, inout _CommitContext) -> Void
+
+    init<Mounted: MountedDOMNodeDirective>(_ directive: Mounted) {
+        self._unmount = directive.unmount(_:_:)
+    }
+
+    func unmount(_ node: DOM.Node, _ context: inout _CommitContext) {
+        _unmount(node, &context)
     }
 }
 
@@ -49,7 +78,7 @@ final class TextBindingDirective: DOMElementDirective, MountedDOMNodeDirective {
     func updateValue(_ value: consuming Value, _ context: inout _RenderContext) {
         self.binding = value
 
-        if binding.wrappedValue != lastValue {
+        if !binding.wrappedValue.utf8Equals(lastValue) {
             self.lastValue = binding.wrappedValue
             markDirty(&context)
         }
