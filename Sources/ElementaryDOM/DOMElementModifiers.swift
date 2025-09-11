@@ -74,8 +74,8 @@ final class BindingModifier<Configuration>: DOMElementModifier, Unmountable wher
     var isDirty: Bool = false
 
     init(value: consuming Value, upstream: BindingModifier?, _ context: inout _RenderContext) {
-        self.binding = value
         self.lastValue = value.wrappedValue
+        self.binding = value
     }
 
     func updateValue(_ value: consuming Value, _ context: inout _RenderContext) {
