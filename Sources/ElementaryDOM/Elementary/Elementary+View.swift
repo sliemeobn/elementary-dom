@@ -49,9 +49,13 @@ extension Never: _Mountable {
 
 // TODO: does this need to be extra?
 public struct _ViewContext {
+    // TODO: get red of this
     var eventListeners: _DomEventListenerStorage = .init()
+    // TODO: get red of this
     var attributes: _AttributeStorage = .none
+
     var environment: EnvironmentValues = .init()
+    var directives: DOMElementModifiers = .init()
 
     mutating func takeAttributes() -> _AttributeStorage {
         let attributes = self.attributes
@@ -63,6 +67,10 @@ public struct _ViewContext {
         let listeners = eventListeners
         eventListeners = .init()
         return listeners
+    }
+
+    mutating func takeDirectives() -> [any DOMElementModifier] {
+        directives.takeModifiers()
     }
 
     public static var empty: Self {
@@ -80,7 +88,8 @@ extension HTMLElement: _Mountable, View where Content: _Mountable {
         return .init(
             tagName: Tag.name,
             attributes: attributes,
-            listerners: context.takeListeners()
+            listerners: context.takeListeners(),
+            modifiers: context.takeDirectives()
         )
     }
 
@@ -128,7 +137,8 @@ extension HTMLVoidElement: _Mountable, View {
         return .init(
             tagName: Tag.name,
             attributes: attributes,
-            listerners: context.takeListeners()
+            listerners: context.takeListeners(),
+            modifiers: context.takeDirectives()
         )
     }
 

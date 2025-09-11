@@ -16,6 +16,45 @@ extension DOM.EventSink {
     var jsClosure: JSClosure { ref as! JSClosure }
 }
 
+extension DOM.PropertyValue {
+    var jsValue: JSValue {
+        switch self {
+        case let .string(value):
+            return value.jsValue
+        case let .number(value):
+            return value.jsValue
+        case let .boolean(value):
+            return value.jsValue
+        case let .stringArray(value):
+            return value.jsValue
+        case .null:
+            return .null
+        case .undefined:
+            return .undefined
+        }
+    }
+
+    init?(_ jsValue: JSValue) {
+        switch jsValue {
+        case let .string(value):
+            self = .string(value.description)
+        case let .number(value):
+            self = .number(value)
+        case let .boolean(value):
+            self = .boolean(value)
+        case let .object(object):
+            guard let array = JSArray(object) else { return nil }
+            self = .stringArray(array.compactMap { $0.string })
+        case .null:
+            self = .null
+        case .undefined:
+            self = .undefined
+        default:
+            return nil
+        }
+    }
+}
+
 final class JSKitDOMInteractor: DOM.Interactor {
     private let document = JSObject.global.document
     private let setTimeout = JSObject.global.setTimeout.function!
@@ -31,6 +70,10 @@ final class JSKitDOMInteractor: DOM.Interactor {
         if __omg_this_was_annoying_I_am_false {
             // NOTE: this is just to force inclusion of some types that would otherwise crash the 6.2 compiler
             _ = JSClosure { _ in .undefined }
+            _ = JSFunction()
+            _ = JSFunction?(nil)
+            _ = JSArray.constructor?.jsValue
+            // _ = JSClosure?(nil)
         }
         #endif
     }
@@ -47,6 +90,15 @@ final class JSKitDOMInteractor: DOM.Interactor {
                 handler(type, .init(event))
                 return .undefined
             }
+        )
+    }
+
+    func makePropertyAccessor(_ node: DOM.Node, name: String) -> DOM.PropertyAccessor {
+        let propertyName = JSString(name)
+        let object = node.jsObject
+        return .init(
+            get: { .init(getJSValue(this: object, name: propertyName)) },
+            set: { setJSValue(this: object, name: propertyName, value: $0.jsValue) }
         )
     }
 

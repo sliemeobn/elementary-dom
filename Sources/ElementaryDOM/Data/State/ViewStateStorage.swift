@@ -41,7 +41,7 @@ public final class _ViewStateStorage {
     }
 }
 
-struct StateAccessor<V> {
+struct StateAccessor<V>: Equatable {
     let storage: _ViewStateStorage
     let index: Int
 
@@ -55,5 +55,9 @@ struct StateAccessor<V> {
         nonmutating _modify {
             yield &storage[index]
         }
+    }
+
+    static func == (lhs: StateAccessor<V>, rhs: StateAccessor<V>) -> Bool {
+        lhs.storage === rhs.storage && lhs.index == rhs.index
     }
 }

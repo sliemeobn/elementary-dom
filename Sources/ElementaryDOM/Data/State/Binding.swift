@@ -42,11 +42,25 @@ public struct Binding<V> {
         }
     }
 
-    @_unavailableInEmbedded
+    public var projectedValue: Binding<V> {
+        self
+    }
+
     public subscript<P>(dynamicMember keypath: WritableKeyPath<V, P>) -> Binding<P> {
         Binding<P>(
             get: { self.wrappedValue[keyPath: keypath] },
             set: { self.wrappedValue[keyPath: keypath] = $0 }
         )
+    }
+}
+
+extension Binding: Equatable {
+    public static func == (lhs: Binding<V>, rhs: Binding<V>) -> Bool {
+        switch (lhs.storage, rhs.storage) {
+        case (.stateAccessor(let lhsAccessor), .stateAccessor(let rhsAccessor)):
+            return lhsAccessor == rhsAccessor
+        default:
+            return false
+        }
     }
 }

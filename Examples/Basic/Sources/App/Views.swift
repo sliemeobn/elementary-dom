@@ -11,17 +11,20 @@ struct App {
     @State var data = SomeData()
 
     var content: some View {
-        TextField(value: Binding(get: { data.name }, set: { data.name = $0 }))
         div {
-            p { "Via Binding: \(data.name)" }
-            p { TestValueView() }
-            p { TestObjectView() }
+            TextField(value: #Binding(data.name))
+
+            div {
+                p { "Via Binding: \(data.name)" }
+                p { TestValueView() }
+                p { TestObjectView() }
+            }
+            .environment(#Key(\.myText), data.name)
+            .environment(data)
         }
-        .environment(#Key(\.myText), data.name)
-        .environment(data)
-
         hr()
-
+        BindingsView()
+        hr()
         // TODE: replaceChildren does not keep animations and similar going....
         // if counters.count > 1 {
         //     span {}.attributes(.style(["display": "none"]))
@@ -96,13 +99,8 @@ struct TextField {
     @Binding<String> var value: String
 
     var content: some View {
-        // // TODO: make proper two-way binding for DOM elements
         input(.type(.text))
-            .onInput { event in
-                let text: String = event.targetValue ?? ""
-                print(event.targetValue ?? "No target value")
-                _value.wrappedValue = text
-            }
+            .bindValue($value)
     }
 }
 
