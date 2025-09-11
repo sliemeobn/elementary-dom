@@ -9,12 +9,10 @@ struct App {
     @State var counters: [Int] = [1]
     @State var nextCounterName = 1
     @State var data = SomeData()
-    @State var checked = false
-    @State var value: Double?
 
     var content: some View {
         div {
-            TextField(value: Binding(get: { data.name }, set: { data.name = $0 }))
+            TextField(value: #Binding(data.name))
 
             div {
                 p { "Via Binding: \(data.name)" }
@@ -23,25 +21,10 @@ struct App {
             }
             .environment(#Key(\.myText), data.name)
             .environment(data)
-
-            input(.type(.checkbox))
-                .bindChecked($checked)
-            p { "Checked: \(checked)" }
-
-            div {
-                input(.type(.number))
-                    .bindValue($value)
-                p { "Value: \(value.map { "\($0)" } ?? "nil")" }
-            }
-
-            button { "Reset" }
-                .onClick { _ in
-                    data.name = "Hello"
-                    value = nil
-                }
         }
         hr()
-
+        BindingsView()
+        hr()
         // TODE: replaceChildren does not keep animations and similar going....
         // if counters.count > 1 {
         //     span {}.attributes(.style(["display": "none"]))

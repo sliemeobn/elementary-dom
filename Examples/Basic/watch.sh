@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
 
-./build-wasi.sh debug
-watchexec -w Sources -e .swift -r './build-wasi.sh debug' &
+./build-dev.sh debug
+watchexec -w Sources -e .swift -r './build-dev.sh debug' &
 browser-sync start -s -w --ss Public --cwd Public

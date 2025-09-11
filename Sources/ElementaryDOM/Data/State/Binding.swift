@@ -46,7 +46,6 @@ public struct Binding<V> {
         self
     }
 
-    @_unavailableInEmbedded
     public subscript<P>(dynamicMember keypath: WritableKeyPath<V, P>) -> Binding<P> {
         Binding<P>(
             get: { self.wrappedValue[keyPath: keypath] },
