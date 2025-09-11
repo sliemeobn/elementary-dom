@@ -50,9 +50,7 @@ where Value: __FunctionView, ChildNode: _Reconcilable, ChildNode == Value.Conten
         precondition(self.value != nil, "value must be set")
         precondition(self.context != nil, "context must be set")
 
-        let needsRerender =
-            !Value.__areEqual(a: value, b: self.value!)
-            || !_ViewContext.areEqualEnoughToSkipRerender(a: viewContext, b: self.context!)
+        let needsRerender = !Value.__areEqual(a: value, b: self.value!)
 
         // NOTE: the idea is that way always store a "wired-up" value, so that we can re-run the function for free
         Value.__applyContext(viewContext, to: &value)
@@ -66,6 +64,7 @@ where Value: __FunctionView, ChildNode: _Reconcilable, ChildNode == Value.Conten
     }
 
     func runFunction(reconciler: inout _RenderContext) {
+        logTrace("running function \(identifier)")
         reconciler.depth = depthInTree + 1
 
         precondition(self.value != nil, "value must be set")
@@ -114,13 +113,5 @@ extension AnyFunctionNode {
         self.identifier = ObjectIdentifier(function)
         self.depthInTree = function.depthInTree
         self.runUpdate = function.runFunction
-    }
-}
-
-extension _ViewContext {
-    // TODO: are we sure about this?
-    static func areEqualEnoughToSkipRerender(a: Self, b: Self) -> Bool {
-        // TODO: actually compare attributes, check event listeners and stuff....
-        a.attributes.isEmpty && b.attributes.isEmpty
     }
 }

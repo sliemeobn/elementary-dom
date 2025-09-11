@@ -8,7 +8,6 @@ private extension AnyParentElememnt {
 public final class _ElementNode<ChildNode>: _Reconcilable where ChildNode: _Reconcilable & ~Copyable {
     public struct Value {
         let tagName: String
-        var attributes: _AttributeStorage
         var listerners: _DomEventListenerStorage
         var modifiers: [any DOMElementModifier]
     }
@@ -57,7 +56,7 @@ public final class _ElementNode<ChildNode>: _Reconcilable where ChildNode: _Reco
         makeChild: (inout _RenderContext) -> ChildNode
     ) {
         self.domNode = .init(reference: root, status: .unchanged)
-        self.value = .init(tagName: "<root>", attributes: .none, listerners: .none, modifiers: .init())
+        self.value = .init(tagName: "<root>", listerners: .none, modifiers: .init())
         self.eventSink = nil
         self.scheduler = context.scheduler
         self.identifier = "\("_root_"):\(ObjectIdentifier(self))"
@@ -81,12 +80,6 @@ public final class _ElementNode<ChildNode>: _Reconcilable where ChildNode: _Reco
         context.commitPlan.addNodeAction(
             CommitAction { [ref, oldValue, eventSink] context in
 
-                context.dom.patchElementAttributes(
-                    ref,
-                    with: newValue.attributes,
-                    replacing: oldValue.attributes
-                )
-
                 if let eventSink {
                     context.dom.patchEventListeners(
                         ref,
@@ -108,15 +101,10 @@ public final class _ElementNode<ChildNode>: _Reconcilable where ChildNode: _Reco
     }
 
     func createDOMNode(_ context: inout _CommitContext) {
+        logTrace("creating DOM node for element \(value.tagName)")
         precondition(domNode == nil, "element already has a DOM node")
         let ref = context.dom.createElement(value.tagName)
         self.domNode = ManagedDOMReference(reference: ref, status: .added)
-
-        context.dom.patchElementAttributes(
-            ref,
-            with: value.attributes,
-            replacing: .none
-        )
 
         if !value.listerners.listeners.isEmpty {
             self.eventSink = context.dom.makeEventSink(handleEvent(_:event:))

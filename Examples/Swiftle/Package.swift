@@ -15,7 +15,10 @@ let package = Package(
             dependencies: [
                 .product(name: "ElementaryDOM", package: "elementary-dom"),
                 .product(name: "ElementaryCSS", package: "elementary-css"),
-            ]
+            ],
+            // linkerSettings: [
+            //     .unsafeFlags(["-Xlinker", "-z", "-Xlinker", "stack-size=134217728"])
+            // ]
         )
     ],
     swiftLanguageModes: [.v5]

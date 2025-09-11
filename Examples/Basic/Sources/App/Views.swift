@@ -9,6 +9,7 @@ struct App {
     @State var counters: [Int] = [1]
     @State var nextCounterName = 1
     @State var data = SomeData()
+    @State var bindingViewCount = 1
 
     var content: some View {
         div {
@@ -23,7 +24,20 @@ struct App {
             .environment(data)
         }
         hr()
-        BindingsView()
+        div {
+            for _ in 0..<bindingViewCount {
+                BindingsView()
+            }
+            button { "Add bindings view" }
+                .onClick { _ in
+                    bindingViewCount += 1
+                }
+            button { "Remove bindings view" }
+                .onClick { _ in
+                    guard bindingViewCount > 0 else { return }
+                    bindingViewCount -= 1
+                }
+        }
         hr()
         // TODE: replaceChildren does not keep animations and similar going....
         // if counters.count > 1 {

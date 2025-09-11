@@ -25,10 +25,8 @@ struct DOMEffectView<Effect: DOMElementModifier, Wrapped: View>: View {
         context: consuming _ViewContext,
         reconciler: inout _RenderContext
     ) -> _MountedNode {
-        // NOTE: this could probably be more efficient somehow
-        let upstream = context.directives[Effect.key]
-        let effect = Effect(value: view.value, upstream: upstream, &reconciler)
-        context.directives[Effect.key] = effect
+        let effect = Effect(value: view.value, upstream: context.modifiers, &reconciler)
+        context.modifiers[Effect.key] = effect
 
         return .init(state: effect, child: Wrapped._makeNode(view.wrapped, context: context, reconciler: &reconciler))
     }
@@ -40,6 +38,6 @@ struct DOMEffectView<Effect: DOMElementModifier, Wrapped: View>: View {
         reconciler: inout _RenderContext
     ) {
         node.state.updateValue(view.value, &reconciler)
-        context.directives[Effect.key] = node.state
+        context.modifiers[Effect.key] = node.state
     }
 }

@@ -15,11 +15,11 @@ struct DOMPatchingTests {
     }
 
     @Test
-    func patchesFragmentAndNodes() {
+    func patchesAttributes() {
         let state = ToggleState()
         let ops = patchOps {
             div {
-                p(.id("\(state.value)")) {}
+                p(.id("\(state.value)"), .style(["unchanged": "style"])) {}
                 a {}.attributes(.hidden, when: !state.value)
             }
         } toggle: {
