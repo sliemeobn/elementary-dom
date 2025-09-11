@@ -5,4 +5,4 @@ swift package \
   --swift-sdk "$(swiftc -print-target-info | jq -r '.swiftCompilerTag')_wasm" \
   --enable-experimental-prebuilts \
   --allow-writing-to-package-directory \
-  js -c release --output $OUTDIR --use-cdn  --no-optimize
+  js -c debug --output $OUTDIR --use-cdn --debug-info-format dwarf
