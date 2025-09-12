@@ -66,13 +66,9 @@ public final class _ElementNode<ChildNode>: _Reconcilable where ChildNode: _Reco
         }
     }
 
-    func patch(_ newValue: Value, context: inout _RenderContext, patchChild: (inout ChildNode, inout _RenderContext) -> Void) {
-        logTrace("patching element \(value.tagName)")
-
-        self.value = newValue
-
+    func withCurrentLayoutContainer(_ context: inout _RenderContext, block: (_ context: inout _RenderContext) -> Void) {
         context.withCurrentLayoutContainer(asParentRef!) { context in
-            patchChild(&child, &context)
+            block(&context)
         }
     }
 

@@ -16,7 +16,6 @@ public protocol _Mountable {
 
     static func _patchNode(
         _ view: consuming Self,
-        context: consuming _ViewContext,
         node: inout _MountedNode,
         reconciler: inout _RenderContext
     )
@@ -41,7 +40,6 @@ extension Never: _Mountable {
 
     public static func _patchNode(
         _ view: consuming Self,
-        context: consuming _ViewContext,
         node: inout _MountedNode,
         reconciler: inout _RenderContext
     ) {}
@@ -94,27 +92,18 @@ extension HTMLElement: _Mountable, View where Content: _Mountable {
 
     public static func _patchNode(
         _ view: consuming Self,
-        context: consuming _ViewContext,
         node: inout _MountedNode,
         reconciler: inout _RenderContext
     ) {
         node.state.updateValue(view._attributes, &reconciler)
-        context.modifiers[_AttributeModifier.key] = node.state
 
-        let value = makeValue(view, context: &context)
-
-        node.child.patch(
-            value,
-            context: &reconciler,
-            patchChild: { [context] child, r in
-                Content._patchNode(
-                    view.content,
-                    context: context,
-                    node: &child,
-                    reconciler: &r
-                )
-            }
-        )
+        node.child.withCurrentLayoutContainer(&reconciler) { r in
+            Content._patchNode(
+                view.content,
+                node: &node.child.child,
+                reconciler: &r
+            )
+        }
     }
 }
 
@@ -149,22 +138,10 @@ extension HTMLVoidElement: _Mountable, View {
 
     public static func _patchNode(
         _ view: consuming Self,
-        context: consuming _ViewContext,
         node: inout _MountedNode,
         reconciler: inout _RenderContext
     ) {
         node.state.updateValue(view._attributes, &reconciler)
-        context.modifiers[_AttributeModifier.key] = node.state
-
-        let value = makeValue(view, context: &context)
-
-        node.child.patch(
-            value,
-            context: &reconciler,
-            patchChild: { child, r in
-                // no children anyway
-            }
-        )
     }
 }
 
@@ -181,7 +158,6 @@ extension HTMLText: _Mountable, View {
 
     public static func _patchNode(
         _ view: consuming Self,
-        context: consuming _ViewContext,
         node: inout _MountedNode,
         reconciler: inout _RenderContext
     ) {
@@ -202,7 +178,6 @@ extension EmptyHTML: _Mountable, View {
 
     public static func _patchNode(
         _ view: consuming Self,
-        context: consuming _ViewContext,
         node: inout _MountedNode,
         reconciler: inout _RenderContext
     ) {}
@@ -217,31 +192,32 @@ extension Optional: _Mountable where Wrapped: _Mountable {
         context: consuming _ViewContext,
         reconciler: inout _RenderContext
     ) -> _MountedNode {
+        // TODO: change this to borrowing
+        let context = copy context
         switch view {
         case let .some(view):
-            return .init(a: Wrapped._makeNode(view, context: context, reconciler: &reconciler))
+            return .init(a: Wrapped._makeNode(view, context: context, reconciler: &reconciler), context: copy context)
         case .none:
-            return .init(b: _EmptyNode())
+            return .init(b: _EmptyNode(), context: copy context)
         }
     }
 
     public static func _patchNode(
         _ view: consuming Self,
-        context: consuming _ViewContext,
         node: inout _MountedNode,
         reconciler: inout _RenderContext
     ) {
         switch view {
         case let .some(view):
-            node.patchWithA(reconciler: &reconciler) { [context] a, r in
+            node.patchWithA(reconciler: &reconciler) { a, c, r in
                 if a == nil {
-                    a = Wrapped._makeNode(view, context: context, reconciler: &r)
+                    a = Wrapped._makeNode(view, context: c, reconciler: &r)
                 } else {
-                    Wrapped._patchNode(view, context: context, node: &a!, reconciler: &r)
+                    Wrapped._patchNode(view, node: &a!, reconciler: &r)
                 }
             }
         case .none:
-            node.patchWithB(reconciler: &reconciler) { b, r in
+            node.patchWithB(reconciler: &reconciler) { b, c, r in
                 if b == nil {
                     b = _EmptyNode()
                 } else {
@@ -260,35 +236,35 @@ extension _HTMLConditional: _Mountable where TrueContent: _Mountable, FalseConte
         context: consuming _ViewContext,
         reconciler: inout _RenderContext
     ) -> _MountedNode {
+        let context = copy context  // TODO: change this to borrowing
         switch view.value {
         case let .trueContent(content):
-            return .init(a: TrueContent._makeNode(content, context: context, reconciler: &reconciler))
+            return .init(a: TrueContent._makeNode(content, context: context, reconciler: &reconciler), context: copy context)
         case let .falseContent(content):
-            return .init(b: FalseContent._makeNode(content, context: context, reconciler: &reconciler))
+            return .init(b: FalseContent._makeNode(content, context: context, reconciler: &reconciler), context: copy context)
         }
     }
 
     public static func _patchNode(
         _ view: consuming Self,
-        context: consuming _ViewContext,
         node: inout _MountedNode,
         reconciler: inout _RenderContext
     ) {
         switch view.value {
         case let .trueContent(content):
-            node.patchWithA(reconciler: &reconciler) { [context] a, r in
+            node.patchWithA(reconciler: &reconciler) { a, c, r in
                 if a == nil {
-                    a = TrueContent._makeNode(content, context: context, reconciler: &r)
+                    a = TrueContent._makeNode(content, context: c, reconciler: &r)
                 } else {
-                    TrueContent._patchNode(content, context: context, node: &a!, reconciler: &r)
+                    TrueContent._patchNode(content, node: &a!, reconciler: &r)
                 }
             }
         case let .falseContent(content):
-            node.patchWithB(reconciler: &reconciler) { [context] b, r in
+            node.patchWithB(reconciler: &reconciler) { b, c, r in
                 if b == nil {
-                    b = FalseContent._makeNode(content, context: context, reconciler: &r)
+                    b = FalseContent._makeNode(content, context: c, reconciler: &r)
                 } else {
-                    FalseContent._patchNode(content, context: context, node: &b!, reconciler: &r)
+                    FalseContent._patchNode(content, node: &b!, reconciler: &r)
                 }
             }
         }
@@ -310,13 +286,12 @@ extension _HTMLArray: _Mountable, View where Element: View {
                     node: Element._makeNode(element, context: context, reconciler: &reconciler)
                 )
             },
-            context: &reconciler
+            context: context
         )
     }
 
     public static func _patchNode(
         _ view: consuming Self,
-        context: consuming _ViewContext,
         node: inout _MountedNode,
         reconciler: inout _RenderContext
     ) {
@@ -327,11 +302,11 @@ extension _HTMLArray: _Mountable, View where Element: View {
         node.patch(
             indexes,
             context: &reconciler,
-            makeOrPatchNode: { [context] index, node, r in
+            makeOrPatchNode: { index, node, context, r in
                 if node == nil {
                     node = Element._makeNode(view.value[index], context: context, reconciler: &r)
                 } else {
-                    Element._patchNode(view.value[index], context: context, node: &node!, reconciler: &r)
+                    Element._patchNode(view.value[index], node: &node!, reconciler: &r)
                 }
             }
         )
@@ -376,13 +351,12 @@ extension ForEach: _Mountable, View where Content: _KeyReadableView, Data: Colle
                     let view = view._contentBuilder(value)
                     return (key: view._key, node: Content.Value._makeNode(view._value, context: context, reconciler: &reconciler))
                 },
-            context: &reconciler
+            context: context
         )
     }
 
     public static func _patchNode(
         _ view: consuming Self,
-        context: consuming _ViewContext,
         node: inout _MountedNode,
         reconciler: inout _RenderContext
     ) {
@@ -390,11 +364,11 @@ extension ForEach: _Mountable, View where Content: _KeyReadableView, Data: Colle
         node.patch(
             views.map { $0._key },
             context: &reconciler
-        ) { [context] index, node, r in
+        ) { index, node, context, r in
             if node == nil {
                 node = Content.Value._makeNode(views[index]._value, context: context, reconciler: &r)
             } else {
-                Content.Value._patchNode(views[index]._value, context: context, node: &node!, reconciler: &r)
+                Content.Value._patchNode(views[index]._value, node: &node!, reconciler: &r)
             }
         }
     }
@@ -419,16 +393,13 @@ extension _AttributedElement: _Mountable, View where Content: _Mountable {
 
     public static func _patchNode(
         _ view: consuming Self,
-        context: consuming _ViewContext,
         node: inout _MountedNode,
         reconciler: inout _RenderContext
     ) {
         node.state.updateValue(view.attributes, &reconciler)
-        context.modifiers[_AttributeModifier.key] = node.state
 
         Content._patchNode(
             view.content,
-            context: context,
             node: &node.child,
             reconciler: &reconciler
         )

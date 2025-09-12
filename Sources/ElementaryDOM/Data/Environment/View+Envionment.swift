@@ -50,7 +50,6 @@ public struct _EnvironmentView<V, Wrapped: View>: View {
 
     public static func _patchNode(
         _ view: consuming Self,
-        context: consuming _ViewContext,
         node: inout _MountedNode,
         reconciler: inout _RenderContext
     ) {
@@ -67,7 +66,6 @@ public struct _EnvironmentView<V, Wrapped: View>: View {
             )
         }
 
-        context.environment.boxes[view.key.propertyID] = node.state
-        Wrapped._patchNode(view.wrapped, context: context, node: &node.child, reconciler: &reconciler)
+        Wrapped._patchNode(view.wrapped, node: &node.child, reconciler: &reconciler)
     }
 }

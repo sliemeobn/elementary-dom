@@ -24,7 +24,7 @@ public struct _LifecycleEventView<Wrapped: View>: View {
     public typealias _MountedNode = _LifecycleNode<Wrapped._MountedNode>
 
     let wrapped: Wrapped
-    let listener: _LifecycleHook
+    let listener: LifecycleHook
 
     public static func _makeNode(
         _ view: consuming Self,
@@ -40,11 +40,10 @@ public struct _LifecycleEventView<Wrapped: View>: View {
 
     public static func _patchNode(
         _ view: consuming Self,
-        context: consuming _ViewContext,
         node: inout _MountedNode,
         reconciler: inout _RenderContext
     ) {
         //TODO: should we patch something? maybe update values?
-        Wrapped._patchNode(view.wrapped, context: context, node: &node.child, reconciler: &reconciler)
+        Wrapped._patchNode(view.wrapped, node: &node.child, reconciler: &reconciler)
     }
 }

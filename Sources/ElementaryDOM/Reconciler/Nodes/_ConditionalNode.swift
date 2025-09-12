@@ -17,6 +17,7 @@ public struct _ConditionalNode<NodeA: _Reconcilable, NodeB: _Reconcilable> {
 
     private var a: NodeA?
     private var b: NodeB?
+    private var context: _ViewContext
 
     private var state: State {
         // NOTE: a poor-man's enum with associated values
@@ -34,31 +35,36 @@ public struct _ConditionalNode<NodeA: _Reconcilable, NodeB: _Reconcilable> {
         }
     }
 
-    init(a: consuming NodeA) {
+    init(a: consuming NodeA, context: consuming _ViewContext) {
         self.a = a
         self.state = .a
+        self.context = context
     }
 
-    init(b: consuming NodeB) {
+    init(b: consuming NodeB, context: consuming _ViewContext) {
         self.b = b
         self.state = .b
+        self.context = context
     }
 
-    mutating func patchWithA(reconciler: inout _RenderContext, _ perform: (inout NodeA?, inout _RenderContext) -> Void) {
+    mutating func patchWithA(
+        reconciler: inout _RenderContext,
+        _ perform: (inout NodeA?, consuming _ViewContext, inout _RenderContext) -> Void
+    ) {
         switch state {
         case .a:
-            perform(&a, &reconciler)
+            perform(&a, context, &reconciler)
             state = .a
         case .b:
-            perform(&a, &reconciler)
+            perform(&a, context, &reconciler)
             b!.apply(.startRemoval, &reconciler)
             reconciler.parentElement?.reportChangedChildren(.elementChanged, &reconciler)
             state = .aWithBLeaving
         case .aWithBLeaving:
-            perform(&a, &reconciler)
+            perform(&a, context, &reconciler)
             state = .aWithBLeaving
         case .bWithALeaving:
-            perform(&a, &reconciler)
+            perform(&a, context, &reconciler)
             a!.apply(.cancelRemoval, &reconciler)
             b!.apply(.startRemoval, &reconciler)
             reconciler.parentElement?.reportChangedChildren(.elementChanged, &reconciler)
@@ -66,21 +72,24 @@ public struct _ConditionalNode<NodeA: _Reconcilable, NodeB: _Reconcilable> {
         }
     }
 
-    mutating func patchWithB(reconciler: inout _RenderContext, _ perform: (inout NodeB?, inout _RenderContext) -> Void) {
+    mutating func patchWithB(
+        reconciler: inout _RenderContext,
+        _ perform: (inout NodeB?, consuming _ViewContext, inout _RenderContext) -> Void
+    ) {
         switch state {
         case .b:
-            perform(&b, &reconciler)
+            perform(&b, context, &reconciler)
             state = .b
         case .a:
             a!.apply(.startRemoval, &reconciler)
             reconciler.parentElement?.reportChangedChildren(.elementChanged, &reconciler)
-            perform(&b, &reconciler)
+            perform(&b, context, &reconciler)
             state = .bWithALeaving
         case .bWithALeaving:
-            perform(&b, &reconciler)
+            perform(&b, context, &reconciler)
             state = .bWithALeaving
         case .aWithBLeaving:
-            perform(&b, &reconciler)
+            perform(&b, context, &reconciler)
             b!.apply(.cancelRemoval, &reconciler)
             a!.apply(.startRemoval, &reconciler)
             reconciler.parentElement?.reportChangedChildren(.elementChanged, &reconciler)

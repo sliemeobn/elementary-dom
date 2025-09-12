@@ -17,12 +17,11 @@ extension _HTMLTuple2: _Mountable where V0: _Mountable, V1: _Mountable {
 
     public static func _patchNode(
         _ view: consuming Self,
-        context: consuming _ViewContext,
         node: inout _MountedNode,
         reconciler: inout _RenderContext
     ) {
-        V0._patchNode(view.v0, context: copy context, node: &node.value.0, reconciler: &reconciler)
-        V1._patchNode(view.v1, context: copy context, node: &node.value.1, reconciler: &reconciler)
+        V0._patchNode(view.v0, node: &node.value.0, reconciler: &reconciler)
+        V1._patchNode(view.v1, node: &node.value.1, reconciler: &reconciler)
     }
 }
 
@@ -44,13 +43,12 @@ extension _HTMLTuple3: _Mountable where V0: _Mountable, V1: _Mountable, V2: _Mou
 
     public static func _patchNode(
         _ view: consuming Self,
-        context: consuming _ViewContext,
         node: inout _MountedNode,
         reconciler: inout _RenderContext
     ) {
-        V0._patchNode(view.v0, context: copy context, node: &node.value.0, reconciler: &reconciler)
-        V1._patchNode(view.v1, context: copy context, node: &node.value.1, reconciler: &reconciler)
-        V2._patchNode(view.v2, context: copy context, node: &node.value.2, reconciler: &reconciler)
+        V0._patchNode(view.v0, node: &node.value.0, reconciler: &reconciler)
+        V1._patchNode(view.v1, node: &node.value.1, reconciler: &reconciler)
+        V2._patchNode(view.v2, node: &node.value.2, reconciler: &reconciler)
     }
 }
 
@@ -73,14 +71,13 @@ extension _HTMLTuple4: _Mountable where V0: _Mountable, V1: _Mountable, V2: _Mou
 
     public static func _patchNode(
         _ view: consuming Self,
-        context: consuming _ViewContext,
         node: inout _MountedNode,
         reconciler: inout _RenderContext
     ) {
-        V0._patchNode(view.v0, context: copy context, node: &node.value.0, reconciler: &reconciler)
-        V1._patchNode(view.v1, context: copy context, node: &node.value.1, reconciler: &reconciler)
-        V2._patchNode(view.v2, context: copy context, node: &node.value.2, reconciler: &reconciler)
-        V3._patchNode(view.v3, context: copy context, node: &node.value.3, reconciler: &reconciler)
+        V0._patchNode(view.v0, node: &node.value.0, reconciler: &reconciler)
+        V1._patchNode(view.v1, node: &node.value.1, reconciler: &reconciler)
+        V2._patchNode(view.v2, node: &node.value.2, reconciler: &reconciler)
+        V3._patchNode(view.v3, node: &node.value.3, reconciler: &reconciler)
     }
 }
 
@@ -104,15 +101,14 @@ extension _HTMLTuple5: _Mountable where V0: _Mountable, V1: _Mountable, V2: _Mou
 
     public static func _patchNode(
         _ view: consuming Self,
-        context: consuming _ViewContext,
         node: inout _MountedNode,
         reconciler: inout _RenderContext
     ) {
-        V0._patchNode(view.v0, context: copy context, node: &node.value.0, reconciler: &reconciler)
-        V1._patchNode(view.v1, context: copy context, node: &node.value.1, reconciler: &reconciler)
-        V2._patchNode(view.v2, context: copy context, node: &node.value.2, reconciler: &reconciler)
-        V3._patchNode(view.v3, context: copy context, node: &node.value.3, reconciler: &reconciler)
-        V4._patchNode(view.v4, context: copy context, node: &node.value.4, reconciler: &reconciler)
+        V0._patchNode(view.v0, node: &node.value.0, reconciler: &reconciler)
+        V1._patchNode(view.v1, node: &node.value.1, reconciler: &reconciler)
+        V2._patchNode(view.v2, node: &node.value.2, reconciler: &reconciler)
+        V3._patchNode(view.v3, node: &node.value.3, reconciler: &reconciler)
+        V4._patchNode(view.v4, node: &node.value.4, reconciler: &reconciler)
     }
 }
 
@@ -139,16 +135,15 @@ extension _HTMLTuple6: _Mountable where V0: _Mountable, V1: _Mountable, V2: _Mou
 
     public static func _patchNode(
         _ view: consuming Self,
-        context: consuming _ViewContext,
         node: inout _MountedNode,
         reconciler: inout _RenderContext
     ) {
-        V0._patchNode(view.v0, context: copy context, node: &node.value.0, reconciler: &reconciler)
-        V1._patchNode(view.v1, context: copy context, node: &node.value.1, reconciler: &reconciler)
-        V2._patchNode(view.v2, context: copy context, node: &node.value.2, reconciler: &reconciler)
-        V3._patchNode(view.v3, context: copy context, node: &node.value.3, reconciler: &reconciler)
-        V4._patchNode(view.v4, context: copy context, node: &node.value.4, reconciler: &reconciler)
-        V5._patchNode(view.v5, context: copy context, node: &node.value.5, reconciler: &reconciler)
+        V0._patchNode(view.v0, node: &node.value.0, reconciler: &reconciler)
+        V1._patchNode(view.v1, node: &node.value.1, reconciler: &reconciler)
+        V2._patchNode(view.v2, node: &node.value.2, reconciler: &reconciler)
+        V3._patchNode(view.v3, node: &node.value.3, reconciler: &reconciler)
+        V4._patchNode(view.v4, node: &node.value.4, reconciler: &reconciler)
+        V5._patchNode(view.v5, node: &node.value.5, reconciler: &reconciler)
     }
 }
 
@@ -174,14 +169,13 @@ extension _HTMLTuple: _Mountable where repeat each Child: _Mountable {
 
     public static func _patchNode(
         _ view: consuming Self,
-        context: consuming _ViewContext,
         node: inout _MountedNode,
         reconciler: inout _RenderContext
     ) {
         // I don't think there is a way to spell this currently without warnings
         for var (view, node) in repeat (each view.value, each node.value) {
             __noop_goshDarnValuePacksAreAnnoyingAF(&view)  // this is to suppress a warning
-            patchNode(view, context: copy context, node: &node, reconciler: &reconciler)
+            patchNode(view, node: &node, reconciler: &reconciler)
         }
 
         // NOTE: this doesn't work because I don't think we can pass a value pack as inout
@@ -210,11 +204,10 @@ private func makeNode<V: _Mountable>(
 
 private func patchNode<V: _Mountable>(
     _ view: consuming V,
-    context: consuming _ViewContext,
     node: inout V._MountedNode,
     reconciler: inout _RenderContext
 ) {
-    V._patchNode(view, context: context, node: &node, reconciler: &reconciler)
+    V._patchNode(view, node: &node, reconciler: &reconciler)
 }
 #endif
 

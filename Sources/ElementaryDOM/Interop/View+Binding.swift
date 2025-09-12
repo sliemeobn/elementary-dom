@@ -33,11 +33,10 @@ struct DOMEffectView<Effect: DOMElementModifier, Wrapped: View>: View {
 
     static func _patchNode(
         _ view: consuming Self,
-        context: consuming _ViewContext,
         node: inout _MountedNode,
         reconciler: inout _RenderContext
     ) {
         node.state.updateValue(view.value, &reconciler)
-        context.modifiers[Effect.key] = node.state
+        Wrapped._patchNode(view.wrapped, node: &node.child, reconciler: &reconciler)
     }
 }

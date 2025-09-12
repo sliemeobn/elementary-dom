@@ -18,7 +18,13 @@ public final class _AttributeModifier: DOMElementModifier, Invalidateable {
         self.lastValue = value
         self.upstream = upstream[_AttributeModifier.key]
         self.upstream?.tracker.addDependency(self)
-        // _ = p {}.attributes(.class([""]), .style(["": ""]))
+
+        #if hasFeature(Embedded)
+        if __omg_this_was_annoying_I_am_false {
+            // this is to force inclusion of types
+            _ = p {}.attributes(.class([""]), .style(["": ""]))
+        }
+        #endif
     }
 
     func updateValue(_ value: consuming Value, _ context: inout _RenderContext) {

@@ -46,17 +46,16 @@ where Value: __FunctionView, ChildNode: _Reconcilable, ChildNode == Value.Conten
         reconciler.addFunction(asFunctionNode)
     }
 
-    func patch(_ value: consuming Value, _ viewContext: consuming _ViewContext, context: inout _RenderContext) {
+    func patch(_ value: consuming Value, context: inout _RenderContext) {
         precondition(self.value != nil, "value must be set")
         precondition(self.context != nil, "context must be set")
 
         let needsRerender = !Value.__areEqual(a: value, b: self.value!)
 
         // NOTE: the idea is that way always store a "wired-up" value, so that we can re-run the function for free
-        Value.__applyContext(viewContext, to: &value)
+        Value.__applyContext(self.context!, to: &value)
         Value.__restoreState(state!, in: &value)
         self.value = value
-        self.context = viewContext
 
         if needsRerender {
             context.addFunction(asFunctionNode)
@@ -78,7 +77,7 @@ where Value: __FunctionView, ChildNode: _Reconcilable, ChildNode == Value.Conten
                 if child == nil {
                     self.child = Value.Content._makeNode(self.value!.content, context: context!, reconciler: &reconciler)
                 } else {
-                    Value.Content._patchNode(self.value!.content, context: context!, node: &child!, reconciler: &reconciler)
+                    Value.Content._patchNode(self.value!.content, node: &child!, reconciler: &reconciler)
                 }
             } onChange: { [scheduler = reconciler.scheduler, asFunctionNode = asFunctionNode!] in
                 scheduler.scheduleFunction(asFunctionNode)
