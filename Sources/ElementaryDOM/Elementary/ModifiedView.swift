@@ -6,7 +6,7 @@
 
 //     static func _makeNode(
 //         _ view: consuming Self,
-//         context: consuming _ViewContext,
+//         context: borrowing _ViewContext,
 //         reconciler: inout _RenderContext
 //     ) -> _MountedNode {
 //         view.modifier(&context)
@@ -15,7 +15,7 @@
 
 //     public static func _patchNode(
 //         _ view: consuming Self,
-//         context: consuming _ViewContext,
+//         context: borrowing _ViewContext,
 //         node: inout _MountedNode,
 //         reconciler: inout _RenderContext
 //     ) {

@@ -38,10 +38,10 @@ public struct _EnvironmentView<V, Wrapped: View>: View {
 
     public static func _makeNode(
         _ view: consuming Self,
-        context: consuming _ViewContext,
+        context: borrowing _ViewContext,
         reconciler: inout _RenderContext
     ) -> _MountedNode {
-
+        var context = copy context
         let box = EnvironmentValues._Box<V>(view.value)
         context.environment.boxes[view.key.propertyID] = box
 

@@ -21,7 +21,7 @@ where Value: __FunctionView, ChildNode: _Reconcilable, ChildNode == Value.Conten
 
     init(
         value: consuming Value,
-        context: consuming _ViewContext,
+        context: borrowing _ViewContext,
         reconciler: inout _RenderContext
     ) {
         guard let parentElement = reconciler.parentElement else {
@@ -36,7 +36,7 @@ where Value: __FunctionView, ChildNode: _Reconcilable, ChildNode == Value.Conten
         Value.__applyContext(context, to: &value)
         Value.__restoreState(state!, in: &value)
         self.value = value
-        self.context = context
+        self.context = copy context
 
         self.asFunctionNode = AnyFunctionNode(self)
 

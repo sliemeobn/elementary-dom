@@ -6,7 +6,7 @@ public struct _KeyedView<Value: View>: View {
 
     public static func _makeNode(
         _ view: consuming Self,
-        context: consuming _ViewContext,
+        context: borrowing _ViewContext,
         reconciler: inout _RenderContext
     ) -> _MountedNode {
         let context = copy context  // TODO: change this to borrowing

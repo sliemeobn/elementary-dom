@@ -5,14 +5,14 @@ public struct _KeyedNode<ChildNode: _Reconcilable> {
     private var leavingChildren: LeavingChildrenTracker = .init()
     private let viewContext: _ViewContext
 
-    init(keys: [_ViewKey], children: [ChildNode?], context: _ViewContext) {
+    init(keys: [_ViewKey], children: [ChildNode?], context: borrowing _ViewContext) {
         assert(keys.count == children.count)
         self.keys = keys
         self.children = children
-        self.viewContext = context
+        self.viewContext = copy context
     }
 
-    init(_ value: some Sequence<(key: _ViewKey, node: ChildNode)>, context: consuming _ViewContext) {
+    init(_ value: some Sequence<(key: _ViewKey, node: ChildNode)>, context: borrowing _ViewContext) {
         var keys = [_ViewKey]()
         var children = [ChildNode?]()
 
@@ -27,7 +27,7 @@ public struct _KeyedNode<ChildNode: _Reconcilable> {
         self.init(keys: keys, children: children, context: context)
     }
 
-    init(key: _ViewKey, child: ChildNode, context: consuming _ViewContext) {
+    init(key: _ViewKey, child: ChildNode, context: borrowing _ViewContext) {
         self.init(CollectionOfOne((key: key, node: child)), context: context)
     }
 

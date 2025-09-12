@@ -6,7 +6,8 @@ private extension AnyParentElememnt {
 }
 
 public final class _ElementNode<ChildNode>: _Reconcilable where ChildNode: _Reconcilable & ~Copyable {
-    public struct Value {
+    // TODO: remove this struct
+    struct Value {
         let tagName: String
         var modifiers: [any DOMElementModifier]
     }

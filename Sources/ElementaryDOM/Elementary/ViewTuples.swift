@@ -6,7 +6,7 @@ extension _HTMLTuple2: _Mountable where V0: _Mountable, V1: _Mountable {
 
     public static func _makeNode(
         _ view: consuming Self,
-        context: consuming _ViewContext,
+        context: borrowing _ViewContext,
         reconciler: inout _RenderContext
     ) -> _MountedNode {
         _MountedNode(
@@ -31,7 +31,7 @@ extension _HTMLTuple3: _Mountable where V0: _Mountable, V1: _Mountable, V2: _Mou
 
     public static func _makeNode(
         _ view: consuming Self,
-        context: consuming _ViewContext,
+        context: borrowing _ViewContext,
         reconciler: inout _RenderContext
     ) -> _MountedNode {
         _MountedNode(
@@ -58,7 +58,7 @@ extension _HTMLTuple4: _Mountable where V0: _Mountable, V1: _Mountable, V2: _Mou
 
     public static func _makeNode(
         _ view: consuming Self,
-        context: consuming _ViewContext,
+        context: borrowing _ViewContext,
         reconciler: inout _RenderContext
     ) -> _MountedNode {
         _MountedNode(
@@ -87,7 +87,7 @@ extension _HTMLTuple5: _Mountable where V0: _Mountable, V1: _Mountable, V2: _Mou
 
     public static func _makeNode(
         _ view: consuming Self,
-        context: consuming _ViewContext,
+        context: borrowing _ViewContext,
         reconciler: inout _RenderContext
     ) -> _MountedNode {
         _MountedNode(
@@ -120,7 +120,7 @@ extension _HTMLTuple6: _Mountable where V0: _Mountable, V1: _Mountable, V2: _Mou
 
     public static func _makeNode(
         _ view: consuming Self,
-        context: consuming _ViewContext,
+        context: borrowing _ViewContext,
         reconciler: inout _RenderContext
     ) -> _MountedNode {
         _MountedNode(
@@ -155,7 +155,7 @@ extension _HTMLTuple: _Mountable where repeat each Child: _Mountable {
 
     public static func _makeNode(
         _ view: consuming Self,
-        context: consuming _ViewContext,
+        context: borrowing _ViewContext,
         reconciler: inout _RenderContext
     ) -> _MountedNode {
         _MountedNode(
@@ -196,7 +196,7 @@ private func __noop_goshDarnValuePacksAreAnnoyingAF(_ v: inout some _Mountable) 
 
 private func makeNode<V: _Mountable>(
     _ view: consuming V,
-    context: consuming _ViewContext,
+    context: borrowing _ViewContext,
     reconciler: inout _RenderContext
 ) -> V._MountedNode {
     V._makeNode(view, context: context, reconciler: &reconciler)

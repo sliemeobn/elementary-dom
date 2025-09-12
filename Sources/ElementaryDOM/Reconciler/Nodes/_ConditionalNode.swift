@@ -35,16 +35,16 @@ public struct _ConditionalNode<NodeA: _Reconcilable, NodeB: _Reconcilable> {
         }
     }
 
-    init(a: consuming NodeA, context: consuming _ViewContext) {
+    init(a: consuming NodeA, context: borrowing _ViewContext) {
         self.a = a
         self.state = .a
-        self.context = context
+        self.context = copy context
     }
 
-    init(b: consuming NodeB, context: consuming _ViewContext) {
+    init(b: consuming NodeB, context: borrowing _ViewContext) {
         self.b = b
         self.state = .b
-        self.context = context
+        self.context = copy context
     }
 
     mutating func patchWithA(

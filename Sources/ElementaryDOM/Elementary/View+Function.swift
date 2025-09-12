@@ -13,7 +13,7 @@ public extension __FunctionView {
 
     static func _makeNode(
         _ view: consuming Self,
-        context: consuming _ViewContext,
+        context: borrowing _ViewContext,
         reconciler: inout _RenderContext
     ) -> _MountedNode {
         .init(

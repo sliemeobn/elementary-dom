@@ -28,7 +28,7 @@ public struct _LifecycleEventView<Wrapped: View>: View {
 
     public static func _makeNode(
         _ view: consuming Self,
-        context: consuming _ViewContext,
+        context: borrowing _ViewContext,
         reconciler: inout _RenderContext
     ) -> _MountedNode {
         .init(

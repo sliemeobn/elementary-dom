@@ -22,10 +22,12 @@ struct DOMEffectView<Effect: DOMElementModifier, Wrapped: View>: View {
 
     static func _makeNode(
         _ view: consuming Self,
-        context: consuming _ViewContext,
+        context: borrowing _ViewContext,
         reconciler: inout _RenderContext
     ) -> _MountedNode {
         let effect = Effect(value: view.value, upstream: context.modifiers, &reconciler)
+
+        var context = copy context
         context.modifiers[Effect.key] = effect
 
         return .init(state: effect, child: Wrapped._makeNode(view.wrapped, context: context, reconciler: &reconciler))
