@@ -1,12 +1,18 @@
-// import _Concurrency
+enum LifecycleHook {
+    case onMount(() -> Void)
+    case onUnmount(() -> Void)
+    case onMountReturningCancelFunction(() -> () -> Void)
+    case __none
+}
 
+// TODO: this can probably be folded into a "stateful node"
 public class _LifecycleNode<ChildNode: _Reconcilable> {  // where ChildNode: ~Copyable
-    private var value: _LifecycleHook
+    private var value: LifecycleHook
     var child: ChildNode
 
     private var onUnmount: (() -> Void)?
 
-    init(value: _LifecycleHook, child: consuming ChildNode, context: inout _RenderContext) {
+    init(value: LifecycleHook, child: consuming ChildNode, context: inout _RenderContext) {
         self.value = value
         self.child = consume child
 

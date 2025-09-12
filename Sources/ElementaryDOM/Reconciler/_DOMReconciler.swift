@@ -59,8 +59,6 @@ public struct _RenderContext: ~Copyable {
 
         return commitPlan
     }
-
-    // TODO: init with assert, but would need to make commitplan optional
 }
 
 public struct _CommitContext: ~Copyable {

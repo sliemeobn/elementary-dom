@@ -22,24 +22,23 @@ struct DOMEffectView<Effect: DOMElementModifier, Wrapped: View>: View {
 
     static func _makeNode(
         _ view: consuming Self,
-        context: consuming _ViewContext,
+        context: borrowing _ViewContext,
         reconciler: inout _RenderContext
     ) -> _MountedNode {
-        // NOTE: this could probably be more efficient somehow
-        let upstream = context.directives[Effect.key]
-        let effect = Effect(value: view.value, upstream: upstream, &reconciler)
-        context.directives[Effect.key] = effect
+        let effect = Effect(value: view.value, upstream: context.modifiers, &reconciler)
+
+        var context = copy context
+        context.modifiers[Effect.key] = effect
 
         return .init(state: effect, child: Wrapped._makeNode(view.wrapped, context: context, reconciler: &reconciler))
     }
 
     static func _patchNode(
         _ view: consuming Self,
-        context: consuming _ViewContext,
         node: inout _MountedNode,
         reconciler: inout _RenderContext
     ) {
         node.state.updateValue(view.value, &reconciler)
-        context.directives[Effect.key] = node.state
+        Wrapped._patchNode(view.wrapped, node: &node.child, reconciler: &reconciler)
     }
 }

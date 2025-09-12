@@ -1,7 +1,7 @@
 // TODO: find a better name for this, "function node" is weird terminology
 
 // NOTE: ChildNode must be specified as extra argument to avoid a compiler error in embedded
-// FIXME: try with embedded main-snapshot build, revert extra argument if it works
+// FIXME: embedded - try with embedded main-snapshot build, revert extra argument if it works
 public final class _FunctionNode<Value, ChildNode>
 where Value: __FunctionView, ChildNode: _Reconcilable, ChildNode == Value.Content._MountedNode {
     private var state: Value.__ViewState?
@@ -21,7 +21,7 @@ where Value: __FunctionView, ChildNode: _Reconcilable, ChildNode == Value.Conten
 
     init(
         value: consuming Value,
-        context: consuming _ViewContext,
+        context: borrowing _ViewContext,
         reconciler: inout _RenderContext
     ) {
         guard let parentElement = reconciler.parentElement else {
@@ -31,12 +31,11 @@ where Value: __FunctionView, ChildNode: _Reconcilable, ChildNode == Value.Conten
         self.parentElement = parentElement
         self.depthInTree = reconciler.depth
 
-        // TODO: track environment access
         self.state = Value.__initializeState(from: value)
         Value.__applyContext(context, to: &value)
         Value.__restoreState(state!, in: &value)
         self.value = value
-        self.context = context
+        self.context = copy context
 
         self.asFunctionNode = AnyFunctionNode(self)
 
@@ -46,19 +45,16 @@ where Value: __FunctionView, ChildNode: _Reconcilable, ChildNode == Value.Conten
         reconciler.addFunction(asFunctionNode)
     }
 
-    func patch(_ value: consuming Value, _ viewContext: consuming _ViewContext, context: inout _RenderContext) {
+    func patch(_ value: consuming Value, context: inout _RenderContext) {
         precondition(self.value != nil, "value must be set")
         precondition(self.context != nil, "context must be set")
 
-        let needsRerender =
-            !Value.__areEqual(a: value, b: self.value!)
-            || !_ViewContext.areEqualEnoughToSkipRerender(a: viewContext, b: self.context!)
+        let needsRerender = !Value.__areEqual(a: value, b: self.value!)
 
         // NOTE: the idea is that way always store a "wired-up" value, so that we can re-run the function for free
-        Value.__applyContext(viewContext, to: &value)
+        Value.__applyContext(self.context!, to: &value)
         Value.__restoreState(state!, in: &value)
         self.value = value
-        self.context = viewContext
 
         if needsRerender {
             context.addFunction(asFunctionNode)
@@ -66,6 +62,7 @@ where Value: __FunctionView, ChildNode: _Reconcilable, ChildNode == Value.Conten
     }
 
     func runFunction(reconciler: inout _RenderContext) {
+        logTrace("running function \(identifier)")
         reconciler.depth = depthInTree + 1
 
         precondition(self.value != nil, "value must be set")
@@ -79,7 +76,7 @@ where Value: __FunctionView, ChildNode: _Reconcilable, ChildNode == Value.Conten
                 if child == nil {
                     self.child = Value.Content._makeNode(self.value!.content, context: context!, reconciler: &reconciler)
                 } else {
-                    Value.Content._patchNode(self.value!.content, context: context!, node: &child!, reconciler: &reconciler)
+                    Value.Content._patchNode(self.value!.content, node: &child!, reconciler: &reconciler)
                 }
             } onChange: { [scheduler = reconciler.scheduler, asFunctionNode = asFunctionNode!] in
                 scheduler.scheduleFunction(asFunctionNode)
@@ -114,13 +111,5 @@ extension AnyFunctionNode {
         self.identifier = ObjectIdentifier(function)
         self.depthInTree = function.depthInTree
         self.runUpdate = function.runFunction
-    }
-}
-
-extension _ViewContext {
-    // TODO: are we sure about this?
-    static func areEqualEnoughToSkipRerender(a: Self, b: Self) -> Bool {
-        // TODO: actually compare attributes, check event listeners and stuff....
-        a.attributes.isEmpty && b.attributes.isEmpty
     }
 }

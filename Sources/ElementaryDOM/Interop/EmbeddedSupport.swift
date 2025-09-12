@@ -1,5 +1,4 @@
 extension String {
-    // TODO: there is probably a better way...
     @inline(__always)
     @inlinable
     func utf8Equals(_ other: borrowing String) -> Bool {

@@ -7,4 +7,5 @@ struct App {
     }
 }
 
+print("Mounting app")
 App().mount(in: .body)

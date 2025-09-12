@@ -3,14 +3,16 @@ public struct _KeyedNode<ChildNode: _Reconcilable> {
     private var keys: [_ViewKey]
     private var children: [ChildNode?]
     private var leavingChildren: LeavingChildrenTracker = .init()
+    private let viewContext: _ViewContext
 
-    init(keys: [_ViewKey], children: [ChildNode?]) {
+    init(keys: [_ViewKey], children: [ChildNode?], context: borrowing _ViewContext) {
         assert(keys.count == children.count)
         self.keys = keys
         self.children = children
+        self.viewContext = copy context
     }
 
-    init(_ value: some Sequence<(key: _ViewKey, node: ChildNode)>, context: inout _RenderContext) {
+    init(_ value: some Sequence<(key: _ViewKey, node: ChildNode)>, context: borrowing _ViewContext) {
         var keys = [_ViewKey]()
         var children = [ChildNode?]()
 
@@ -22,29 +24,29 @@ public struct _KeyedNode<ChildNode: _Reconcilable> {
             children.append(entry.node)
         }
 
-        self.init(keys: keys, children: children)
+        self.init(keys: keys, children: children, context: context)
     }
 
-    init(key: _ViewKey, child: ChildNode, context: inout _RenderContext) {
-        self.init(CollectionOfOne((key: key, node: child)), context: &context)
+    init(key: _ViewKey, child: ChildNode, context: borrowing _ViewContext) {
+        self.init(CollectionOfOne((key: key, node: child)), context: context)
     }
 
     mutating func patch(
         key: _ViewKey,
         context: inout _RenderContext,
-        makeOrPatchNode: (inout ChildNode?, inout _RenderContext) -> Void
+        makeOrPatchNode: (inout ChildNode?, consuming _ViewContext, inout _RenderContext) -> Void
     ) {
         patch(
             CollectionOfOne(key),
             context: &context,
-            makeOrPatchNode: { _, node, r in makeOrPatchNode(&node, &r) }
+            makeOrPatchNode: { _, node, context, r in makeOrPatchNode(&node, context, &r) }
         )
     }
 
     mutating func patch(
         _ newKeys: some BidirectionalCollection<_ViewKey>,
         context: inout _RenderContext,
-        makeOrPatchNode: (Int, inout ChildNode?, inout _RenderContext) -> Void
+        makeOrPatchNode: (Int, inout ChildNode?, consuming _ViewContext, inout _RenderContext) -> Void
     ) {
         // TODO: add fast-pass for empty key list
         let diff = newKeys.difference(from: keys).inferringMoves()
@@ -90,7 +92,7 @@ public struct _KeyedNode<ChildNode: _Reconcilable> {
 
         // run update / patch functions on all nodes
         for index in children.indices {
-            makeOrPatchNode(index, &children[index], &context)
+            makeOrPatchNode(index, &children[index], self.viewContext, &context)
             assert(children[index] != nil, "unexpected nil child on collection")
         }
     }

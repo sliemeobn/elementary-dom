@@ -18,14 +18,43 @@ struct DOMMountingTests {
 
     @Test
     func setsAttributes() {
-        let ops = mountOps { img(.id("foo"), .src("bar")) }
+        let ops = mountOps {
+            img(.id("not-foo"), .src("bar"))
+                .attributes(.hidden, .id("foo"), when: true)
+                .attributes(.inert, when: false)
+        }
 
         #expect(
             ops == [
                 .createElement("img"),
                 .setAttr(node: "<img>", name: "id", value: "foo"),
                 .setAttr(node: "<img>", name: "src", value: "bar"),
+                .setAttr(node: "<img>", name: "hidden", value: nil),
                 .addChild(parent: "<>", child: "<img>"),
+            ]
+        )
+    }
+
+    @Test
+    func setsNestedAttributes() {
+        let ops = mountOps {
+            div {
+                p(.id("1")) {
+                    span {}
+                }
+            }.attributes(.style("foo"))
+        }
+
+        #expect(
+            ops == [
+                .createElement("div"),
+                .setAttr(node: "<div>", name: "style", value: "foo"),
+                .createElement("p"),
+                .setAttr(node: "<p>", name: "id", value: "1"),
+                .createElement("span"),
+                .addChild(parent: "<p>", child: "<span>"),
+                .addChild(parent: "<div>", child: "<p>"),
+                .addChild(parent: "<>", child: "<div>"),
             ]
         )
     }

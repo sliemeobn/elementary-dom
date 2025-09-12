@@ -2,33 +2,39 @@
 public final class _TextNode: _Reconcilable {
     var value: String
     var domNode: ManagedDOMReference?
+    var isDirty: Bool = false
 
     init(_ newValue: String, context: inout _RenderContext) {
         self.value = newValue
         self.domNode = nil
 
-        context.commitPlan.addNodeAction(CommitAction(run: createDOMNode(_:)))
         context.parentElement?.reportChangedChildren(.elementAdded, &context)
+
+        isDirty = true
+        context.commitPlan.addNodeAction(
+            CommitAction { [self] context in
+                self.domNode = ManagedDOMReference(reference: context.dom.createText(newValue), status: .added)
+                self.isDirty = false
+            }
+        )
     }
 
     func patch(_ newValue: String, context: inout _RenderContext) {
-        logTrace("patching text \(value) with \(newValue)")
-        guard !value.utf8Equals(newValue) else { return }
-
-        context.commitPlan.addNodeAction(CommitAction(run: updateDOMNode(_:)))
+        let needsUpdate = !isDirty && !value.utf8Equals(newValue)
         self.value = newValue
-    }
 
-    func createDOMNode(_ context: inout _CommitContext) {
-        self.domNode = ManagedDOMReference(reference: context.dom.createText(value), status: .added)
-    }
+        guard needsUpdate else { return }
 
-    func updateDOMNode(_ context: inout _CommitContext) {
-        guard let ref = domNode?.reference else {
-            preconditionFailure("unitialized text node in update - maybe this can be fine?")
-        }
+        isDirty = true
+        context.commitPlan.addNodeAction(
+            CommitAction { [self] context in
+                assert(isDirty, "text node is not dirty")
+                assert(domNode != nil, "text node is not mounted")
 
-        context.dom.patchText(ref, with: value)
+                (domNode?.reference).map { context.dom.patchText($0, with: value) }
+                self.isDirty = false
+            }
+        )
     }
 
     public func collectChildren(_ ops: inout ContainerLayoutPass, _ context: inout _CommitContext) {
@@ -44,7 +50,6 @@ public final class _TextNode: _Reconcilable {
         case .cancelRemoval:
             fatalError("not implemented")
         case .markAsMoved:
-            // TODO: checks and handling
             domNode?.status = .moved
             reconciler.parentElement?.reportChangedChildren(.elementChanged, &reconciler)
         }
@@ -52,9 +57,5 @@ public final class _TextNode: _Reconcilable {
 
     public consuming func unmount(_ context: inout _CommitContext) {
         self.domNode = nil
-    }
-
-    deinit {
-        logTrace("deiniting text node \(value)")
     }
 }

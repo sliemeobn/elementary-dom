@@ -1,67 +1,3 @@
-protocol DOMElementModifier: AnyObject {
-    associatedtype Value
-
-    static var key: DOMElementModifiers.Key<Self> { get }
-
-    init(value: consuming Value, upstream: Self?, _ context: inout _RenderContext)
-    func updateValue(_ value: consuming Value, _ context: inout _RenderContext)
-
-    func mount(_ node: DOM.Node, _ context: inout _CommitContext) -> AnyUnmountable
-}
-
-extension DOMElementModifier {
-    static var key: DOMElementModifiers.Key<Self> {
-        DOMElementModifiers.Key(Self.self)
-    }
-}
-
-protocol Unmountable: AnyObject {
-    func unmount(_ context: inout _CommitContext)
-}
-
-struct DOMElementModifiers {
-    struct Key<Directive: DOMElementModifier> {
-        let typeID: ObjectIdentifier
-
-        init(_: Directive.Type) {
-            typeID = ObjectIdentifier(Directive.self)
-        }
-    }
-
-    private var storage: [ObjectIdentifier: any DOMElementModifier] = [:]
-
-    subscript<Directive: DOMElementModifier>(_ key: Key<Directive>) -> Directive? {
-        get {
-            storage[key.typeID] as? Directive
-        }
-        set {
-            if let newValue = newValue {
-                storage[key.typeID] = newValue
-            } else {
-                storage.removeValue(forKey: key.typeID)
-            }
-        }
-    }
-
-    consuming func takeModifiers() -> [any DOMElementModifier] {
-        let directives = Array(storage.values)
-        storage.removeAll()
-        return directives
-    }
-}
-
-struct AnyUnmountable {
-    private let _unmount: (inout _CommitContext) -> Void
-
-    init(_ unmountable: some Unmountable) {
-        self._unmount = unmountable.unmount(_:)
-    }
-
-    func unmount(_ context: inout _CommitContext) {
-        _unmount(&context)
-    }
-}
-
 final class BindingModifier<Configuration>: DOMElementModifier, Unmountable where Configuration: BindingConfiguration {
     typealias Value = Binding<Configuration.Value>
 
@@ -73,7 +9,7 @@ final class BindingModifier<Configuration>: DOMElementModifier, Unmountable wher
     var accessor: DOM.PropertyAccessor?
     var isDirty: Bool = false
 
-    init(value: consuming Value, upstream: BindingModifier?, _ context: inout _RenderContext) {
+    init(value: consuming Value, upstream: borrowing DOMElementModifiers, _ context: inout _RenderContext) {
         self.lastValue = value.wrappedValue
         self.binding = value
     }
@@ -88,6 +24,7 @@ final class BindingModifier<Configuration>: DOMElementModifier, Unmountable wher
     }
 
     private func markDirty(_ context: inout _RenderContext) {
+        precondition(mountedNode != nil, "Binding effect can only be marked dirty on a mounted element")
         guard !isDirty else { return }
         isDirty = true
 
@@ -138,7 +75,7 @@ final class BindingModifier<Configuration>: DOMElementModifier, Unmountable wher
 
     func unmount(_ context: inout _CommitContext) {
         guard let sink = self.sink, let node = self.mountedNode else {
-            assertionFailure("Binding effect can only be unmounted on a mounted element")
+            // NOTE: since this object is used for both state and mounted effect, it will be unmounted twice
             return
         }
 
@@ -229,19 +166,5 @@ struct CheckboxBindingConfiguration: BindingConfiguration {
     }
     static func writeValue(_ value: Value) -> DOM.PropertyValue? {
         .boolean(value)
-    }
-}
-
-struct DependencyList: ~Copyable {
-    private var downstreams: [() -> Void] = []
-
-    mutating func add(_ invalidate: @escaping () -> Void) {
-        downstreams.append(invalidate)
-    }
-
-    func invalidateAll() {
-        for downstream in downstreams {
-            downstream()
-        }
     }
 }

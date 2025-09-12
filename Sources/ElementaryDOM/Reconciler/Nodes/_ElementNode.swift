@@ -6,48 +6,52 @@ private extension AnyParentElememnt {
 }
 
 public final class _ElementNode<ChildNode>: _Reconcilable where ChildNode: _Reconcilable & ~Copyable {
-    public struct Value {
-        let tagName: String
-        var attributes: _AttributeStorage
-        var listerners: _DomEventListenerStorage
-        var modifiers: [any DOMElementModifier]
-    }
-
-    var value: Value
+    var identifier: String = ""
     var child: ChildNode!
 
     var domNode: ManagedDOMReference?
     var mountedModifieres: [AnyUnmountable]?
 
-    var eventSink: DOM.EventSink?
     var childrenLayoutStatus: ChildrenLayoutStatus = .init()
-
-    let scheduler: Scheduler  // TODO: maybe find a way to not hold on to this
 
     struct ChildrenLayoutStatus {
         var isDirty: Bool = false
         var count: Int = 0
     }
 
-    private(set) var asParentRef: AnyParentElememnt!
+    private(set) var asParentRef: AnyParentElememnt?
 
-    var identifier: String!
-
-    init(value: Value, context: inout _RenderContext, makeChild: (inout _RenderContext) -> ChildNode) {
+    init(
+        tag: String,
+        viewContext: consuming _ViewContext,
+        context: inout _RenderContext,
+        makeChild: (borrowing _ViewContext, inout _RenderContext) -> ChildNode
+    ) {
         precondition(context.parentElement != nil, "parent element must be set")
 
-        self.value = value
-        self.scheduler = context.scheduler
-        self.identifier = "\(value.tagName):\(ObjectIdentifier(self))"
+        self.identifier = "\(tag):\(ObjectIdentifier(self))"
         self.asParentRef = AnyParentElememnt(self)
 
-        logTrace("created element \(identifier!) in \(context.parentElement!.identifier)")
+        logTrace("created element \(identifier) in \(context.parentElement!.identifier)")
 
-        context.commitPlan.addNodeAction(CommitAction(run: createDOMNode(_:)))
+        var viewContext = copy viewContext
+        let modifiers = viewContext.takeModifiers()
+
+        context.commitPlan.addNodeAction(
+            CommitAction { [self] context in
+                precondition(self.domNode == nil, "element already has a DOM node")
+                let ref = context.dom.createElement(tag)
+                self.domNode = ManagedDOMReference(reference: ref, status: .added)
+
+                self.mountedModifieres = modifiers.map {
+                    $0.mount(ref, &context)
+                }
+            }
+        )
         context.parentElement?.reportChangedChildren(.elementAdded, &context)
 
-        context.withCurrentLayoutContainer(asParentRef) {
-            self.child = makeChild(&$0)
+        context.withCurrentLayoutContainer(asParentRef!) { context in
+            self.child = makeChild(viewContext, &context)
         }
     }
 
@@ -57,86 +61,18 @@ public final class _ElementNode<ChildNode>: _Reconcilable where ChildNode: _Reco
         makeChild: (inout _RenderContext) -> ChildNode
     ) {
         self.domNode = .init(reference: root, status: .unchanged)
-        self.value = .init(tagName: "<root>", attributes: .none, listerners: .none, modifiers: .init())
-        self.eventSink = nil
-        self.scheduler = context.scheduler
-        self.identifier = "\("_root_"):\(ObjectIdentifier(self))"
         self.asParentRef = AnyParentElememnt(self)
+        self.identifier = "\("_root_"):\(ObjectIdentifier(self))"
 
         context.withCurrentLayoutContainer(asParentRef!) { context in
             self.child = makeChild(&context)
         }
     }
 
-    func patch(_ newValue: Value, context: inout _RenderContext, patchChild: (inout ChildNode, inout _RenderContext) -> Void) {
-        logTrace("patching element \(value.tagName)")
-
-        guard let ref = domNode?.reference else {
-            preconditionFailure("unitialized element in patch - maybe this can be fine?")
-        }
-
-        let oldValue = value
-
-        // TODO: diff here and store diff in object, only enqueue if diff is non-empty, use direct function on object in action
-        context.commitPlan.addNodeAction(
-            CommitAction { [ref, oldValue, eventSink] context in
-
-                context.dom.patchElementAttributes(
-                    ref,
-                    with: newValue.attributes,
-                    replacing: oldValue.attributes
-                )
-
-                if let eventSink {
-                    context.dom.patchEventListeners(
-                        ref,
-                        with: newValue.listerners,
-                        replacing: oldValue.listerners,
-                        sink: eventSink
-                    )
-                } else {
-                    assert(newValue.listerners.listeners.isEmpty, "unexpected added listener on element in patch")
-                }
-            }
-        )
-
-        self.value = newValue
-
+    func updateChild(_ context: inout _RenderContext, block: (_ node: inout ChildNode, _ context: inout _RenderContext) -> Void) {
         context.withCurrentLayoutContainer(asParentRef!) { context in
-            patchChild(&child, &context)
+            block(&self.child, &context)
         }
-    }
-
-    func createDOMNode(_ context: inout _CommitContext) {
-        precondition(domNode == nil, "element already has a DOM node")
-        let ref = context.dom.createElement(value.tagName)
-        self.domNode = ManagedDOMReference(reference: ref, status: .added)
-
-        context.dom.patchElementAttributes(
-            ref,
-            with: value.attributes,
-            replacing: .none
-        )
-
-        if !value.listerners.listeners.isEmpty {
-            self.eventSink = context.dom.makeEventSink(handleEvent(_:event:))
-
-            context.dom.patchEventListeners(
-                ref,
-                with: value.listerners,
-                replacing: .none,
-                sink: eventSink!
-            )
-        }
-
-        self.mountedModifieres = value.modifiers.map {
-            $0.mount(ref, &context)
-        }
-    }
-
-    func handleEvent(_ name: String, event: DOM.Event) {
-        logTrace("handling event \(name) for element \(value.tagName)")
-        value.listerners.handleEvent(name, event)
     }
 
     func reportChangedChildren(_ change: AnyParentElememnt.Change, context: inout _RenderContext) {
@@ -178,7 +114,6 @@ public final class _ElementNode<ChildNode>: _Reconcilable where ChildNode: _Reco
         mountedModifieres = nil
 
         self.domNode = nil
-        self.eventSink = nil
         self.asParentRef = nil
     }
 
@@ -224,10 +159,6 @@ public final class _ElementNode<ChildNode>: _Reconcilable where ChildNode: _Reco
                 }
             }
         }
-    }
-
-    deinit {
-        logTrace("deiniting element \(identifier ?? "")")
     }
 }
 

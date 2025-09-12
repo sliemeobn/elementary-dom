@@ -6,30 +6,29 @@ public struct _KeyedView<Value: View>: View {
 
     public static func _makeNode(
         _ view: consuming Self,
-        context: consuming _ViewContext,
+        context: borrowing _ViewContext,
         reconciler: inout _RenderContext
     ) -> _MountedNode {
         .init(
             key: view.key,
             child: Value._makeNode(view.value, context: context, reconciler: &reconciler),
-            context: &reconciler
+            context: context
         )
     }
 
     public static func _patchNode(
         _ view: consuming Self,
-        context: consuming _ViewContext,
         node: inout _MountedNode,
         reconciler: inout _RenderContext
     ) {
         node.patch(
             key: view.key,
             context: &reconciler,
-            makeOrPatchNode: { [context] node, r in
+            makeOrPatchNode: { node, context, r in
                 if node == nil {
                     node = Value._makeNode(view.value, context: context, reconciler: &r)
                 } else {
-                    Value._patchNode(view.value, context: context, node: &node!, reconciler: &r)
+                    Value._patchNode(view.value, node: &node!, reconciler: &r)
                 }
             }
         )
