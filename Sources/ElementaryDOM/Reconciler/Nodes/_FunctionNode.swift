@@ -1,7 +1,7 @@
 // TODO: find a better name for this, "function node" is weird terminology
 
 // NOTE: ChildNode must be specified as extra argument to avoid a compiler error in embedded
-// FIXME: try with embedded main-snapshot build, revert extra argument if it works
+// FIXME: embedded - try with embedded main-snapshot build, revert extra argument if it works
 public final class _FunctionNode<Value, ChildNode>
 where Value: __FunctionView, ChildNode: _Reconcilable, ChildNode == Value.Content._MountedNode {
     private var state: Value.__ViewState?
