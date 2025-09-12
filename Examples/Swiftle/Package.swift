@@ -17,7 +17,7 @@ let package = Package(
                 .product(name: "ElementaryCSS", package: "elementary-css"),
             ],
             linkerSettings: [
-                .unsafeFlags(["-Xlinker", "-z", "-Xlinker", "stack-size=5531072"])
+                .unsafeFlags(["-Xlinker", "-z", "-Xlinker", "stack-size=1048576"], .when(platforms: [.wasi], configuration: .debug))
             ]
         )
     ],
