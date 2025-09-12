@@ -8,7 +8,6 @@ private extension AnyParentElememnt {
 public final class _ElementNode<ChildNode>: _Reconcilable where ChildNode: _Reconcilable & ~Copyable {
     public struct Value {
         let tagName: String
-        var listerners: _DomEventListenerStorage
         var modifiers: [any DOMElementModifier]
     }
 
@@ -56,7 +55,7 @@ public final class _ElementNode<ChildNode>: _Reconcilable where ChildNode: _Reco
         makeChild: (inout _RenderContext) -> ChildNode
     ) {
         self.domNode = .init(reference: root, status: .unchanged)
-        self.value = .init(tagName: "<root>", listerners: .none, modifiers: .init())
+        self.value = .init(tagName: "<root>", modifiers: .init())
         self.eventSink = nil
         self.scheduler = context.scheduler
         self.identifier = "\("_root_"):\(ObjectIdentifier(self))"
@@ -69,29 +68,6 @@ public final class _ElementNode<ChildNode>: _Reconcilable where ChildNode: _Reco
 
     func patch(_ newValue: Value, context: inout _RenderContext, patchChild: (inout ChildNode, inout _RenderContext) -> Void) {
         logTrace("patching element \(value.tagName)")
-
-        guard let ref = domNode?.reference else {
-            preconditionFailure("unitialized element in patch - maybe this can be fine?")
-        }
-
-        let oldValue = value
-
-        // TODO: diff here and store diff in object, only enqueue if diff is non-empty, use direct function on object in action
-        context.commitPlan.addNodeAction(
-            CommitAction { [ref, oldValue, eventSink] context in
-
-                if let eventSink {
-                    context.dom.patchEventListeners(
-                        ref,
-                        with: newValue.listerners,
-                        replacing: oldValue.listerners,
-                        sink: eventSink
-                    )
-                } else {
-                    assert(newValue.listerners.listeners.isEmpty, "unexpected added listener on element in patch")
-                }
-            }
-        )
 
         self.value = newValue
 
@@ -106,25 +82,9 @@ public final class _ElementNode<ChildNode>: _Reconcilable where ChildNode: _Reco
         let ref = context.dom.createElement(value.tagName)
         self.domNode = ManagedDOMReference(reference: ref, status: .added)
 
-        if !value.listerners.listeners.isEmpty {
-            self.eventSink = context.dom.makeEventSink(handleEvent(_:event:))
-
-            context.dom.patchEventListeners(
-                ref,
-                with: value.listerners,
-                replacing: .none,
-                sink: eventSink!
-            )
-        }
-
         self.mountedModifieres = value.modifiers.map {
             $0.mount(ref, &context)
         }
-    }
-
-    func handleEvent(_ name: String, event: DOM.Event) {
-        logTrace("handling event \(name) for element \(value.tagName)")
-        value.listerners.handleEvent(name, event)
     }
 
     func reportChangedChildren(_ change: AnyParentElememnt.Change, context: inout _RenderContext) {

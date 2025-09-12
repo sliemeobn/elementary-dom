@@ -49,17 +49,8 @@ extension Never: _Mountable {
 
 // TODO: does this need to be extra?
 public struct _ViewContext {
-    // TODO: get red of this
-    var eventListeners: _DomEventListenerStorage = .init()
-
     var environment: EnvironmentValues = .init()
     var modifiers: DOMElementModifiers = .init()
-
-    mutating func takeListeners() -> _DomEventListenerStorage {
-        let listeners = eventListeners
-        eventListeners = .init()
-        return listeners
-    }
 
     mutating func takeModifiers() -> [any DOMElementModifier] {
         modifiers.takeModifiers()
@@ -76,7 +67,6 @@ extension HTMLElement: _Mountable, View where Content: _Mountable {
     private static func makeValue(_ view: borrowing Self, context: inout _ViewContext) -> _ElementNode<Content._MountedNode>.Value {
         .init(
             tagName: Tag.name,
-            listerners: context.takeListeners(),
             modifiers: context.takeModifiers()
         )
     }
@@ -134,7 +124,6 @@ extension HTMLVoidElement: _Mountable, View {
     private static func makeValue(_ view: borrowing Self, context: inout _ViewContext) -> _ElementNode<_EmptyNode>.Value {
         .init(
             tagName: Tag.name,
-            listerners: context.takeListeners(),
             modifiers: context.takeModifiers()
         )
     }
