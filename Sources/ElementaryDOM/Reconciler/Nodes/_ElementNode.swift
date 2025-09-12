@@ -213,10 +213,6 @@ public final class _ElementNode<ChildNode>: _Reconcilable where ChildNode: _Reco
             }
         }
     }
-
-    deinit {
-        logTrace("deiniting element \(identifier ?? "")")
-    }
 }
 
 extension ManagedDOMReference {

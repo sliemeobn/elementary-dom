@@ -31,7 +31,6 @@ public struct _ConditionalNode<NodeA: _Reconcilable, NodeB: _Reconcilable> {
             case .bWithALeaving:
                 precondition(b != nil && a != nil)
             }
-            logTrace("conditional state: \(state)")
         }
     }
 
@@ -46,7 +45,6 @@ public struct _ConditionalNode<NodeA: _Reconcilable, NodeB: _Reconcilable> {
     }
 
     mutating func patchWithA(reconciler: inout _RenderContext, _ perform: (inout NodeA?, inout _RenderContext) -> Void) {
-        logTrace("patchWithA: \(state)")
         switch state {
         case .a:
             perform(&a, &reconciler)
@@ -69,7 +67,6 @@ public struct _ConditionalNode<NodeA: _Reconcilable, NodeB: _Reconcilable> {
     }
 
     mutating func patchWithB(reconciler: inout _RenderContext, _ perform: (inout NodeB?, inout _RenderContext) -> Void) {
-        logTrace("patchWithB: \(state)")
         switch state {
         case .b:
             perform(&b, &reconciler)

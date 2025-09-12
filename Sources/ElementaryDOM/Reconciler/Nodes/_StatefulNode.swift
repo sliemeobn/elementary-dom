@@ -26,10 +26,7 @@ extension _StatefulNode: _Reconcilable {
 
     public consuming func unmount(_ context: inout _CommitContext) {
         child.unmount(&context)
-        if let onUnmount = onUnmount {
-            logTrace("unmounting stateful node")
-            onUnmount(&context)
-            self.onUnmount = nil
-        }
+        onUnmount?(&context)
+        self.onUnmount = nil
     }
 }

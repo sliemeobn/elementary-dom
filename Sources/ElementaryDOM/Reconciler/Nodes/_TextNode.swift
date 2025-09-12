@@ -53,8 +53,4 @@ public final class _TextNode: _Reconcilable {
     public consuming func unmount(_ context: inout _CommitContext) {
         self.domNode = nil
     }
-
-    deinit {
-        logTrace("deiniting text node \(value)")
-    }
 }
