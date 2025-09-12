@@ -72,14 +72,13 @@ extension HTMLElement: _Mountable, View where Content: _Mountable {
         var context = copy context
         context.modifiers[_AttributeModifier.key] = attributeModifier
 
-        let modifiers = context.takeModifiers()
-
         return _MountedNode(
             state: attributeModifier,
             child: _ElementNode(
-                value: .init(tagName: self.Tag.name, modifiers: modifiers),
+                tag: self.Tag.name,
+                viewContext: context,
                 context: &reconciler,
-                makeChild: { r in Content._makeNode(view.content, context: context, reconciler: &r) }
+                makeChild: { viewContext, r in Content._makeNode(view.content, context: viewContext, reconciler: &r) }
             )
         )
     }
@@ -91,10 +90,10 @@ extension HTMLElement: _Mountable, View where Content: _Mountable {
     ) {
         node.state.updateValue(view._attributes, &reconciler)
 
-        node.child.withCurrentLayoutContainer(&reconciler) { r in
+        node.child.updateChild(&reconciler) { child, r in
             Content._patchNode(
                 view.content,
-                node: &node.child.child,
+                node: &child,
                 reconciler: &r
             )
         }
@@ -113,14 +112,14 @@ extension HTMLVoidElement: _Mountable, View {
 
         var context = copy context
         context.modifiers[_AttributeModifier.key] = attributeModifier
-        let modifiers = context.takeModifiers()
 
         return _MountedNode(
             state: attributeModifier,
             child: _ElementNode(
-                value: .init(tagName: self.Tag.name, modifiers: modifiers),
+                tag: self.Tag.name,
+                viewContext: context,
                 context: &reconciler,
-                makeChild: { _ in _EmptyNode() }
+                makeChild: { _, _ in _EmptyNode() }
             )
         )
     }

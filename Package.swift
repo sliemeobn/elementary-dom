@@ -10,7 +10,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/swiftwasm/JavaScriptKit", from: "0.33.1"),
-        .package(url: "https://github.com/sliemeobn/elementary", branch: "embedded/utf8-equating"),
+        .package(url: "https://github.com/sliemeobn/elementary", from: "0.5.4"),
         .package(url: "https://github.com/swiftlang/swift-syntax", "600.0.0"..<"602.0.0-prerelease"),
     ],
     targets: [
