@@ -9,8 +9,7 @@ public struct _KeyedView<Value: View>: View {
         context: borrowing _ViewContext,
         reconciler: inout _RenderContext
     ) -> _MountedNode {
-        let context = copy context  // TODO: change this to borrowing
-        return .init(
+        .init(
             key: view.key,
             child: Value._makeNode(view.value, context: context, reconciler: &reconciler),
             context: context

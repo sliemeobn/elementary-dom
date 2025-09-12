@@ -50,7 +50,6 @@ public final class _TextNode: _Reconcilable {
         case .cancelRemoval:
             fatalError("not implemented")
         case .markAsMoved:
-            // TODO: checks and handling
             domNode?.status = .moved
             reconciler.parentElement?.reportChangedChildren(.elementChanged, &reconciler)
         }

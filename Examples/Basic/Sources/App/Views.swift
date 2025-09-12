@@ -140,8 +140,7 @@ struct TestObjectView {
 
     var content: some View {
         span { "Via environment object: \(data.name)" }
-        // TODO: figure out how to make optional environment object work in embedded
         br()
-        //span { "Via optional environment object: \(optionalData?.name ?? "")" }
+        span { "Via optional environment object: \(optionalData?.name ?? "")" }
     }
 }

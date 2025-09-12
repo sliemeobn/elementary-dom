@@ -31,7 +31,6 @@ where Value: __FunctionView, ChildNode: _Reconcilable, ChildNode == Value.Conten
         self.parentElement = parentElement
         self.depthInTree = reconciler.depth
 
-        // TODO: track environment access
         self.state = Value.__initializeState(from: value)
         Value.__applyContext(context, to: &value)
         Value.__restoreState(state!, in: &value)
