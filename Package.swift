@@ -11,7 +11,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/swiftwasm/JavaScriptKit", from: "0.33.1"),
         .package(url: "https://github.com/sliemeobn/elementary", from: "0.5.4"),
-        .package(url: "https://github.com/swiftlang/swift-syntax", "600.0.0"..<"602.0.0-prerelease"),
+        .package(url: "https://github.com/swiftlang/swift-syntax", "600.0.0"..<"603.0.0"),
     ],
     targets: [
         .target(
@@ -21,6 +21,7 @@ let package = Package(
                 .product(name: "JavaScriptKit", package: "JavaScriptKit"),
                 .target(name: "ElementaryDOMMacros"),
                 .target(name: "Reactivity"),
+                .target(name: "ElementaryMath"),
             ],
             swiftSettings: [
                 .swiftLanguageMode(.v5),
@@ -28,6 +29,9 @@ let package = Package(
                 .enableUpcomingFeature("ConciseMagicFile"),
                 .enableUpcomingFeature("ImplicitOpenExistentials"),
             ]
+        ),
+        .target(
+            name: "ElementaryMath"
         ),
         .macro(
             name: "ElementaryDOMMacros",

@@ -6,7 +6,7 @@ enum LifecycleHook {
 }
 
 // TODO: this can probably be folded into a "stateful node"
-public class _LifecycleNode<ChildNode: _Reconcilable> {  // where ChildNode: ~Copyable
+public final class _LifecycleNode<ChildNode: _Reconcilable> {  // where ChildNode: ~Copyable
     private var value: LifecycleHook
     var child: ChildNode
 

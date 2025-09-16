@@ -24,6 +24,7 @@ struct CommitAction {
 public struct _RenderContext: ~Copyable {
     let scheduler: Scheduler
     var commitPlan: CommitPlan
+    var transaction: Transaction?
 
     private(set) var pendingFunctions: PendingFunctionQueue
     private(set) var parentElement: AnyParentElememnt?
@@ -31,6 +32,7 @@ public struct _RenderContext: ~Copyable {
 
     init(
         scheduler: Scheduler,
+        transaction: Transaction?,
         commitPlan: consuming CommitPlan,
         pendingFunctions: consuming PendingFunctionQueue = .init()
     ) {
