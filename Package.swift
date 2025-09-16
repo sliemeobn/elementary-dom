@@ -31,7 +31,10 @@ let package = Package(
             ]
         ),
         .target(
-            name: "ElementaryMath"
+            name: "ElementaryMath",
+            swiftSettings: [
+                .enableExperimentalFeature("Extern")
+            ]
         ),
         .macro(
             name: "ElementaryDOMMacros",

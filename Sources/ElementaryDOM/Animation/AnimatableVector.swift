@@ -75,13 +75,13 @@ extension AnimatableVector {
         case .d1(let x):
             return abs(x)
         case .d2(let x, let y):
-            return sqrt(x * x + y * y)
+            return sqrtf(x * x + y * y)
         case .d4(let v):
-            return sqrt(v.x * v.x + v.y * v.y + v.z * v.z + v.w * v.w)
+            return sqrtf(v.x * v.x + v.y * v.y + v.z * v.z + v.w * v.w)
         case .d8(let v1, let v2):
             let mag1 = v1.x * v1.x + v1.y * v1.y + v1.z * v1.z + v1.w * v1.w
             let mag2 = v2.x * v2.x + v2.y * v2.y + v2.z * v2.z + v2.w * v2.w
-            return sqrt(mag1 + mag2)
+            return sqrtf(mag1 + mag2)
         }
     }
 }
