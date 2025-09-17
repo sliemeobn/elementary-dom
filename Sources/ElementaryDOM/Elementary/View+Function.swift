@@ -7,6 +7,9 @@ public protocol __FunctionView: View where _MountedNode == _FunctionNode<Self, S
     static func __applyContext(_ context: borrowing _ViewContext, to view: inout Self)
 
     static func __areEqual(a: borrowing Self, b: borrowing Self) -> Bool
+
+    static func __getAnimatableData(from view: borrowing Self) -> AnimatableVector
+    static func __setAnimatableData(_ data: AnimatableVector, to view: inout Self)
 }
 
 public extension __FunctionView {
@@ -35,6 +38,27 @@ public extension __FunctionView {
 public extension __FunctionView where __ViewState == Void {
     static func __initializeState(from view: borrowing Self) {}
     static func __restoreState(_ storage: __ViewState, in view: inout Self) {}
+}
+
+public extension __FunctionView {
+    static func __getAnimatableData(from view: borrowing Self) -> AnimatableVector {
+        .d0
+    }
+
+    static func __setAnimatableData(_ data: AnimatableVector, to view: inout Self) {
+        // do nothing
+        assertionFailure("__setAnimatableData called on view that does not support animatable data")
+    }
+}
+
+public extension __FunctionView where Self: Animatable {
+    static func __getAnimatableData(from view: borrowing Self) -> AnimatableVector {
+        view.animatableValue.animatableVector
+    }
+
+    static func __setAnimatableData(_ data: AnimatableVector, to view: inout Self) {
+        view.animatableValue = Value(data)
+    }
 }
 
 public extension __FunctionView {

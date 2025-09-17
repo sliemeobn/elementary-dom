@@ -10,10 +10,15 @@ struct AnyParentElememnt {
     let reportChangedChildren: (Change, inout _RenderContext) -> Void
 }
 
+// TODO: find a better name for this
 struct AnyFunctionNode {
     let identifier: ObjectIdentifier
     let depthInTree: Int
     let runUpdate: (inout _RenderContext) -> Void
+}
+
+struct AnyAnimatable {
+    let progressAnimation: (inout _RenderContext) -> Bool
 }
 
 struct CommitAction {
@@ -23,7 +28,7 @@ struct CommitAction {
 
 public struct _RenderContext: ~Copyable {
     let scheduler: Scheduler
-    var commitPlan: CommitPlan
+    var currentTime: Double
     var transaction: Transaction?
 
     private(set) var pendingFunctions: PendingFunctionQueue
@@ -32,13 +37,14 @@ public struct _RenderContext: ~Copyable {
 
     init(
         scheduler: Scheduler,
+        currentTime: Double,
         transaction: Transaction?,
-        commitPlan: consuming CommitPlan,
         pendingFunctions: consuming PendingFunctionQueue = .init()
     ) {
         self.pendingFunctions = pendingFunctions
         self.scheduler = scheduler
-        self.commitPlan = commitPlan
+        self.currentTime = currentTime
+        self.transaction = transaction
 
         depth = 0
     }
@@ -54,12 +60,10 @@ public struct _RenderContext: ~Copyable {
         parentElement = previous
     }
 
-    consuming func drain() -> CommitPlan {
+    consuming func drain() {
         while let next = pendingFunctions.next() {
             next.runUpdate(&self)
         }
-
-        return commitPlan
     }
 }
 
@@ -129,40 +133,6 @@ struct PendingFunctionQueue: ~Copyable {
 
     deinit {
         assert(functionsToRun.isEmpty, "pending functions dropped without being run")
-    }
-}
-
-struct CommitPlan: ~Copyable {
-    private var nodes: [CommitAction] = []
-    private var placements: [CommitAction] = []
-
-    var isEmpty: Bool { nodes.isEmpty && placements.isEmpty }
-
-    mutating func addNodeAction(_ action: CommitAction) {
-        nodes.append(action)
-    }
-
-    mutating func addPlacementAction(_ action: CommitAction) {
-        placements.append(action)
-    }
-
-    consuming func flush(dom: inout any DOM.Interactor) {
-        var context = _CommitContext(dom: dom)
-        for node in nodes {
-            node.run(&context)
-        }
-        nodes.removeAll()
-
-        for placement in placements.reversed() {
-            placement.run(&context)
-        }
-        placements.removeAll()
-
-        context.drain()
-    }
-
-    deinit {
-        assert(isEmpty, "dirty DOM element dropped without being committed")
     }
 }
 

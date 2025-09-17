@@ -217,6 +217,8 @@ final class TestDOM: DOM.Interactor {
         queueMicrotaskCallbacks.append(callback)
     }
 
+    func getCurrentTime() -> Double { 0 }
+
     func flushMicrotasks() {
         while !queueMicrotaskCallbacks.isEmpty {
             queueMicrotaskCallbacks.removeFirst()()

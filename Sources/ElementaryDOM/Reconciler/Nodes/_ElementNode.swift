@@ -37,7 +37,7 @@ public final class _ElementNode<ChildNode>: _Reconcilable where ChildNode: _Reco
         var viewContext = copy viewContext
         let modifiers = viewContext.takeModifiers()
 
-        context.commitPlan.addNodeAction(
+        context.scheduler.addNodeAction(
             CommitAction { [self] context in
                 precondition(self.domNode == nil, "element already has a DOM node")
                 let ref = context.dom.createElement(tag)
@@ -81,7 +81,7 @@ public final class _ElementNode<ChildNode>: _Reconcilable where ChildNode: _Reco
         if !childrenLayoutStatus.isDirty {
             childrenLayoutStatus.isDirty = true
 
-            context.commitPlan.addPlacementAction(CommitAction(run: performLayout(_:)))
+            context.scheduler.addPlacementAction(CommitAction(run: performLayout(_:)))
         }
     }
 

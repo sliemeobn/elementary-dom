@@ -16,7 +16,7 @@ public final class _LifecycleNode<ChildNode: _Reconcilable> {  // where ChildNod
         self.value = value
         self.child = consume child
 
-        context.commitPlan.addNodeAction(
+        context.scheduler.addNodeAction(
             CommitAction(run: self.commitLifecycleValue)
         )
     }

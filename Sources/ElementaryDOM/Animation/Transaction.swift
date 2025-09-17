@@ -30,7 +30,7 @@ public func withTransaction<Result, Failure>(
 }
 
 public func withAnimation<Result, Failure>(
-    _ animation: Animation?,
+    _ animation: Animation? = .default,
     _ body: () throws(Failure) -> Result
 ) throws(Failure) -> Result {
     try withTransaction(.init(animation: animation), body)

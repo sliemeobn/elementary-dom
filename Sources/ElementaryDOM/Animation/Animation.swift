@@ -1,16 +1,6 @@
-public protocol Animatable {
-    associatedtype Value: AnimatableVectorConvertible
-    var animatableValue: Value { get set }
-}
-
-public protocol AnimatableVectorConvertible {
-    init(_ animatableVector: AnimatableVector)
-    var animatableVector: AnimatableVector { get }
-}
-
 public struct Animation {
     enum StoredAnimation {
-        case spring(Spring)
+        case spring(SpringAnimation)
         case timingFunction(TimingFunction)
         case any(AnyAnimation)
     }
@@ -24,7 +14,7 @@ public struct Animation {
     }
 
     init(spring: Spring) {
-        self.storage = .spring(spring)
+        self.storage = .spring(SpringAnimation(spring: spring))
     }
 
     public init(_ customAnimation: some CustomAnimation) {

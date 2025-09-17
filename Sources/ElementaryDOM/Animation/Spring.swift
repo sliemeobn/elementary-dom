@@ -84,6 +84,92 @@ public struct Spring {
 }
 
 extension Spring {
+    public func value(target: AnimatableVector, initialVelocity: AnimatableVector, time: Double) -> AnimatableVector {
+        switch regime {
+        case .criticallyDamped:
+            // Critically damped: starts at 0, approaches target
+            let envelope = exp(-naturalFrequency * time)
+            let factor = 1.0 - envelope * (1.0 + naturalFrequency * time)
+            let velocityFactor = envelope * time
+
+            return target * Float(factor) + initialVelocity * Float(velocityFactor)
+
+        case .underdamped:
+            // Underdamped: starts at 0, approaches target with oscillation
+            let omegaD = naturalFrequency * sqrt(1.0 - dampingRatio * dampingRatio)
+            let envelope = exp(-dampingRatio * naturalFrequency * time)
+            let cosine = cos(omegaD * time)
+            let sine = sin(omegaD * time)
+
+            let factor = 1.0 - envelope * (cosine + (dampingRatio * naturalFrequency / omegaD) * sine)
+            let velocityFactor = envelope * sine / omegaD
+
+            return target * Float(factor) + initialVelocity * Float(velocityFactor)
+
+        case .overdamped:
+            // Overdamped: starts at 0, approaches target without oscillation
+            let discriminant = sqrt(dampingRatio * dampingRatio - 1.0)
+            let r1 = -naturalFrequency * (dampingRatio + discriminant)
+            let r2 = -naturalFrequency * (dampingRatio - discriminant)
+
+            // Solve for coefficients such that position(0) = 0 and velocity(0) = initialVelocity
+            let c1 = Float(1.0 / (r1 - r2))
+            let c2 = -c1
+
+            let exp1 = exp(r1 * time)
+            let exp2 = exp(r2 * time)
+
+            // Position approaches target as exponentials decay to 0
+            let decayFactor = c1 * Float(exp1) + c2 * Float(exp2)
+            let velocityTerm = initialVelocity * Float((exp1 - exp2) / (r1 - r2))
+
+            return target - target * decayFactor + velocityTerm
+        }
+    }
+
+    public func velocity(target: AnimatableVector, initialVelocity: AnimatableVector, time: Double) -> AnimatableVector {
+        switch regime {
+        case .underdamped:
+            // Underdamped velocity
+            let omegaD = naturalFrequency * sqrt(1.0 - dampingRatio * dampingRatio)
+            let envelope = exp(-dampingRatio * naturalFrequency * time)
+            let cosine = cos(omegaD * time)
+            let sine = sin(omegaD * time)
+
+            let targetVelocityFactor = envelope * (dampingRatio * naturalFrequency * cosine + omegaD * sine)
+            let initialVelocityFactor = envelope * (cosine - (dampingRatio * naturalFrequency / omegaD) * sine)
+
+            return target * Float(targetVelocityFactor) + initialVelocity * Float(initialVelocityFactor)
+
+        case .criticallyDamped:
+            // Critically damped velocity
+            let envelope = exp(-naturalFrequency * time)
+            let targetVelocityFactor = envelope * naturalFrequency * naturalFrequency * time
+            let initialVelocityFactor = envelope * (1.0 - naturalFrequency * time)
+
+            return target * Float(targetVelocityFactor) + initialVelocity * Float(initialVelocityFactor)
+
+        case .overdamped:
+            // Overdamped velocity
+            let discriminant = sqrt(dampingRatio * dampingRatio - 1.0)
+            let r1 = -naturalFrequency * (dampingRatio + discriminant)
+            let r2 = -naturalFrequency * (dampingRatio - discriminant)
+
+            let c1 = Float(1.0 / (r1 - r2))
+            let c2 = -c1
+
+            let exp1 = exp(r1 * time)
+            let exp2 = exp(r2 * time)
+
+            let targetVelocityFactor = -(c1 * Float(r1 * exp1) + c2 * Float(r2 * exp2))
+            let initialVelocityFactor = Float(r1 * exp1 - r2 * exp2) / Float(r1 - r2)
+
+            return target * targetVelocityFactor + initialVelocity * initialVelocityFactor
+        }
+    }
+}
+
+extension Spring {
     public static var smooth: Self { smooth() }
     public static var snappy: Self { snappy() }
     public static var bouncy: Self { bouncy() }
@@ -101,50 +187,15 @@ extension Spring {
     }
 }
 
-// MARK: - CustomAnimation Conformance
+struct SpringAnimation: CustomAnimation {
+    var spring: Spring
 
-extension Spring: CustomAnimation {
-    public func animate(value: AnimatableVector, time: Double, context: inout AnimationContext) -> AnimatableVector? {
+    func animate(value: AnimatableVector, time: Double, context: inout AnimationContext) -> AnimatableVector? {
         // Use the initial velocity from context if available, otherwise use zero velocity
         let velocity = context.initialVelocity ?? AnimatableVector.zero(value)
+        print("animate: value: \(value) time: \(time) velocity: \(velocity)")
 
-        // Use stored spring physics values
-        let t = time
-
-        let result: AnimatableVector
-
-        switch regime {
-        case .criticallyDamped:
-            // Critically damped
-            let envelope = exp(-naturalFrequency * t)
-            let factor = envelope * (1.0 + naturalFrequency * t)
-            let velocityFactor = envelope * t
-
-            result = value * factor + velocity * velocityFactor
-        case .underdamped:
-            // Underdamped
-            let omegaD = naturalFrequency * sqrt(1.0 - dampingRatio * dampingRatio)
-            let envelope = exp(-dampingRatio * naturalFrequency * t)
-            let cosine = cos(omegaD * t)
-            let sine = sin(omegaD * t)
-
-            let factor = envelope * (cosine + (dampingRatio * naturalFrequency / omegaD) * sine)
-            let velocityFactor = envelope * (-omegaD * sine)
-
-            result = value * factor + velocity * (velocityFactor / naturalFrequency)
-        case .overdamped:
-            // Overdamped
-            let r1 = -naturalFrequency * (dampingRatio + sqrt(dampingRatio * dampingRatio - 1.0))
-            let r2 = -naturalFrequency * (dampingRatio - sqrt(dampingRatio * dampingRatio - 1.0))
-
-            let c1 = (velocity + value * Float(-r2)) * Float(1.0 / (r1 - r2))
-            let c2 = value + c1 * Float(-1.0)
-
-            let factor1 = exp(r1 * t)
-            let factor2 = exp(r2 * t)
-
-            result = c1 * Float(factor1) + c2 * Float(factor2)
-        }
+        let result = spring.value(target: value, initialVelocity: velocity, time: time)
 
         // Check if animation has settled (within tolerance)
         let tolerance: Float = 0.001
@@ -154,33 +205,17 @@ extension Spring: CustomAnimation {
         return isSettled ? nil : result
     }
 
-    public func velocity(value: AnimatableVector, time: Double, context: AnimationContext) -> AnimatableVector? {
+    func velocity(value: AnimatableVector, time: Double, context: AnimationContext) -> AnimatableVector? {
         let velocity = context.initialVelocity ?? AnimatableVector.zero(value)
 
-        let t = time
-
-        switch regime {
-        case .underdamped:
-            // Underdamped
-            let omegaD = naturalFrequency * sqrt(1.0 - dampingRatio * dampingRatio)
-            let envelope = exp(-dampingRatio * naturalFrequency * t)
-            let cosine = cos(omegaD * t)
-            let sine = sin(omegaD * t)
-
-            let velocityFactor = envelope * (-dampingRatio * naturalFrequency * cosine - omegaD * sine)
-            let accelerationFactor =
-                envelope * (dampingRatio * naturalFrequency * omegaD * sine - omegaD * omegaD * cosine) / naturalFrequency
-
-            return value * Float(velocityFactor) + velocity * Float(accelerationFactor)
-        case .criticallyDamped, .overdamped:
-            // Simplified velocity calculation for critically and overdamped cases
-            return velocity * Float(exp(-naturalFrequency * t))
-        }
+        return spring.velocity(target: value, initialVelocity: velocity, time: time)
     }
 
     public func shouldMerge(previous: Animation, value: AnimatableVector, time: Double, context: inout AnimationContext) -> Bool {
-        // TODO: if velocity -> merge
-        true
+        let velocity = previous.velocity(value: value, time: time, context: context)
+        context.initialVelocity = velocity
+
+        return true
     }
 
     private func isValueSettled(

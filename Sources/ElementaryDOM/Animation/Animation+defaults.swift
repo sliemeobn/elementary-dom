@@ -22,4 +22,14 @@ extension Animation {
     public static func smooth(duration: Double = 0.5, extraBounce: Double = 0.0) -> Self {
         .init(spring: .smooth(duration: duration, extraBounce: extraBounce))
     }
+
+    public static func snappy(duration: Double = 0.5, extraBounce: Double = 0.0) -> Self {
+        .init(spring: .snappy(duration: duration, extraBounce: extraBounce))
+    }
+
+    public static func bouncy(duration: Double = 0.5, extraBounce: Double = 0.0) -> Self {
+        .init(spring: .bouncy(duration: duration, extraBounce: extraBounce))
+    }
+
+    public static let `default`: Self = .smooth
 }

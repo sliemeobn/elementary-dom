@@ -63,7 +63,7 @@ extension _AttributeModifier {
             guard !isDirty else { return }
             logTrace("invalidating attribute modifier")
             isDirty = true
-            context.commitPlan.addNodeAction(CommitAction(run: updateDOMNode(_:)))
+            context.scheduler.addNodeAction(CommitAction(run: updateDOMNode(_:)))
         }
 
         func updateDOMNode(_ context: inout _CommitContext) {

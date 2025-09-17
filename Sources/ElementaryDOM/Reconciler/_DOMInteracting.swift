@@ -72,6 +72,7 @@ public enum DOM {
         func requestAnimationFrame(_ callback: @escaping (Double) -> Void)
         func queueMicrotask(_ callback: @escaping () -> Void)
         func setTimeout(_ callback: @escaping () -> Void, _ timeout: Double)
+        func getCurrentTime() -> Double
     }
 }
 

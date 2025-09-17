@@ -2,6 +2,7 @@ import ElementaryMath
 
 // TODO: maybe this can be replaced with Spans of floats somehow
 public enum AnimatableVector {
+    case d0
     case d1(Float)
     case d2(Float, Float)
     case d4(SIMD4<Float>)
@@ -9,8 +10,50 @@ public enum AnimatableVector {
 }
 
 extension AnimatableVector {
-    public static func zero(_ vetor: borrowing Self) -> Self {
-        switch vetor {
+    internal var isEmpty: Bool {
+        switch self {
+        case .d0:
+            return true
+        default:
+            return false
+        }
+    }
+}
+
+extension AnimatableVector: AnimatableVectorConvertible {
+    public init(_ animatableVector: AnimatableVector) {
+        self = animatableVector
+    }
+
+    public var animatableVector: AnimatableVector {
+        self
+    }
+}
+
+extension AnimatableVector: Equatable {
+    public static func == (lhs: Self, rhs: Self) -> Bool {
+        switch (lhs, rhs) {
+        case (.d0, .d0):
+            return true
+        case (.d1(let l1), .d1(let r1)):
+            return l1 == r1
+        case (.d2(let l1, let l2), .d2(let r1, let r2)):
+            return l1 == r1 && l2 == r2
+        case (.d4(let l1), .d4(let r1)):
+            return l1 == r1
+        case (.d8(let l1, let l2), .d8(let r1, let r2)):
+            return l1 == r1 && l2 == r2
+        default:
+            return false
+        }
+    }
+}
+
+extension AnimatableVector {
+    public static func zero(_ vector: borrowing Self) -> Self {
+        switch vector {
+        case .d0:
+            return .d0
         case .d1(_):
             return .d1(0)
         case .d2(_, _):
@@ -24,6 +67,8 @@ extension AnimatableVector {
 
     public static func + (lhs: Self, rhs: Self) -> Self {
         switch (lhs, rhs) {
+        case (.d0, .d0):
+            return .d0
         case (.d1(let l1), .d1(let r1)):
             return .d1(l1 + r1)
         case (.d2(let l1, let l2), .d2(let r1, let r2)):
@@ -37,8 +82,14 @@ extension AnimatableVector {
         }
     }
 
+    public static func += (lhs: inout Self, rhs: Self) {
+        lhs = lhs + rhs
+    }
+
     public static func * (lhs: Self, rhs: Float) -> Self {
         switch lhs {
+        case .d0:
+            return .d0
         case .d1(let l1):
             return .d1(l1 * rhs)
         case .d2(let l1, let l2):
@@ -56,6 +107,8 @@ extension AnimatableVector {
 
     public static func - (lhs: Self, rhs: Self) -> Self {
         switch (lhs, rhs) {
+        case (.d0, .d0):
+            return .d0
         case (.d1(let l1), .d1(let r1)):
             return .d1(l1 - r1)
         case (.d2(let l1, let l2), .d2(let r1, let r2)):
@@ -72,6 +125,8 @@ extension AnimatableVector {
     /// Calculates the magnitude (length) of the vector
     public var magnitude: Float {
         switch self {
+        case .d0:
+            return 0
         case .d1(let x):
             return abs(x)
         case .d2(let x, let y):

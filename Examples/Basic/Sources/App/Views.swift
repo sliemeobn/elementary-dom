@@ -13,6 +13,8 @@ struct App {
 
     var content: some View {
         div {
+            AnimationsView()
+            hr()
             TextField(value: #Binding(data.name))
 
             div {
