@@ -49,24 +49,27 @@ struct AnimatedValue<Value: AnimatableVectorConvertible>: ~Copyable {
     mutating func animate(to value: Value, animation: AnimationInstance) {
         guard value != currentTarget else { return }
 
+        self.progressToTime(animation.startTime)
         var animationTarget = value.animatableVector - currentTarget.animatableVector
 
         if let previous = runningAnimations.last {
+            let elapsedTime = animation.startTime - previous.instance.startTime
             let shouldMerge = animation.animation.shouldMerge(
                 previous: previous.instance.animation,
                 value: previous.target,
-                time: animation.startTime,
+                time: elapsedTime,
                 context: &context
             )
 
             if shouldMerge {
                 self.animationBase = currentAnimationValue.animatableVector
                 self.removeAnimations(upThrough: runningAnimations.endIndex - 1)
-                animationTarget = value.animatableVector - currentAnimationValue.animatableVector
+                animationTarget = value.animatableVector - self.animationBase
             }
         }
 
         self.currentTarget = value
+        print("animate: appending animationTarget: \(animationTarget), base: \(self.animationBase)")
         runningAnimations.append(RunningAnimation(instance: animation, target: animationTarget))
     }
 
@@ -76,19 +79,18 @@ struct AnimatedValue<Value: AnimatableVectorConvertible>: ~Copyable {
         let (animatedVector, finishedAnimationIndex) = calculateAnimationAtTime(
             time,
             runningAnimations: runningAnimations,
-            context: &context,
-            animationBase: &animationBase
+            context: &context
         )
+
+        self.currentAnimationValue = Value(animationBase + animatedVector)
 
         if let finishedAnimationIndex {
             removeAnimations(upThrough: finishedAnimationIndex)
         }
 
-        if let animatedVector {
-            self.currentAnimationValue = Value(animationBase + animatedVector)
-        } else {
-            assert(!isAnimating)
-            self.currentAnimationValue = self.currentTarget
+        if !isAnimating {
+            assert(self.currentAnimationValue == self.currentTarget)
+            assert(self.animationBase == self.currentTarget.animatableVector)
         }
     }
 
@@ -96,7 +98,6 @@ struct AnimatedValue<Value: AnimatableVectorConvertible>: ~Copyable {
     func peekFutureValues(_ times: StrideThrough<Double>) -> [Value] {
         var results: [Value] = []
         var contextCopy = context
-        var baseCopy = animationBase
         var runningAnimations = runningAnimations[...]
 
         results.reserveCapacity(times.underestimatedCount)
@@ -105,16 +106,13 @@ struct AnimatedValue<Value: AnimatableVectorConvertible>: ~Copyable {
             let (animatedVector, completedIndex) = calculateAnimationAtTime(
                 time,
                 runningAnimations: runningAnimations,
-                context: &contextCopy,
-                animationBase: &baseCopy
+                context: &contextCopy
             )
-            if let animatedVector {
-                results.append(Value(baseCopy + animatedVector))
-            } else {
-                results.append(self.currentTarget)
-            }
+
+            results.append(Value(self.animationBase + animatedVector))
 
             if let completedIndex {
+                //TODO: update base
                 runningAnimations = runningAnimations[(completedIndex + 1)...]
             }
         }
@@ -122,6 +120,9 @@ struct AnimatedValue<Value: AnimatableVectorConvertible>: ~Copyable {
     }
 
     private mutating func removeAnimations(upThrough index: Int) {
+        for i in 0...index {
+            self.animationBase += runningAnimations[i].target
+        }
         runningAnimations.removeSubrange(0...index)
         // TODO: run callbacks
     }
@@ -131,30 +132,38 @@ private func calculateAnimationAtTime<AnimationList>(
     _ time: Double,
     runningAnimations: AnimationList,
     context: inout AnimationContext,
-    animationBase: inout AnimatableVector
-) -> (animatedVector: AnimatableVector?, finishedAnimationIndex: AnimationList.Index?)
+) -> (animatedVector: AnimatableVector, finishedAnimationIndex: AnimationList.Index?)
 where AnimationList: Collection<RunningAnimation> {
-    var animatedVector: AnimatableVector?
-    var additionalVector: AnimatableVector?
+    guard runningAnimations.count > 1 else {
+        if let vector = runningAnimations.first!.animate(time: time, context: &context, additionalVector: nil) {
+            return (vector, nil)
+        } else {
+            return (runningAnimations.first!.target, runningAnimations.indices.first)
+        }
+    }
+
     var finishedAnimationIndex: AnimationList.Index?
     var index = runningAnimations.startIndex
+
+    let zero = AnimatableVector.zero(runningAnimations.first!.target)
+
+    var totalAnimationVector = zero
+    var additionalVector = zero
 
     while index < runningAnimations.endIndex {
         let runningAnimation = runningAnimations[index]
 
         if let vector = runningAnimation.animate(time: time, context: &context, additionalVector: additionalVector) {
-            animatedVector = vector
+            totalAnimationVector += vector
+            additionalVector = runningAnimation.target - vector
         } else {
             finishedAnimationIndex = index
-            animationBase += runningAnimation.target
-            animatedVector = nil
+            totalAnimationVector += runningAnimation.target
+            additionalVector = zero
         }
 
         runningAnimations.formIndex(after: &index)
-        guard index < runningAnimations.endIndex else { break }
-
-        additionalVector = animatedVector.map { runningAnimations[index].target - $0 } ?? nil
     }
 
-    return (animatedVector, finishedAnimationIndex)
+    return (totalAnimationVector, finishedAnimationIndex)
 }

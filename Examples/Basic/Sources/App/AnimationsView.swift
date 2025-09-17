@@ -10,8 +10,8 @@ struct AnimationsView {
             AnimatedView(angle: angle)
             button { "Animate" }
                 .onClick { _ in
-                    withAnimation(.bouncy(duration: 2, extraBounce: 0.5)) {
-                        angle += 1
+                    withAnimation(.linear(duration: 5)) {
+                        if angle == 1 { angle = 0 } else { angle = 1 }
                     }
                 }
         }

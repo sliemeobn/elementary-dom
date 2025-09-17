@@ -112,18 +112,15 @@ extension Spring {
             let r1 = -naturalFrequency * (dampingRatio + discriminant)
             let r2 = -naturalFrequency * (dampingRatio - discriminant)
 
-            // Solve for coefficients such that position(0) = 0 and velocity(0) = initialVelocity
-            let c1 = Float(1.0 / (r1 - r2))
-            let c2 = -c1
-
             let exp1 = exp(r1 * time)
             let exp2 = exp(r2 * time)
 
-            // Position approaches target as exponentials decay to 0
-            let decayFactor = c1 * Float(exp1) + c2 * Float(exp2)
-            let velocityTerm = initialVelocity * Float((exp1 - exp2) / (r1 - r2))
+            // Position: x(t) = target * [1 - (r2 e^{r1 t} - r1 e^{r2 t}) / (r2 - r1)]
+            //                 + v0 * (e^{r1 t} - e^{r2 t}) / (r1 - r2)
+            let targetFactor = 1.0 - ((r2 * exp1 - r1 * exp2) / (r2 - r1))
+            let velocityFactor = (exp1 - exp2) / (r1 - r2)
 
-            return target - target * decayFactor + velocityTerm
+            return target * Float(targetFactor) + initialVelocity * Float(velocityFactor)
         }
     }
 
@@ -136,7 +133,7 @@ extension Spring {
             let cosine = cos(omegaD * time)
             let sine = sin(omegaD * time)
 
-            let targetVelocityFactor = envelope * (dampingRatio * naturalFrequency * cosine + omegaD * sine)
+            let targetVelocityFactor = envelope * (dampingRatio * naturalFrequency * cosine - omegaD * sine)
             let initialVelocityFactor = envelope * (cosine - (dampingRatio * naturalFrequency / omegaD) * sine)
 
             return target * Float(targetVelocityFactor) + initialVelocity * Float(initialVelocityFactor)
@@ -144,7 +141,7 @@ extension Spring {
         case .criticallyDamped:
             // Critically damped velocity
             let envelope = exp(-naturalFrequency * time)
-            let targetVelocityFactor = envelope * naturalFrequency * naturalFrequency * time
+            let targetVelocityFactor = envelope * naturalFrequency * (naturalFrequency * time - 1.0)
             let initialVelocityFactor = envelope * (1.0 - naturalFrequency * time)
 
             return target * Float(targetVelocityFactor) + initialVelocity * Float(initialVelocityFactor)
@@ -155,16 +152,15 @@ extension Spring {
             let r1 = -naturalFrequency * (dampingRatio + discriminant)
             let r2 = -naturalFrequency * (dampingRatio - discriminant)
 
-            let c1 = Float(1.0 / (r1 - r2))
-            let c2 = -c1
-
             let exp1 = exp(r1 * time)
             let exp2 = exp(r2 * time)
 
-            let targetVelocityFactor = -(c1 * Float(r1 * exp1) + c2 * Float(r2 * exp2))
-            let initialVelocityFactor = Float(r1 * exp1 - r2 * exp2) / Float(r1 - r2)
+            // Velocity: x'(t) = target * [ (r1 r2) * (e^{r1 t} - e^{r2 t}) / (r1 - r2) ]
+            //                     + v0 * (r1 e^{r1 t} - r2 e^{r2 t}) / (r1 - r2)
+            let targetVelocityFactor = (r1 * r2) * (exp1 - exp2) / (r1 - r2)
+            let initialVelocityFactor = (r1 * exp1 - r2 * exp2) / (r1 - r2)
 
-            return target * targetVelocityFactor + initialVelocity * initialVelocityFactor
+            return target * Float(targetVelocityFactor) + initialVelocity * Float(initialVelocityFactor)
         }
     }
 }
@@ -212,6 +208,7 @@ struct SpringAnimation: CustomAnimation {
     }
 
     public func shouldMerge(previous: Animation, value: AnimatableVector, time: Double, context: inout AnimationContext) -> Bool {
+        // Calculate velocity from the previous animation at the interruption time
         let velocity = previous.velocity(value: value, time: time, context: context)
         context.initialVelocity = velocity
 

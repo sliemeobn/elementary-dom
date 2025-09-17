@@ -22,26 +22,28 @@ public struct Animation {
     }
 
     func animate(value: AnimatableVector, time: Double, context: inout AnimationContext) -> AnimatableVector? {
-        let time = time * speed + delay
+        let localTime = max(0, (time - delay)) * speed
 
         switch storage {
         case .spring(let spring):
-            return spring.animate(value: value, time: time, context: &context)
+            return spring.animate(value: value, time: localTime, context: &context)
         case .timingFunction(let timingFunction):
-            return timingFunction.animate(value: value, time: time, context: &context)
+            return timingFunction.animate(value: value, time: localTime, context: &context)
         case .any(let anyAnimation):
-            return anyAnimation.animate(value, time, &context)
+            return anyAnimation.animate(value, localTime, &context)
         }
     }
 
     func velocity(value: AnimatableVector, time: Double, context: borrowing AnimationContext) -> AnimatableVector? {
+        let localTime = max(0, (time - delay)) * speed
+
         switch storage {
         case .spring(let spring):
-            return spring.velocity(value: value, time: time, context: context)
+            return spring.velocity(value: value, time: localTime, context: context)
         case .timingFunction(let timingFunction):
-            return timingFunction.velocity(value: value, time: time, context: context)
+            return timingFunction.velocity(value: value, time: localTime, context: context)
         case .any(let anyAnimation):
-            return anyAnimation.velocity(value, time, context)
+            return anyAnimation.velocity(value, localTime, context)
         }
     }
 
