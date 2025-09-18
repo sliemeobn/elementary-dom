@@ -28,7 +28,7 @@ final class BindingModifier<Configuration>: DOMElementModifier, Unmountable wher
         guard !isDirty else { return }
         isDirty = true
 
-        context.commitPlan.addNodeAction(
+        context.scheduler.addNodeAction(
             CommitAction(run: updateDOMNode)
         )
     }

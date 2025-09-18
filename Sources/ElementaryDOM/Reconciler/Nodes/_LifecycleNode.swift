@@ -6,7 +6,7 @@ enum LifecycleHook {
 }
 
 // TODO: this can probably be folded into a "stateful node"
-public class _LifecycleNode<ChildNode: _Reconcilable> {  // where ChildNode: ~Copyable
+public final class _LifecycleNode<ChildNode: _Reconcilable> {  // where ChildNode: ~Copyable
     private var value: LifecycleHook
     var child: ChildNode
 
@@ -16,7 +16,7 @@ public class _LifecycleNode<ChildNode: _Reconcilable> {  // where ChildNode: ~Co
         self.value = value
         self.child = consume child
 
-        context.commitPlan.addNodeAction(
+        context.scheduler.addNodeAction(
             CommitAction(run: self.commitLifecycleValue)
         )
     }

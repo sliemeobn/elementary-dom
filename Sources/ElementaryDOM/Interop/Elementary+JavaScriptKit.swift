@@ -56,10 +56,11 @@ extension DOM.PropertyValue {
 }
 
 final class JSKitDOMInteractor: DOM.Interactor {
-    private let document = JSObject.global.document
-    private let setTimeout = JSObject.global.setTimeout.function!
-    private let requestAnimationFrame = JSObject.global.requestAnimationFrame.function!
-    private let queueMicrotask = JSObject.global.queueMicrotask.function!
+    private let jsDocument = JSObject.global.document
+    private let jsSetTimeout = JSObject.global.setTimeout.function!
+    private let jsRequestAnimationFrame = JSObject.global.requestAnimationFrame.function!
+    private let jsQueueMicrotask = JSObject.global.queueMicrotask.function!
+    private let jsPerformance = JSObject.global.performance.object!
 
     let root: DOM.Node
 
@@ -103,11 +104,11 @@ final class JSKitDOMInteractor: DOM.Interactor {
     }
 
     func createText(_ text: String) -> DOM.Node {
-        .init(document.createTextNode(text).object!)
+        .init(jsDocument.createTextNode(text).object!)
     }
 
     func createElement(_ element: String) -> DOM.Node {
-        .init(document.createElement(element).object!)
+        .init(jsDocument.createElement(element).object!)
     }
 
     // Low-level DOM-like operations used by protocol extensions
@@ -128,7 +129,7 @@ final class JSKitDOMInteractor: DOM.Interactor {
     }
 
     func patchText(_ node: DOM.Node, with text: String) {
-        _ = node.jsObject.textContent = text.jsValue
+        node.jsObject.textContent = text.jsValue
     }
 
     func replaceChildren(_ children: [DOM.Node], in parent: DOM.Node) {
@@ -154,7 +155,7 @@ final class JSKitDOMInteractor: DOM.Interactor {
 
     func requestAnimationFrame(_ callback: @escaping (Double) -> Void) {
         // TODO: optimize this
-        requestAnimationFrame(
+        jsRequestAnimationFrame(
             JSOneshotClosure { args in
                 callback(args[0].number!)
                 return .undefined
@@ -163,7 +164,7 @@ final class JSKitDOMInteractor: DOM.Interactor {
     }
 
     func queueMicrotask(_ callback: @escaping () -> Void) {
-        queueMicrotask(
+        jsQueueMicrotask(
             JSOneshotClosure { args in
                 callback()
                 return .undefined
@@ -172,12 +173,16 @@ final class JSKitDOMInteractor: DOM.Interactor {
     }
 
     func setTimeout(_ callback: @escaping () -> Void, _ timeout: Double) {
-        setTimeout(
+        jsSetTimeout(
             JSOneshotClosure { args in
                 callback()
                 return .undefined
             }.jsValue,
             timeout
         )
+    }
+
+    func getCurrentTime() -> Double {
+        jsPerformance.now!().number! / 1000
     }
 }

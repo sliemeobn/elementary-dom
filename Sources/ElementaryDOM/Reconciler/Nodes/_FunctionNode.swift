@@ -7,6 +7,7 @@ where Value: __FunctionView, ChildNode: _Reconcilable, ChildNode == Value.Conten
     private var state: Value.__ViewState?
     private var value: Value?
     private var context: _ViewContext?
+    private var animatedValue: AnimatedValue<AnimatableVector>
 
     var parentElement: AnyParentElememnt!
     public var depthInTree: Int
@@ -32,8 +33,10 @@ where Value: __FunctionView, ChildNode: _Reconcilable, ChildNode == Value.Conten
         self.depthInTree = reconciler.depth
 
         self.state = Value.__initializeState(from: value)
+        self.animatedValue = AnimatedValue(value: Value.__getAnimatableData(from: value))
         Value.__applyContext(context, to: &value)
         Value.__restoreState(state!, in: &value)
+
         self.value = value
         self.context = copy context
 
@@ -52,13 +55,33 @@ where Value: __FunctionView, ChildNode: _Reconcilable, ChildNode == Value.Conten
         let needsRerender = !Value.__areEqual(a: value, b: self.value!)
 
         // NOTE: the idea is that way always store a "wired-up" value, so that we can re-run the function for free
+        // the equality check is generated to exclude State and Context from the equality check
         Value.__applyContext(self.context!, to: &value)
         Value.__restoreState(state!, in: &value)
         self.value = value
 
         if needsRerender {
+            let didStartAnimation = animatedValue.setValueAndReturnIfAnimationWasStarted(
+                Value.__getAnimatableData(from: self.value!),
+                context: context
+            )
+
+            if didStartAnimation == true {
+                context.scheduler.registerAnimation(.init(progressAnimation: self.progressAnimation(_:)))
+            }
+
             context.addFunction(asFunctionNode)
         }
+    }
+
+    func progressAnimation(_ context: inout _RenderContext) -> Bool {
+        assert(!animatedValue.model.isEmpty, "animation should never be called without an animatable value")
+        guard animatedValue.isAnimating else { return false }
+
+        animatedValue.progressToTime(context.currentTime)
+        runFunction(reconciler: &context)
+
+        return animatedValue.isAnimating
     }
 
     func runFunction(reconciler: inout _RenderContext) {
@@ -68,15 +91,23 @@ where Value: __FunctionView, ChildNode: _Reconcilable, ChildNode == Value.Conten
         precondition(self.value != nil, "value must be set")
         precondition(self.context != nil, "context must be set")
 
+        // create a copy of the value to avoid mutating the original value, especially for animations
+        var value = self.value!
+
+        if !animatedValue.model.isEmpty {
+            Value.__setAnimatableData(animatedValue.presentation.animatableVector, to: &value)
+        }
+
         // TODO: expose cancellation mechanism of reactivity and keep track of it
         // canceling on unmount/recalc maybe important for retain cycles
 
         reconciler.withCurrentLayoutContainer(parentElement) { reconciler in
+            // TODO: only track the .content access here, entangle the dependencies a bit (especially environment)
             withReactiveTracking {
                 if child == nil {
-                    self.child = Value.Content._makeNode(self.value!.content, context: context!, reconciler: &reconciler)
+                    self.child = Value.Content._makeNode(value.content, context: context!, reconciler: &reconciler)
                 } else {
-                    Value.Content._patchNode(self.value!.content, node: &child!, reconciler: &reconciler)
+                    Value.Content._patchNode(value.content, node: &child!, reconciler: &reconciler)
                 }
             } onChange: { [scheduler = reconciler.scheduler, asFunctionNode = asFunctionNode!] in
                 scheduler.scheduleFunction(asFunctionNode)
@@ -111,5 +142,19 @@ extension AnyFunctionNode {
         self.identifier = ObjectIdentifier(function)
         self.depthInTree = function.depthInTree
         self.runUpdate = function.runFunction
+    }
+}
+
+private extension AnimatedValue {
+    mutating func setValueAndReturnIfAnimationWasStarted(_ value: Value, context: borrowing _RenderContext) -> Bool {
+        let wasAnimating = isAnimating
+
+        if let animation = context.transaction?.animation {
+            self.animate(to: value, animation: AnimationInstance(startTime: context.currentTime, animation: animation))
+        } else {
+            self.setValue(value)
+        }
+
+        return isAnimating && !wasAnimating
     }
 }
