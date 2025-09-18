@@ -110,8 +110,10 @@ public final class _ElementNode<ChildNode>: _Reconcilable where ChildNode: _Reco
         let c = self.child.take()!
         c.unmount(&context)
 
-        mountedModifieres?.forEach { $0.unmount(&context) }
-        mountedModifieres = nil
+        for modifier in mountedModifieres! {
+            modifier.unmount(&context)
+        }
+        self.mountedModifieres = nil
 
         self.domNode = nil
         self.asParentRef = nil
