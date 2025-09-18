@@ -38,4 +38,5 @@ jobs:
     timeout-minutes: 5
     container: "swift:6.2"
     steps:
+      - uses: actions/checkout@v4
       - run: swift format lint -rps .

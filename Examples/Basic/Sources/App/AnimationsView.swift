@@ -1,5 +1,5 @@
 import ElementaryDOM
-import ElementaryMath
+import _ElementaryMath
 
 @View
 struct AnimationsView {

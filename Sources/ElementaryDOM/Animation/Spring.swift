@@ -1,4 +1,4 @@
-import ElementaryMath
+import _ElementaryMath
 
 /// A spring animation configuration that defines the physical properties of a spring.
 /// Similar to SwiftUI's Spring but uses AnimatableVector as the value type.

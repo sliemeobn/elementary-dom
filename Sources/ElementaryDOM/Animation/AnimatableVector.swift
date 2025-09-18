@@ -1,4 +1,4 @@
-import ElementaryMath
+import _ElementaryMath
 
 // TODO: maybe this can be replaced with Spans of floats somehow
 public enum AnimatableVector {
