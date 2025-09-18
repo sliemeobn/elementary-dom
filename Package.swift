@@ -1,4 +1,4 @@
-// swift-tools-version: 6.0
+// swift-tools-version: 6.1
 import CompilerPluginSupport
 import PackageDescription
 
@@ -21,7 +21,7 @@ let package = Package(
                 .product(name: "JavaScriptKit", package: "JavaScriptKit"),
                 .target(name: "ElementaryDOMMacros"),
                 .target(name: "Reactivity"),
-                .target(name: "ElementaryMath"),
+                .target(name: "_ElementaryMath"),
             ],
             swiftSettings: [
                 .swiftLanguageMode(.v5),
@@ -31,7 +31,7 @@ let package = Package(
             ]
         ),
         .target(
-            name: "ElementaryMath",
+            name: "_ElementaryMath",
             swiftSettings: [
                 .enableExperimentalFeature("Extern")
             ]

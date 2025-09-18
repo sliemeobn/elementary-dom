@@ -19,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        image: ["swift:6.1", "swiftlang/swift:nightly-6.2-noble"]
+        image: ["swift:6.1", "swift:6.2"]
 
     container:
       image: ${{ matrix.image }}
@@ -32,3 +32,10 @@ jobs:
 
       - name: Run Tests
         run: swift test
+
+  format:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    container: "swift:6.2"
+    steps:
+      - run: swift format lint -rps .

@@ -129,7 +129,7 @@ final class JSKitDOMInteractor: DOM.Interactor {
     }
 
     func patchText(_ node: DOM.Node, with text: String) {
-        _ = node.jsObject.textContent = text.jsValue
+        node.jsObject.textContent = text.jsValue
     }
 
     func replaceChildren(_ children: [DOM.Node], in parent: DOM.Node) {

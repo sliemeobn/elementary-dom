@@ -88,9 +88,9 @@ public func _swift_float64ToString(
             tmpExp /= 10
             expDigits += 1
         }
-        let reservedForExponent = 1 /*e*/ + 1 /*sign*/ + expDigits
+        let reservedForExponent = expDigits + 2  // 'e' + sign
         let remainingBeforeExponent = (maxIndex - index) - reservedForExponent
-        let capacityBasedFractionals = max(0, remainingBeforeExponent - 2 /*leading + dot*/)
+        let capacityBasedFractionals = max(0, remainingBeforeExponent - 2)  // leading + dot
         let digitBasedFractionals = 9
         let allowedFractionDigitsSci = max(0, min(digitBasedFractionals, capacityBasedFractionals))
 
@@ -255,7 +255,7 @@ public func _swift_float64ToString(
         // Determine how many fractional digits we can print based on buffer and 10-digit significant cap
         let integerDigits = index - start
         let remainingCapacity = maxIndex - index
-        let capacityBasedFractionals = max(0, remainingCapacity - 1 /*dot*/)
+        let capacityBasedFractionals = max(0, remainingCapacity - 1)  // dot
         let digitBasedFractionals = max(0, 10 - integerDigits)
         let allowedFractionDigits = max(0, min(digitBasedFractionals, capacityBasedFractionals))
 
