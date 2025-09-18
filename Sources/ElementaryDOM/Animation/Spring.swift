@@ -133,7 +133,7 @@ extension Spring {
             let cosine = cos(omegaD * time)
             let sine = sin(omegaD * time)
 
-            let targetVelocityFactor = envelope * (dampingRatio * naturalFrequency * cosine - omegaD * sine)
+            let targetVelocityFactor = envelope * (naturalFrequency * naturalFrequency / omegaD) * sine
             let initialVelocityFactor = envelope * (cosine - (dampingRatio * naturalFrequency / omegaD) * sine)
 
             return target * Float(targetVelocityFactor) + initialVelocity * Float(initialVelocityFactor)
@@ -141,7 +141,7 @@ extension Spring {
         case .criticallyDamped:
             // Critically damped velocity
             let envelope = exp(-naturalFrequency * time)
-            let targetVelocityFactor = envelope * naturalFrequency * (naturalFrequency * time - 1.0)
+            let targetVelocityFactor = envelope * (naturalFrequency * naturalFrequency) * time
             let initialVelocityFactor = envelope * (1.0 - naturalFrequency * time)
 
             return target * Float(targetVelocityFactor) + initialVelocity * Float(initialVelocityFactor)
@@ -189,7 +189,6 @@ struct SpringAnimation: CustomAnimation {
     func animate(value: AnimatableVector, time: Double, context: inout AnimationContext) -> AnimatableVector? {
         // Use the initial velocity from context if available, otherwise use zero velocity
         let velocity = context.initialVelocity ?? AnimatableVector.zero(value)
-        print("animate: value: \(value) time: \(time) velocity: \(velocity)")
 
         let result = spring.value(target: value, initialVelocity: velocity, time: time)
 
@@ -209,9 +208,11 @@ struct SpringAnimation: CustomAnimation {
 
     public func shouldMerge(previous: Animation, value: AnimatableVector, time: Double, context: inout AnimationContext) -> Bool {
         // Calculate velocity from the previous animation at the interruption time
-        let velocity = previous.velocity(value: value, time: time, context: context)
-        context.initialVelocity = velocity
+        guard let velocity = previous.velocity(value: value, time: time, context: context) else {
+            return false
+        }
 
+        context.initialVelocity = velocity
         return true
     }
 

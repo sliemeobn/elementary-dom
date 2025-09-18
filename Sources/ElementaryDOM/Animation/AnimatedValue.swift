@@ -63,13 +63,12 @@ struct AnimatedValue<Value: AnimatableVectorConvertible>: ~Copyable {
 
             if shouldMerge {
                 self.animationBase = currentAnimationValue.animatableVector
-                self.removeAnimations(upThrough: runningAnimations.endIndex - 1)
+                self.removeAnimations(upThrough: runningAnimations.endIndex - 1, skipBaseUpdate: true)
                 animationTarget = value.animatableVector - self.animationBase
             }
         }
 
         self.currentTarget = value
-        print("animate: appending animationTarget: \(animationTarget), base: \(self.animationBase)")
         runningAnimations.append(RunningAnimation(instance: animation, target: animationTarget))
     }
 
@@ -88,10 +87,12 @@ struct AnimatedValue<Value: AnimatableVectorConvertible>: ~Copyable {
             removeAnimations(upThrough: finishedAnimationIndex)
         }
 
+        #if DEBUG
         if !isAnimating {
             assert(self.currentAnimationValue == self.currentTarget)
             assert(self.animationBase == self.currentTarget.animatableVector)
         }
+        #endif
     }
 
     // TODO: figure out the shape for this
@@ -119,9 +120,11 @@ struct AnimatedValue<Value: AnimatableVectorConvertible>: ~Copyable {
         return results
     }
 
-    private mutating func removeAnimations(upThrough index: Int) {
-        for i in 0...index {
-            self.animationBase += runningAnimations[i].target
+    private mutating func removeAnimations(upThrough index: Int, skipBaseUpdate: Bool = false) {
+        if !skipBaseUpdate {
+            for i in 0...index {
+                self.animationBase += runningAnimations[i].target
+            }
         }
         runningAnimations.removeSubrange(0...index)
         // TODO: run callbacks

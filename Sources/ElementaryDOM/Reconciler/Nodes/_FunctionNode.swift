@@ -67,7 +67,6 @@ where Value: __FunctionView, ChildNode: _Reconcilable, ChildNode == Value.Conten
             )
 
             if didStartAnimation == true {
-                print("registering animation")
                 context.scheduler.registerAnimation(.init(progressAnimation: self.progressAnimation(_:)))
             }
 
@@ -79,7 +78,6 @@ where Value: __FunctionView, ChildNode: _Reconcilable, ChildNode == Value.Conten
         assert(!animatedValue.model.isEmpty, "animation should never be called without an animatable value")
         guard animatedValue.isAnimating else { return false }
 
-        print("progressing animation to time \(context.currentTime)")
         animatedValue.progressToTime(context.currentTime)
         runFunction(reconciler: &context)
 

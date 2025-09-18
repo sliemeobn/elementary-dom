@@ -6,12 +6,13 @@ struct AnimationsView {
     @State var angle: Double = 0
 
     var content: some View {
+
         div {
             AnimatedView(angle: angle)
             button { "Animate" }
                 .onClick { _ in
-                    withAnimation(.linear(duration: 5)) {
-                        if angle == 1 { angle = 0 } else { angle = 1 }
+                    withAnimation(.bouncy(duration: 1)) {
+                        angle += 1
                     }
                 }
         }
