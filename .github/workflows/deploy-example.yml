@@ -22,16 +22,13 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    container: swift:6.2
     env:
-      SWIFT_VERSION: 6.2-snapshot-2025-08-21
-      WASM_SDK_URL: https://download.swift.org/swift-6.2-branch/wasm-sdk/swift-6.2-DEVELOPMENT-SNAPSHOT-2025-08-21-a/swift-6.2-DEVELOPMENT-SNAPSHOT-2025-08-21-a_wasm.artifactbundle.tar.gz
-      WASM_SDK_CHECKSUM: 46984066d3c93add1ef2e12914fc5af3814b722ada26aa13690def663236e675
+      WASM_SDK_URL: https://download.swift.org/swift-6.2-release/wasm/swift-6.2-RELEASE/swift-6.2-RELEASE_wasm.artifactbundle.tar.gz
+      WASM_SDK_CHECKSUM: fe4e8648309fce86ea522e9e0d1dc48e82df6ba6e5743dbf0c53db8429fb5224
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - uses: beeauvin/swiftly-swift@v1
-        with:
-          swift-version: ${{ env.SWIFT_VERSION }}
       - name: Install Swift WASM SDK
         run: swift sdk install ${{ env.WASM_SDK_URL }} --checksum ${{ env.WASM_SDK_CHECKSUM }}
       - name: Install wasm-opt
