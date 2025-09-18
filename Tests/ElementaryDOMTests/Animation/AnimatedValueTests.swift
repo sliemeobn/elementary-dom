@@ -5,7 +5,7 @@ import Testing
 @Suite
 struct AnimatedValueTests {
     @Test
-    func animatesLinearly() {
+    func progressesAnimation() {
         var value = AnimatedValue(value: TestValue(0))
         value.animate(to: 10, animation: .init(startTime: 0, animation: .linear(duration: 1)))
         #expect(value.presentation == 0)
@@ -27,6 +27,29 @@ struct AnimatedValueTests {
     }
 
     @Test
+    func delaysAnimation() {
+        var value = AnimatedValue(value: TestValue(0))
+        value.animate(to: 10, animation: .init(startTime: 0, animation: .linear(duration: 1).delay(0.5)))
+        #expect(value.progressToEnd(sampling: 0.2) == [0, 0, 0, 1, 3, 5, 7, 9, 10])
+    }
+
+    @Test
+    func speedsUpAnimation() {
+        var value = AnimatedValue(value: TestValue(0))
+        value.animate(to: 10, animation: .init(startTime: 0, animation: .linear(duration: 1).speed(2)))
+        #expect(value.progressToEnd(sampling: 0.2) == [0, 4, 8, 10])
+    }
+
+    @Test
+    func combinesDelaysAndSpeeds() {
+        var value = AnimatedValue(value: TestValue(0))
+        value.animate(to: 10, animation: .init(startTime: 0, animation: .linear(duration: 2).speed(2).delay(0.5)))
+        #expect(value.progressToEnd(sampling: 0.2) == [0, 0, 0, 1, 3, 5, 7, 9, 10])
+        value.animate(to: 0, animation: .init(startTime: 0, animation: .linear(duration: 0.5).delay(0.5).speed(0.5)))
+        #expect(value.progressToEnd(sampling: 0.2) == [10, 10, 10, 10, 10, 10, 8, 6, 4, 2, 0, 0])
+    }
+
+    @Test
     func peeksValues() {
         // var value = AnimatedValue(value: TestValue(0))
         // value.animate(to: 10, animation: .init(startTime: 0, animation: .linear(duration: 1)))
@@ -34,6 +57,22 @@ struct AnimatedValueTests {
         // #expect(peeked == [0, 2, 4, 6, 8, 10, 10, 10])
         // #expect(value.presentation == 0)
         // #expect(value.isAnimating == true)
+    }
+}
+
+extension AnimatedValue {
+    mutating func progressToEnd(sampling: Double) -> [Value] {
+        var time = 0.0
+        var values: [Value] = []
+        values.append(presentation)
+
+        while isAnimating {
+            time += sampling
+            self.progressToTime(time)
+            values.append(presentation)
+        }
+
+        return values
     }
 }
 

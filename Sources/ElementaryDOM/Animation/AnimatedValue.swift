@@ -151,18 +151,18 @@ where AnimationList: Collection<RunningAnimation> {
     let zero = AnimatableVector.zero(runningAnimations.first!.target)
 
     var totalAnimationVector = zero
-    var additionalVector = zero
+    var carryOverVector = zero
 
     while index < runningAnimations.endIndex {
         let runningAnimation = runningAnimations[index]
 
-        if let vector = runningAnimation.animate(time: time, context: &context, additionalVector: additionalVector) {
+        if let vector = runningAnimation.animate(time: time, context: &context, additionalVector: carryOverVector) {
             totalAnimationVector += vector
-            additionalVector = runningAnimation.target - vector
+            carryOverVector = runningAnimation.target - vector
         } else {
             finishedAnimationIndex = index
             totalAnimationVector += runningAnimation.target
-            additionalVector = zero
+            carryOverVector = zero
         }
 
         runningAnimations.formIndex(after: &index)

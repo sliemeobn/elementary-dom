@@ -22,7 +22,9 @@ public struct Animation {
     }
 
     func animate(value: AnimatableVector, time: Double, context: inout AnimationContext) -> AnimatableVector? {
-        let localTime = max(0, (time - delay)) * speed
+        let localTime = localTime(time)
+
+        guard localTime >= 0 else { return AnimatableVector.zero(value) }
 
         switch storage {
         case .spring(let spring):
@@ -35,7 +37,9 @@ public struct Animation {
     }
 
     func velocity(value: AnimatableVector, time: Double, context: borrowing AnimationContext) -> AnimatableVector? {
-        let localTime = max(0, (time - delay)) * speed
+        let localTime = localTime(time)
+
+        guard localTime >= 0 else { return AnimatableVector.zero(value) }
 
         switch storage {
         case .spring(let spring):
@@ -48,6 +52,10 @@ public struct Animation {
     }
 
     func shouldMerge(previous: Animation, value: AnimatableVector, time: Double, context: inout AnimationContext) -> Bool {
+        let localTime = localTime(time)
+
+        guard localTime >= 0 else { return true }
+
         switch storage {
         case .spring(let spring):
             return spring.shouldMerge(previous: previous, value: value, time: time, context: &context)
@@ -56,6 +64,29 @@ public struct Animation {
         case .any(let anyAnimation):
             return anyAnimation.shouldMerge(previous, value, time, &context)
         }
+    }
+
+    @inline(__always)
+    private func localTime(_ time: Double) -> Double {
+        (time - delay) * speed
+    }
+}
+
+public extension Animation {
+    consuming func delay(_ delay: Double) -> Self {
+        self.delay = delay + self.delay
+        return self
+    }
+
+    consuming func speed(_ speed: Double) -> Self {
+        guard speed != 0 else {
+            self.speed = 0
+            return self
+        }
+
+        self.delay = self.delay / speed
+        self.speed = speed * self.speed
+        return self
     }
 }
 
