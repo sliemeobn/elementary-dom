@@ -40,10 +40,10 @@ public struct _LifecycleEventView<Wrapped: View>: View {
 
     public static func _patchNode(
         _ view: consuming Self,
-        node: inout _MountedNode,
+        node: _MountedNode,
         reconciler: inout _RenderContext
     ) {
         //TODO: should we patch something? maybe update values?
-        Wrapped._patchNode(view.wrapped, node: &node.child, reconciler: &reconciler)
+        Wrapped._patchNode(view.wrapped, node: node.child, reconciler: &reconciler)
     }
 }

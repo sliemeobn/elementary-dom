@@ -1,4 +1,4 @@
-public struct _StatefulNode<State, Child: _Reconcilable> {
+public final class _StatefulNode<State, Child: _Reconcilable> {
     var state: State
     var child: Child
     var onUnmount: ((inout _CommitContext) -> Void)?
@@ -16,15 +16,15 @@ public struct _StatefulNode<State, Child: _Reconcilable> {
 }
 
 extension _StatefulNode: _Reconcilable {
-    public mutating func collectChildren(_ ops: inout ContainerLayoutPass, _ context: inout _CommitContext) {
+    public func collectChildren(_ ops: inout ContainerLayoutPass, _ context: inout _CommitContext) {
         child.collectChildren(&ops, &context)
     }
 
-    public mutating func apply(_ op: _ReconcileOp, _ reconciler: inout _RenderContext) {
+    public func apply(_ op: _ReconcileOp, _ reconciler: inout _RenderContext) {
         child.apply(op, &reconciler)
     }
 
-    public consuming func unmount(_ context: inout _CommitContext) {
+    public func unmount(_ context: inout _CommitContext) {
         child.unmount(&context)
         onUnmount?(&context)
         self.onUnmount = nil

@@ -1,5 +1,5 @@
 // FIXME:NONCOPYABLE this should be ~Copyable once associatedtype is supported (//where NodeA: ~Copyable, NodeB: ~Copyable)
-public struct _ConditionalNode<NodeA: _Reconcilable, NodeB: _Reconcilable> {
+public final class _ConditionalNode<NodeA: _Reconcilable, NodeB: _Reconcilable> {
     // FIXME:NONCOPYABLE noncopyable enums cannot mutate in-place, making the code very frustrating to write
     // enum State: ~Copyable {
     //     case a(NodeA)
@@ -47,7 +47,7 @@ public struct _ConditionalNode<NodeA: _Reconcilable, NodeB: _Reconcilable> {
         self.context = copy context
     }
 
-    mutating func patchWithA(
+    func patchWithA(
         reconciler: inout _RenderContext,
         _ perform: (inout NodeA?, consuming _ViewContext, inout _RenderContext) -> Void
     ) {
@@ -72,7 +72,7 @@ public struct _ConditionalNode<NodeA: _Reconcilable, NodeB: _Reconcilable> {
         }
     }
 
-    mutating func patchWithB(
+    func patchWithB(
         reconciler: inout _RenderContext,
         _ perform: (inout NodeB?, consuming _ViewContext, inout _RenderContext) -> Void
     ) {
@@ -99,7 +99,7 @@ public struct _ConditionalNode<NodeA: _Reconcilable, NodeB: _Reconcilable> {
 }
 
 extension _ConditionalNode: _Reconcilable {
-    public mutating func collectChildren(_ ops: inout ContainerLayoutPass, _ context: inout _CommitContext) {
+    public func collectChildren(_ ops: inout ContainerLayoutPass, _ context: inout _CommitContext) {
         switch state {
         case .a:
             a!.collectChildren(&ops, &context)
@@ -133,12 +133,12 @@ extension _ConditionalNode: _Reconcilable {
         }
     }
 
-    public mutating func apply(_ op: _ReconcileOp, _ reconciler: inout _RenderContext) {
+    public func apply(_ op: _ReconcileOp, _ reconciler: inout _RenderContext) {
         a?.apply(op, &reconciler)
         b?.apply(op, &reconciler)
     }
 
-    public consuming func unmount(_ context: inout _CommitContext) {
+    public func unmount(_ context: inout _CommitContext) {
         a?.unmount(&context)
         b?.unmount(&context)
     }

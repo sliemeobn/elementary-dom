@@ -50,7 +50,7 @@ public struct _EnvironmentView<V, Wrapped: View>: View {
 
     public static func _patchNode(
         _ view: consuming Self,
-        node: inout _MountedNode,
+        node: _MountedNode,
         reconciler: inout _RenderContext
     ) {
         // IMPORTANT: _value does not cause access tracking!
@@ -66,6 +66,6 @@ public struct _EnvironmentView<V, Wrapped: View>: View {
             )
         }
 
-        Wrapped._patchNode(view.wrapped, node: &node.child, reconciler: &reconciler)
+        Wrapped._patchNode(view.wrapped, node: node.child, reconciler: &reconciler)
     }
 }

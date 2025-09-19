@@ -27,10 +27,12 @@ final class App<DOMInteractor: DOM.Interactor> {
                             root: dom.root,
                             context: &context,
                             makeChild: { [rootView] context in
-                                RootView._makeNode(
-                                    rootView,
-                                    context: _ViewContext(),
-                                    reconciler: &context
+                                AnyReconcilable(
+                                    RootView._makeNode(
+                                        rootView,
+                                        context: _ViewContext(),
+                                        reconciler: &context
+                                    )
                                 )
                             }
                         )

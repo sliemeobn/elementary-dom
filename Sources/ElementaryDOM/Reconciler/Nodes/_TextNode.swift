@@ -55,7 +55,7 @@ public final class _TextNode: _Reconcilable {
         }
     }
 
-    public consuming func unmount(_ context: inout _CommitContext) {
+    public func unmount(_ context: inout _CommitContext) {
         self.domNode = nil
     }
 }

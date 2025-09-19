@@ -113,7 +113,7 @@ where Value: __FunctionView, ChildNode: _Reconcilable, ChildNode == Value.Conten
             if child == nil {
                 self.child = Value.Content._makeNode(newContent, context: context!, reconciler: &reconciler)
             } else {
-                Value.Content._patchNode(newContent, node: &child!, reconciler: &reconciler)
+                Value.Content._patchNode(newContent, node: child!, reconciler: &reconciler)
             }
         }
     }

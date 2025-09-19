@@ -18,7 +18,7 @@ public struct _KeyedView<Value: View>: View {
 
     public static func _patchNode(
         _ view: consuming Self,
-        node: inout _MountedNode,
+        node: _MountedNode,
         reconciler: inout _RenderContext
     ) {
         node.patch(
@@ -28,7 +28,7 @@ public struct _KeyedView<Value: View>: View {
                 if node == nil {
                     node = Value._makeNode(view.value, context: context, reconciler: &r)
                 } else {
-                    Value._patchNode(view.value, node: &node!, reconciler: &r)
+                    Value._patchNode(view.value, node: node!, reconciler: &r)
                 }
             }
         )

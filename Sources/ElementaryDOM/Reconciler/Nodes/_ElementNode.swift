@@ -1,13 +1,13 @@
 private extension AnyParentElememnt {
-    init(_ element: _ElementNode<some _Reconcilable & ~Copyable>) {
+    init(_ element: _ElementNode) {
         self.identifier = element.identifier
         self.reportChangedChildren = element.reportChangedChildren
     }
 }
 
-public final class _ElementNode<ChildNode>: _Reconcilable where ChildNode: _Reconcilable & ~Copyable {
+public final class _ElementNode: _Reconcilable {
     var identifier: String = ""
-    var child: ChildNode!
+    var child: AnyReconcilable!
 
     var domNode: ManagedDOMReference?
     var mountedModifieres: [AnyUnmountable]?
@@ -25,7 +25,7 @@ public final class _ElementNode<ChildNode>: _Reconcilable where ChildNode: _Reco
         tag: String,
         viewContext: consuming _ViewContext,
         context: inout _RenderContext,
-        makeChild: (borrowing _ViewContext, inout _RenderContext) -> ChildNode
+        makeChild: (borrowing _ViewContext, inout _RenderContext) -> AnyReconcilable
     ) {
         precondition(context.parentElement != nil, "parent element must be set")
 
@@ -58,7 +58,7 @@ public final class _ElementNode<ChildNode>: _Reconcilable where ChildNode: _Reco
     init(
         root: DOM.Node,
         context: inout _RenderContext,
-        makeChild: (inout _RenderContext) -> ChildNode
+        makeChild: (inout _RenderContext) -> AnyReconcilable
     ) {
         self.domNode = .init(reference: root, status: .unchanged)
         self.asParentRef = AnyParentElememnt(self)
@@ -69,9 +69,9 @@ public final class _ElementNode<ChildNode>: _Reconcilable where ChildNode: _Reco
         }
     }
 
-    func updateChild(_ context: inout _RenderContext, block: (_ node: inout ChildNode, _ context: inout _RenderContext) -> Void) {
+    func updateChild(_ context: inout _RenderContext, block: (_ node: AnyReconcilable, _ context: inout _RenderContext) -> Void) {
         context.withCurrentLayoutContainer(asParentRef!) { context in
-            block(&self.child, &context)
+            block(self.child, &context)
         }
     }
 
@@ -106,7 +106,7 @@ public final class _ElementNode<ChildNode>: _Reconcilable where ChildNode: _Reco
         }
     }
 
-    public consuming func unmount(_ context: inout _CommitContext) {
+    public func unmount(_ context: inout _CommitContext) {
         let c = self.child.take()!
         c.unmount(&context)
 
