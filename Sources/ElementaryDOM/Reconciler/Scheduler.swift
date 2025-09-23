@@ -92,7 +92,6 @@ final class Scheduler {
             isAnimationFramePending = true
             dom.requestAnimationFrame { [self] _ in
                 isAnimationFramePending = false
-                currentFrameTime = 0
                 flushCommitPlan()
                 if !runningAnimations.isEmpty {
                     dom.runNext {
@@ -104,7 +103,9 @@ final class Scheduler {
     }
 
     private func flushCommitPlan() {
-        var context = _CommitContext(dom: dom)
+        var context = _CommitContext(dom: dom, currentFrameTime: currentFrameTime)
+        currentFrameTime = 0
+
         for node in nodes {
             node.run(&context)
         }

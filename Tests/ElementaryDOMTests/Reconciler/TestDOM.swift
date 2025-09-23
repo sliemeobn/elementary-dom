@@ -63,6 +63,7 @@ final class TestDOM: DOM.Interactor {
         let tag: String
         var children: [NodeRef] = []
         var attributes: [String: String?] = [:]
+        var inlineStyles: [String: String] = [:]
         var listeners: Set<String> = []
         var sink: EventSink?
 
@@ -135,6 +136,22 @@ final class TestDOM: DOM.Interactor {
 
     func makePropertyAccessor(_ node: DOM.Node, name: String) -> DOM.PropertyAccessor {
         fatalError("Not implemented")
+    }
+
+    func makeStyleAccessor(_ node: DOM.Node, cssName: String) -> DOM.StyleAccessor {
+        fatalError("Not implemented")
+    }
+
+    func setStyleProperty(_ node: DOM.Node, name: String, value: String) {
+        guard case let .element(data) = node.value.kind else { return }
+        data.inlineStyles[name] = value
+        // Model as attribute op for trace? We keep ops minimal; no op appended here.
+    }
+
+    func removeStyleProperty(_ node: DOM.Node, name: String) {
+        guard case let .element(data) = node.value.kind else { return }
+        data.inlineStyles.removeValue(forKey: name)
+        // No op trace for simplicity
     }
 
     func createText(_ text: String) -> DOM.Node {

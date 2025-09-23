@@ -78,7 +78,7 @@ where Value: __FunctionView, ChildNode: _Reconcilable, ChildNode == Value.Conten
         assert(!animatedValue.model.isEmpty, "animation should never be called without an animatable value")
         guard animatedValue.isAnimating else { return false }
 
-        animatedValue.progressToTime(context.currentTime)
+        animatedValue.progressToTime(context.currentFrameTime)
         runFunction(reconciler: &context)
 
         return animatedValue.isAnimating
@@ -142,19 +142,5 @@ extension AnyFunctionNode {
         self.identifier = ObjectIdentifier(function)
         self.depthInTree = function.depthInTree
         self.runUpdate = function.runFunction
-    }
-}
-
-private extension AnimatedValue {
-    mutating func setValueAndReturnIfAnimationWasStarted(_ value: Value, context: borrowing _RenderContext) -> Bool {
-        let wasAnimating = isAnimating
-
-        if let animation = context.transaction?.animation {
-            self.animate(to: value, animation: AnimationInstance(startTime: context.currentTime, animation: animation))
-        } else {
-            self.setValue(value)
-        }
-
-        return isAnimating && !wasAnimating
     }
 }

@@ -170,3 +170,17 @@ where AnimationList: Collection<RunningAnimation> {
 
     return (totalAnimationVector, finishedAnimationIndex)
 }
+
+internal extension AnimatedValue {
+    mutating func setValueAndReturnIfAnimationWasStarted(_ value: Value, context: borrowing _RenderContext) -> Bool {
+        let wasAnimating = isAnimating
+
+        if let animation = context.transaction?.animation {
+            self.animate(to: value, animation: AnimationInstance(startTime: context.currentFrameTime, animation: animation))
+        } else {
+            self.setValue(value)
+        }
+
+        return isAnimating && !wasAnimating
+    }
+}

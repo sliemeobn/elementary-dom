@@ -66,6 +66,6 @@ struct Ball {
                     "border-radius": "50%",
                     "display": "block",
                 ])
-            )
+            ).opacity(0.5)
     }
 }

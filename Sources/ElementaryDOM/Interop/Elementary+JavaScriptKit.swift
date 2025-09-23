@@ -103,6 +103,26 @@ final class JSKitDOMInteractor: DOM.Interactor {
         )
     }
 
+    func makeStyleAccessor(_ node: DOM.Node, cssName: String) -> DOM.StyleAccessor {
+        let propertyName = JSString(cssName)
+        let style = node.jsObject.style
+
+        return .init(
+            get: { style.getPropertyValue(propertyName.jsValue).string ?? "" },
+            set: { _ = style.setProperty(propertyName.jsValue, $0.jsValue) }
+        )
+    }
+
+    func setStyleProperty(_ node: DOM.Node, name: String, value: String) {
+        let style = node.jsObject.style
+        _ = style.setProperty(JSString(name).jsValue, JSString(value).jsValue)
+    }
+
+    func removeStyleProperty(_ node: DOM.Node, name: String) {
+        let style = node.jsObject.style
+        _ = style.removeProperty(JSString(name).jsValue)
+    }
+
     func createText(_ text: String) -> DOM.Node {
         .init(jsDocument.createTextNode(text).object!)
     }

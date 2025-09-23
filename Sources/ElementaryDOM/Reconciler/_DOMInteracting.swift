@@ -45,6 +45,27 @@ public enum DOM {
         }
     }
 
+    public struct StyleAccessor {
+        let _get: () -> String
+        let _set: (String) -> Void
+
+        init(
+            get: @escaping () -> String,
+            set: @escaping (String) -> Void
+        ) {
+            self._get = get
+            self._set = set
+        }
+
+        func get() -> String {
+            _get()
+        }
+
+        func set(_ value: String) {
+            _set(value)
+        }
+    }
+
     // TODO: remove anyobject and make reconcier runs generic over this
     public protocol Interactor: AnyObject {
         var root: Node { get }
@@ -52,6 +73,11 @@ public enum DOM {
         func makeEventSink(_ handler: @escaping (String, Event) -> Void) -> EventSink
 
         func makePropertyAccessor(_ node: Node, name: String) -> PropertyAccessor
+        func makeStyleAccessor(_ node: Node, cssName: String) -> StyleAccessor
+
+        // Fine-grained style property operations
+        func setStyleProperty(_ node: Node, name: String, value: String)
+        func removeStyleProperty(_ node: Node, name: String)
 
         func createText(_ text: String) -> Node
         func createElement(_ element: String) -> Node
@@ -91,24 +117,148 @@ extension DOM.Interactor {
 
         var previous = replacing.flattened().reversed()
         for attribute in attributes.flattened() {
-            let previousIndex = previous.firstIndex { $0.name.utf8Equals(attribute.name) }
-            if let previousValue = previousIndex {
-                let oldValue = previous.remove(at: previousValue)
+            if let previousIndex = previous.firstIndex(where: { $0.name.utf8Equals(attribute.name) }) {
+                let oldValue = previous.remove(at: previousIndex)
                 if !oldValue.value.utf8Equals(attribute.value) {
-                    logTrace(
-                        "updating attribute \(attribute.name) from \(oldValue.value ?? "") to \(attribute.value ?? "")"
-                    )
-                    setAttribute(node, name: attribute.name, value: attribute.value)
+                    if attribute.name.utf8Equals("style") {
+                        var oldMap = _parseInlineStyle(oldValue.value)
+                        let newMap = _parseInlineStyle(attribute.value)
+                        for (k, v) in newMap {
+                            if oldMap[k]?.utf8Equals(v) != true {
+                                setStyleProperty(node, name: k, value: v)
+                            }
+                            oldMap.removeValue(forKey: k)
+                        }
+                        for (k, _) in oldMap {
+                            removeStyleProperty(node, name: k)
+                        }
+                    } else {
+
+                        logTrace(
+                            "updating attribute \(attribute.name) from \(oldValue.value ?? "") to \(attribute.value ?? "")"
+                        )
+                        setAttribute(node, name: attribute.name, value: attribute.value)
+                    }
                 }
             } else {
-                logTrace("setting attribute \(attribute.name) to \(attribute.value ?? "")")
-                setAttribute(node, name: attribute.name, value: attribute.value)
+                if attribute.name.utf8Equals("style") {
+                    let newMap = _parseInlineStyle(attribute.value)
+                    for (k, v) in newMap {
+                        setStyleProperty(node, name: k, value: v)
+                    }
+                } else {
+                    logTrace("setting attribute \(attribute.name) to \(attribute.value ?? "")")
+                    setAttribute(node, name: attribute.name, value: attribute.value)
+                }
             }
         }
 
         for attribute in previous {
-            logTrace("removing attribute \(attribute.name)")
-            removeAttribute(node, name: attribute.name)
+            if attribute.name.utf8Equals("style") {
+                let oldMap = _parseInlineStyle(attribute.value)
+                for (k, _) in oldMap {
+                    removeStyleProperty(node, name: k)
+                }
+            } else {
+                logTrace("removing attribute \(attribute.name)")
+                removeAttribute(node, name: attribute.name)
+            }
         }
     }
+}
+
+// NOTE: AI slop below, don't judge me
+@inline(__always)
+private func _isASCIISpace(_ byte: UInt8) -> Bool {
+    // space, tab, LF, CR, FF
+    byte == 32 || byte == 9 || byte == 10 || byte == 13 || byte == 12
+}
+
+private func _parseInlineStyle(_ value: String?) -> [String: String] {
+    guard let value, !value.isEmpty else { return [:] }
+    var result: [String: String] = [:]
+
+    let utf8 = value.utf8
+    var i = utf8.startIndex
+    let end = utf8.endIndex
+
+    // ASCII constants
+    let colon: UInt8 = 58  // ':'
+    let semicolon: UInt8 = 59  // ';'
+
+    while i < end {
+        // skip leading whitespace
+        while i < end, _isASCIISpace(utf8[i]) { i = utf8.index(after: i) }
+        if i >= end { break }
+
+        // name start
+        let nameStart = i
+        while i < end {
+            let b = utf8[i]
+            if b == colon || b == semicolon { break }
+            i = utf8.index(after: i)
+        }
+        var nameEnd = i
+
+        // trim trailing spaces of name
+        while nameEnd > nameStart {
+            let prev = utf8.index(before: nameEnd)
+            if _isASCIISpace(utf8[prev]) {
+                nameEnd = prev
+            } else {
+                break
+            }
+        }
+
+        // If empty name or hit semicolon before colon, skip to after semicolon
+        var hasValue = false
+        if i < end, utf8[i] == colon {
+            hasValue = true
+            i = utf8.index(after: i)  // skip ':'
+        } else {
+            // skip until semicolon or end
+            while i < end, utf8[i] != semicolon { i = utf8.index(after: i) }
+        }
+
+        var valueString: String = ""
+        if hasValue {
+            // skip whitespace after ':'
+            while i < end, _isASCIISpace(utf8[i]) { i = utf8.index(after: i) }
+            let valStart = i
+            while i < end, utf8[i] != semicolon { i = utf8.index(after: i) }
+            var valEnd = i
+            // trim trailing spaces
+            while valEnd > valStart {
+                let prev = utf8.index(before: valEnd)
+                if _isASCIISpace(utf8[prev]) {
+                    valEnd = prev
+                } else {
+                    break
+                }
+            }
+
+            if valEnd > valStart {
+                let s = valStart.samePosition(in: value)!
+                let e = valEnd.samePosition(in: value)!
+                valueString = String(value[s..<e])
+            }
+        }
+
+        // If we have a non-empty name, record it
+        if nameEnd > nameStart {
+            let s = nameStart.samePosition(in: value)!
+            let e = nameEnd.samePosition(in: value)!
+            let nameString = String(value[s..<e])
+            if !nameString.isEmpty {
+                result[nameString] = valueString
+            }
+        }
+
+        // skip semicolon if present
+        if i < end, utf8[i] == semicolon {
+            i = utf8.index(after: i)
+        }
+    }
+
+    return result
 }
