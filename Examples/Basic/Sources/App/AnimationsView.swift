@@ -4,16 +4,21 @@ import _ElementaryMath
 @View
 struct AnimationsView {
     @State var angle: Double = 0
+    @State var isBallVisible: Bool = true
 
     var content: some View {
 
         div {
-            AnimatedView(angle: angle)
+            AnimatedView(angle: angle, isBallVisible: isBallVisible)
             button { "Animate" }
                 .onClick { _ in
                     withAnimation(.bouncy(duration: 1)) {
                         angle += 1
                     }
+                }
+            button { "Toggle ball" }
+                .onClick { _ in
+                    isBallVisible.toggle()
                 }
         }
     }
@@ -22,6 +27,7 @@ struct AnimationsView {
 @View
 struct AnimatedView {
     var angle: Double
+    var isBallVisible: Bool
 
     let size = 100.0
     var x: Double { size * (1 - cos(angle)) }
@@ -37,6 +43,7 @@ struct AnimatedView {
                         "position": "relative",
                     ])
                 )
+                .opacity(isBallVisible ? 1 : 0)
         }.attributes(
             .style([
                 "height": "\(2 * size + 10)px",
@@ -66,6 +73,6 @@ struct Ball {
                     "border-radius": "50%",
                     "display": "block",
                 ])
-            ).opacity(0.5)
+            )
     }
 }

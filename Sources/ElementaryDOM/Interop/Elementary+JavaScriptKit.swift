@@ -74,6 +74,7 @@ final class JSKitDOMInteractor: DOM.Interactor {
             _ = JSFunction()
             _ = JSFunction?(nil)
             _ = JSArray.constructor?.jsValue
+            _ = _parseInlineStyle("")
             // _ = JSClosure?(nil)
         }
         #endif

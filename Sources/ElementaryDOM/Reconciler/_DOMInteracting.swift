@@ -121,17 +121,9 @@ extension DOM.Interactor {
                 let oldValue = previous.remove(at: previousIndex)
                 if !oldValue.value.utf8Equals(attribute.value) {
                     if attribute.name.utf8Equals("style") {
-                        var oldMap = _parseInlineStyle(oldValue.value)
+                        let oldMap = _parseInlineStyle(oldValue.value)
                         let newMap = _parseInlineStyle(attribute.value)
-                        for (k, v) in newMap {
-                            if oldMap[k]?.utf8Equals(v) != true {
-                                setStyleProperty(node, name: k, value: v)
-                            }
-                            oldMap.removeValue(forKey: k)
-                        }
-                        for (k, _) in oldMap {
-                            removeStyleProperty(node, name: k)
-                        }
+                        _applyInlineStyles(node, old: oldMap, new: newMap)
                     } else {
 
                         logTrace(
@@ -143,9 +135,7 @@ extension DOM.Interactor {
             } else {
                 if attribute.name.utf8Equals("style") {
                     let newMap = _parseInlineStyle(attribute.value)
-                    for (k, v) in newMap {
-                        setStyleProperty(node, name: k, value: v)
-                    }
+                    _applyInlineStyles(node, old: [:], new: newMap)
                 } else {
                     logTrace("setting attribute \(attribute.name) to \(attribute.value ?? "")")
                     setAttribute(node, name: attribute.name, value: attribute.value)
@@ -156,9 +146,7 @@ extension DOM.Interactor {
         for attribute in previous {
             if attribute.name.utf8Equals("style") {
                 let oldMap = _parseInlineStyle(attribute.value)
-                for (k, _) in oldMap {
-                    removeStyleProperty(node, name: k)
-                }
+                _applyInlineStyles(node, old: oldMap, new: [:])
             } else {
                 logTrace("removing attribute \(attribute.name)")
                 removeAttribute(node, name: attribute.name)
@@ -168,97 +156,100 @@ extension DOM.Interactor {
 }
 
 // NOTE: AI slop below, don't judge me
-@inline(__always)
 private func _isASCIISpace(_ byte: UInt8) -> Bool {
     // space, tab, LF, CR, FF
     byte == 32 || byte == 9 || byte == 10 || byte == 13 || byte == 12
 }
 
-private func _parseInlineStyle(_ value: String?) -> [String: String] {
+func _parseInlineStyle(_ value: String?) -> [PropertyID: String] {
     guard let value, !value.isEmpty else { return [:] }
-    var result: [String: String] = [:]
+    var result: [PropertyID: String] = [:]
 
-    let utf8 = value.utf8
-    var i = utf8.startIndex
-    let end = utf8.endIndex
+    let bytes = value.utf8
+    var i = bytes.startIndex
+    let end = bytes.endIndex
 
-    // ASCII constants
     let colon: UInt8 = 58  // ':'
     let semicolon: UInt8 = 59  // ';'
 
+    var nameBuf: [UInt8] = []
+    var valueBuf: [UInt8] = []
+
     while i < end {
         // skip leading whitespace
-        while i < end, _isASCIISpace(utf8[i]) { i = utf8.index(after: i) }
+        while i < end, _isASCIISpace(bytes[i]) { i = bytes.index(after: i) }
         if i >= end { break }
 
-        // name start
-        let nameStart = i
+        // read name
+        nameBuf.removeAll(keepingCapacity: true)
+        var nameLen = 0
         while i < end {
-            let b = utf8[i]
+            let b = bytes[i]
             if b == colon || b == semicolon { break }
-            i = utf8.index(after: i)
+            nameBuf.append(b)
+            if !_isASCIISpace(b) { nameLen = nameBuf.count }
+            i = bytes.index(after: i)
         }
-        var nameEnd = i
+        if nameLen < nameBuf.count { nameBuf.removeLast(nameBuf.count - nameLen) }
 
-        // trim trailing spaces of name
-        while nameEnd > nameStart {
-            let prev = utf8.index(before: nameEnd)
-            if _isASCIISpace(utf8[prev]) {
-                nameEnd = prev
-            } else {
-                break
-            }
-        }
-
-        // If empty name or hit semicolon before colon, skip to after semicolon
+        // check for value
         var hasValue = false
-        if i < end, utf8[i] == colon {
+        if i < end, bytes[i] == colon {
             hasValue = true
-            i = utf8.index(after: i)  // skip ':'
+            i = bytes.index(after: i)  // skip ':'
         } else {
             // skip until semicolon or end
-            while i < end, utf8[i] != semicolon { i = utf8.index(after: i) }
+            while i < end, bytes[i] != semicolon { i = bytes.index(after: i) }
         }
 
-        var valueString: String = ""
+        valueBuf.removeAll(keepingCapacity: true)
+        var valueLen = 0
         if hasValue {
             // skip whitespace after ':'
-            while i < end, _isASCIISpace(utf8[i]) { i = utf8.index(after: i) }
-            let valStart = i
-            while i < end, utf8[i] != semicolon { i = utf8.index(after: i) }
-            var valEnd = i
-            // trim trailing spaces
-            while valEnd > valStart {
-                let prev = utf8.index(before: valEnd)
-                if _isASCIISpace(utf8[prev]) {
-                    valEnd = prev
-                } else {
-                    break
-                }
+            while i < end, _isASCIISpace(bytes[i]) { i = bytes.index(after: i) }
+            while i < end, bytes[i] != semicolon {
+                let b = bytes[i]
+                valueBuf.append(b)
+                if !_isASCIISpace(b) { valueLen = valueBuf.count }
+                i = bytes.index(after: i)
             }
-
-            if valEnd > valStart {
-                let s = valStart.samePosition(in: value)!
-                let e = valEnd.samePosition(in: value)!
-                valueString = String(value[s..<e])
-            }
+            if valueLen < valueBuf.count { valueBuf.removeLast(valueBuf.count - valueLen) }
         }
 
-        // If we have a non-empty name, record it
-        if nameEnd > nameStart {
-            let s = nameStart.samePosition(in: value)!
-            let e = nameEnd.samePosition(in: value)!
-            let nameString = String(value[s..<e])
+        if !nameBuf.isEmpty {
+            let nameString = String(decoding: nameBuf, as: UTF8.self)
+            let valueString = String(decoding: valueBuf, as: UTF8.self)
             if !nameString.isEmpty {
-                result[nameString] = valueString
+                result[PropertyID(nameString)] = valueString
             }
         }
 
         // skip semicolon if present
-        if i < end, utf8[i] == semicolon {
-            i = utf8.index(after: i)
+        if i < end, bytes[i] == semicolon {
+            i = bytes.index(after: i)
         }
     }
 
     return result
+}
+
+private extension DOM.Interactor {
+    func _applyInlineStyles(_ node: DOM.Node, old: [PropertyID: String], new: [PropertyID: String]) {
+        // Set or update
+        for (k, v) in new {
+            if let ov = old[k] {
+                if !ov.utf8Equals(v) {
+                    setStyleProperty(node, name: k.description, value: v)
+                }
+            } else {
+                setStyleProperty(node, name: k.description, value: v)
+            }
+        }
+        // Removals
+        for (k, _) in old {
+            if new[k] == nil {
+                removeStyleProperty(node, name: k.description)
+            }
+        }
+    }
 }

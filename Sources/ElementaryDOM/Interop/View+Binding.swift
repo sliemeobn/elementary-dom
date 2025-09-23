@@ -15,6 +15,7 @@ public extension View where Tag == HTMLTag.input {
 }
 
 struct DOMEffectView<Effect: DOMElementModifier, Wrapped: View>: View {
+    typealias Tag = Wrapped.Tag
     var value: Effect.Value
     var wrapped: Wrapped
 
@@ -26,6 +27,14 @@ struct DOMEffectView<Effect: DOMElementModifier, Wrapped: View>: View {
         reconciler: inout _RenderContext
     ) -> _MountedNode {
         let effect = Effect(value: view.value, upstream: context.modifiers, &reconciler)
+
+        #if hasFeature(Embedded)
+        if __omg_this_was_annoying_I_am_false {
+            var context = _CommitContext(dom: JSKitDOMInteractor(root: .global), currentFrameTime: 0)
+            // force inclusion of types used in mount
+            _ = effect.mount(.init(.init()), &context)
+        }
+        #endif
 
         var context = copy context
         context.modifiers[Effect.key] = effect
