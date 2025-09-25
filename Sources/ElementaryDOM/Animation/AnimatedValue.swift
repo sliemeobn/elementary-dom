@@ -81,18 +81,17 @@ struct AnimatedValue<Value: AnimatableVectorConvertible>: ~Copyable {
             context: &context
         )
 
-        self.currentAnimationValue = Value(animationBase + animatedVector)
-
         if let finishedAnimationIndex {
             removeAnimations(upThrough: finishedAnimationIndex)
         }
 
-        #if DEBUG
-        if !isAnimating {
-            assert(self.currentAnimationValue == self.currentTarget)
-            assert(self.animationBase == self.currentTarget.animatableVector)
+        if isAnimating {
+            self.currentAnimationValue = Value(animationBase + animatedVector)
+        } else {
+            // NOTE: avoid floating point weirdness
+            self.currentAnimationValue = self.currentTarget
+            self.animationBase = self.currentTarget.animatableVector
         }
-        #endif
     }
 
     // TODO: figure out the shape for this
@@ -115,6 +114,10 @@ struct AnimatedValue<Value: AnimatableVectorConvertible>: ~Copyable {
             if let completedIndex {
                 //TODO: update base
                 runningAnimations = runningAnimations[(completedIndex + 1)...]
+            }
+
+            if runningAnimations.isEmpty {
+                break
             }
         }
         return results

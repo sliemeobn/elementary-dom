@@ -3,69 +3,6 @@ import JavaScriptKit
 
 // Type-erased node reference
 public enum DOM {
-    public struct Node {
-        let ref: AnyObject
-    }
-
-    public struct Event {
-        let ref: AnyObject
-    }
-
-    public struct EventSink {
-        let ref: AnyObject
-    }
-
-    public enum PropertyValue {
-        case string(String)
-        case number(Double)
-        case boolean(Bool)
-        case stringArray([String])
-        case null
-        case undefined
-    }
-
-    public struct PropertyAccessor {
-        let _get: () -> PropertyValue?
-        let _set: (PropertyValue) -> Void
-
-        init(
-            get: @escaping () -> PropertyValue?,
-            set: @escaping (PropertyValue) -> Void
-        ) {
-            self._get = get
-            self._set = set
-        }
-
-        func get() -> PropertyValue? {
-            _get()
-        }
-
-        func set(_ value: PropertyValue) {
-            _set(value)
-        }
-    }
-
-    public struct StyleAccessor {
-        let _get: () -> String
-        let _set: (String) -> Void
-
-        init(
-            get: @escaping () -> String,
-            set: @escaping (String) -> Void
-        ) {
-            self._get = get
-            self._set = set
-        }
-
-        func get() -> String {
-            _get()
-        }
-
-        func set(_ value: String) {
-            _set(value)
-        }
-    }
-
     // TODO: remove anyobject and make reconcier runs generic over this
     public protocol Interactor: AnyObject {
         var root: Node { get }
@@ -81,9 +18,12 @@ public enum DOM {
 
         func createText(_ text: String) -> Node
         func createElement(_ element: String) -> Node
+
         // Low-level DOM-like attribute APIs
         func setAttribute(_ node: Node, name: String, value: String?)
         func removeAttribute(_ node: Node, name: String)
+
+        func animateElement(_ element: Node, _ effect: Animation.KeyframeEffect, onFinish: @escaping () -> Void) -> Animation
 
         // Low-level DOM-like event listener APIs
         func addEventListener(_ node: Node, event: String, sink: EventSink)

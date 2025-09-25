@@ -141,6 +141,32 @@ final class JSKitDOMInteractor: DOM.Interactor {
         _ = node.jsObject.removeAttribute!(name)
     }
 
+    func animateElement(_ element: DOM.Node, _ effect: DOM.Animation.KeyframeEffect, onFinish: @escaping () -> Void) -> DOM.Animation {
+        let animation = element.jsObject.animate!(
+            effect.jsKeyframes,
+            effect.jsTiming
+        )
+
+        animation.onfinish =
+            JSClosure { _ in
+                onFinish()
+                return .undefined
+            }.jsValue
+
+        return .init(
+            _cancel: {
+                _ = animation.cancel()
+            },
+            _update: { effect in
+                logTrace("updating animation with effect \(effect)")
+                _ = animation.effect.setKeyframes(effect.jsKeyframes)
+                _ = animation.effect.updateTiming(effect.jsTiming)
+                animation.currentTime = 0.jsValue
+                _ = animation.play()
+            }
+        )
+    }
+
     func addEventListener(_ node: DOM.Node, event: String, sink: DOM.EventSink) {
         _ = node.jsObject.addEventListener!(event.jsValue, sink.jsClosure.jsValue)
     }
@@ -205,5 +231,31 @@ final class JSKitDOMInteractor: DOM.Interactor {
 
     func getCurrentTime() -> Double {
         jsPerformance.now!().number! / 1000
+    }
+}
+
+private extension DOM.Animation.KeyframeEffect {
+    var jsKeyframes: JSValue {
+        let object = JSObject()
+        object[property] = values.jsValue
+        object["composite"] = composite.rawValue.jsValue
+        return object.jsValue
+        // FIXME EMBEDDED: below does not compile for embedded - test with main, report issue
+        // [
+        //     property: values.jsValue,
+        //     "composite": composite.rawValue.jsValue,
+        // ].jsValue
+    }
+
+    var jsTiming: JSValue {
+        let object = JSObject()
+        object["duration"] = duration.jsValue
+        object["fill"] = "forwards".jsValue
+        return object.jsValue
+        // FIXME EMBEDDED: below does not compile for embedded - test with main, report issue
+        // [
+        //     "duration": duration.jsValue,
+        //     "fill": "forwards".jsValue,
+        // ].jsValue
     }
 }

@@ -46,6 +46,7 @@ final class Scheduler {
 
     func registerAnimation(_ node: AnyAnimatable) {
         runningAnimations.append(node)
+        scheduleFrameIfNecessary()
     }
 
     func addNodeAction(_ action: CommitAction) {

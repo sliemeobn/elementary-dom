@@ -176,6 +176,19 @@ final class TestDOM: DOM.Interactor {
         ops.append(.removeAttr(node: label(node), name: name))
     }
 
+    func animateElement(_ node: DOM.Node, _ effect: DOM.Animation.KeyframeEffect, onFinish: @escaping () -> Void) -> DOM.Animation {
+        .init(
+            _cancel: {
+                // TODO: implement
+                print("TESTDOM: cancel animation")
+            },
+            _update: { effect in
+                // TODO: implement
+                print("TESTDOM: update animation \(effect)")
+            }
+        )
+    }
+
     func addEventListener(_ node: DOM.Node, event: String, sink: DOM.EventSink) {
         guard case let .element(data) = node.value.kind else { return }
         data.listeners.insert(event)
