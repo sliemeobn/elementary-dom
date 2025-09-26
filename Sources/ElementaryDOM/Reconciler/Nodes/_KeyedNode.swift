@@ -34,7 +34,7 @@ public final class _KeyedNode {
         key: _ViewKey,
         context: inout _RenderContext,
         as: Node.Type = Node.self,
-        makeOrPatchNode: (inout Node?, consuming _ViewContext, inout _RenderContext) -> Void
+        makeOrPatchNode: (inout Node?, borrowing _ViewContext, inout _RenderContext) -> Void
     ) {
         patch(
             CollectionOfOne(key),
@@ -47,7 +47,7 @@ public final class _KeyedNode {
         _ newKeys: some BidirectionalCollection<_ViewKey>,
         context: inout _RenderContext,
         as: Node.Type = Node.self,
-        makeOrPatchNode: (Int, inout Node?, consuming _ViewContext, inout _RenderContext) -> Void
+        makeOrPatchNode: (Int, inout Node?, borrowing _ViewContext, inout _RenderContext) -> Void
     ) {
         // TODO: add fast-pass for empty key list
         let diff = newKeys.difference(from: keys).inferringMoves()
@@ -146,8 +146,7 @@ extension _KeyedNode: _Reconcilable {
 }
 
 private extension _KeyedNode {
-    // FIXME:NONCOPYABLE
-    struct LeavingChildrenTracker {
+    struct LeavingChildrenTracker: ~Copyable {
         struct Entry {
             let key: _ViewKey
             var originalMountIndex: Int

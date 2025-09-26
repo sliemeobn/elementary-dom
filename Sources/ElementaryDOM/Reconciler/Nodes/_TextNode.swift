@@ -1,4 +1,3 @@
-// FIXME:NONCOPYABLE make ~Copyable once associatedtype is supported
 public final class _TextNode: _Reconcilable {
     var value: String
     var domNode: ManagedDOMReference?

@@ -10,8 +10,8 @@ extension _HTMLTuple2: _Mountable where V0: _Mountable, V1: _Mountable {
         reconciler: inout _RenderContext
     ) -> _MountedNode {
         _MountedNode(
-            V0._makeNode(view.v0, context: copy context, reconciler: &reconciler),
-            V1._makeNode(view.v1, context: copy context, reconciler: &reconciler)
+            V0._makeNode(view.v0, context: context, reconciler: &reconciler),
+            V1._makeNode(view.v1, context: context, reconciler: &reconciler)
         )
     }
 
@@ -35,9 +35,9 @@ extension _HTMLTuple3: _Mountable where V0: _Mountable, V1: _Mountable, V2: _Mou
         reconciler: inout _RenderContext
     ) -> _MountedNode {
         _MountedNode(
-            V0._makeNode(view.v0, context: copy context, reconciler: &reconciler),
-            V1._makeNode(view.v1, context: copy context, reconciler: &reconciler),
-            V2._makeNode(view.v2, context: copy context, reconciler: &reconciler)
+            V0._makeNode(view.v0, context: context, reconciler: &reconciler),
+            V1._makeNode(view.v1, context: context, reconciler: &reconciler),
+            V2._makeNode(view.v2, context: context, reconciler: &reconciler)
         )
     }
 
@@ -62,10 +62,10 @@ extension _HTMLTuple4: _Mountable where V0: _Mountable, V1: _Mountable, V2: _Mou
         reconciler: inout _RenderContext
     ) -> _MountedNode {
         _MountedNode(
-            V0._makeNode(view.v0, context: copy context, reconciler: &reconciler),
-            V1._makeNode(view.v1, context: copy context, reconciler: &reconciler),
-            V2._makeNode(view.v2, context: copy context, reconciler: &reconciler),
-            V3._makeNode(view.v3, context: copy context, reconciler: &reconciler)
+            V0._makeNode(view.v0, context: context, reconciler: &reconciler),
+            V1._makeNode(view.v1, context: context, reconciler: &reconciler),
+            V2._makeNode(view.v2, context: context, reconciler: &reconciler),
+            V3._makeNode(view.v3, context: context, reconciler: &reconciler)
         )
     }
 
@@ -124,12 +124,12 @@ extension _HTMLTuple6: _Mountable where V0: _Mountable, V1: _Mountable, V2: _Mou
         reconciler: inout _RenderContext
     ) -> _MountedNode {
         _MountedNode(
-            V0._makeNode(view.v0, context: copy context, reconciler: &reconciler),
-            V1._makeNode(view.v1, context: copy context, reconciler: &reconciler),
-            V2._makeNode(view.v2, context: copy context, reconciler: &reconciler),
-            V3._makeNode(view.v3, context: copy context, reconciler: &reconciler),
-            V4._makeNode(view.v4, context: copy context, reconciler: &reconciler),
-            V5._makeNode(view.v5, context: copy context, reconciler: &reconciler)
+            V0._makeNode(view.v0, context: context, reconciler: &reconciler),
+            V1._makeNode(view.v1, context: context, reconciler: &reconciler),
+            V2._makeNode(view.v2, context: context, reconciler: &reconciler),
+            V3._makeNode(view.v3, context: context, reconciler: &reconciler),
+            V4._makeNode(view.v4, context: context, reconciler: &reconciler),
+            V5._makeNode(view.v5, context: context, reconciler: &reconciler)
         )
     }
 
@@ -161,7 +161,7 @@ extension _HTMLTuple: _Mountable where repeat each Child: _Mountable {
         _MountedNode(
             repeat makeNode(
                 each view.value,
-                context: copy context,
+                context: context,
                 reconciler: &reconciler
             )
         )
@@ -181,7 +181,7 @@ extension _HTMLTuple: _Mountable where repeat each Child: _Mountable {
         // NOTE: this doesn't work because I don't think we can pass a value pack as inout
         // repeat patchNode(
         //     each view.value,
-        //     context: copy context,
+        //     context: context,
         //     node: each &node.value,
         //     reconciler: &reconciler
         // )
