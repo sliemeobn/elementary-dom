@@ -176,3 +176,17 @@ struct ManagedDOMReference: ~Copyable {
     let reference: DOM.Node
     var status: ContainerLayoutPass.Entry.Status
 }
+
+struct AnyNode {
+    private var ref: AnyObject
+
+    @inline(__always)
+    init(_ node: some _Reconcilable) {
+        self.ref = node
+    }
+
+    @inline(__always)
+    func unwrap<Node: _Reconcilable>(as: Node.Type = Node.self) -> Node {
+        unsafeDowncast(ref, to: Node.self)
+    }
+}

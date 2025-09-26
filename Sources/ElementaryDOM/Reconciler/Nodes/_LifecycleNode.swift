@@ -6,19 +6,28 @@ enum LifecycleHook {
 }
 
 // TODO: this can probably be folded into a "stateful node"
-public final class _LifecycleNode<ChildNode: _Reconcilable> {  // where ChildNode: ~Copyable
+// TODO: revise scheduling / timing of these
+public final class _LifecycleNode {
     private var value: LifecycleHook
-    var child: ChildNode
+    private var child: AnyReconcilable
 
     private var onUnmount: (() -> Void)?
 
-    init(value: LifecycleHook, child: consuming ChildNode, context: inout _RenderContext) {
+    init(value: LifecycleHook, child: consuming AnyReconcilable, context: inout _RenderContext) {
         self.value = value
-        self.child = consume child
+        self.child = child
+    }
+
+    convenience init(value: LifecycleHook, child: consuming some _Reconcilable, context: inout _RenderContext) {
+        self.init(value: value, child: AnyReconcilable(child), context: &context)
 
         context.scheduler.addNodeAction(
             CommitAction(run: self.commitLifecycleValue)
         )
+    }
+
+    func patch<Node: _Reconcilable>(context: inout _RenderContext, patchNode: (Node, inout _RenderContext) -> Void) {
+        patchNode(child.unwrap(), &context)
     }
 
     private func commitLifecycleValue(_ context: inout _CommitContext) {
@@ -40,7 +49,7 @@ public final class _LifecycleNode<ChildNode: _Reconcilable> {  // where ChildNod
     }
 }
 
-extension _LifecycleNode: _Reconcilable where ChildNode: _Reconcilable {
+extension _LifecycleNode: _Reconcilable {
 
     public func collectChildren(_ ops: inout ContainerLayoutPass, _ context: inout _CommitContext) {
         child.collectChildren(&ops, &context)

@@ -173,7 +173,7 @@ extension EmptyHTML: _Mountable, View {
 
 extension Optional: View where Wrapped: View {}
 extension Optional: _Mountable where Wrapped: _Mountable {
-    public typealias _MountedNode = _ConditionalNode<Wrapped._MountedNode, _EmptyNode>
+    public typealias _MountedNode = _ConditionalNode
 
     public static func _makeNode(
         _ view: consuming Self,
@@ -195,27 +195,24 @@ extension Optional: _Mountable where Wrapped: _Mountable {
     ) {
         switch view {
         case let .some(view):
-            node.patchWithA(reconciler: &reconciler) { a, c, r in
-                if a == nil {
-                    a = Wrapped._makeNode(view, context: c, reconciler: &r)
-                } else {
-                    Wrapped._patchNode(view, node: a!, reconciler: &r)
-                }
-            }
+            node.patchWithA(
+                reconciler: &reconciler,
+                makeNode: { c, r in Wrapped._makeNode(view, context: c, reconciler: &r) },
+                updateNode: { node, r in Wrapped._patchNode(view, node: node, reconciler: &r) }
+            )
         case .none:
-            node.patchWithB(reconciler: &reconciler) { b, c, r in
-                if b == nil {
-                    b = _EmptyNode()
-                } else {
-                }
-            }
+            node.patchWithB(
+                reconciler: &reconciler,
+                makeNode: { _, _ in _EmptyNode() },
+                updateNode: { _, _ in }
+            )
         }
     }
 }
 
 extension _HTMLConditional: View where TrueContent: View, FalseContent: View {}
 extension _HTMLConditional: _Mountable where TrueContent: _Mountable, FalseContent: _Mountable {
-    public typealias _MountedNode = _ConditionalNode<TrueContent._MountedNode, FalseContent._MountedNode>
+    public typealias _MountedNode = _ConditionalNode
 
     public static func _makeNode(
         _ view: consuming Self,
@@ -237,27 +234,23 @@ extension _HTMLConditional: _Mountable where TrueContent: _Mountable, FalseConte
     ) {
         switch view.value {
         case let .trueContent(content):
-            node.patchWithA(reconciler: &reconciler) { a, c, r in
-                if a == nil {
-                    a = TrueContent._makeNode(content, context: c, reconciler: &r)
-                } else {
-                    TrueContent._patchNode(content, node: a!, reconciler: &r)
-                }
-            }
+            node.patchWithA(
+                reconciler: &reconciler,
+                makeNode: { c, r in TrueContent._makeNode(content, context: c, reconciler: &r) },
+                updateNode: { node, r in TrueContent._patchNode(content, node: node, reconciler: &r) }
+            )
         case let .falseContent(content):
-            node.patchWithB(reconciler: &reconciler) { b, c, r in
-                if b == nil {
-                    b = FalseContent._makeNode(content, context: c, reconciler: &r)
-                } else {
-                    FalseContent._patchNode(content, node: b!, reconciler: &r)
-                }
-            }
+            node.patchWithB(
+                reconciler: &reconciler,
+                makeNode: { c, r in FalseContent._makeNode(content, context: c, reconciler: &r) },
+                updateNode: { node, r in FalseContent._patchNode(content, node: node, reconciler: &r) }
+            )
         }
     }
 }
 
 extension _HTMLArray: _Mountable, View where Element: View {
-    public typealias _MountedNode = _KeyedNode<Element._MountedNode>
+    public typealias _MountedNode = _KeyedNode
 
     public static func _makeNode(
         _ view: consuming Self,
@@ -287,6 +280,7 @@ extension _HTMLArray: _Mountable, View where Element: View {
         node.patch(
             indexes,
             context: &reconciler,
+            as: Element._MountedNode.self,
             makeOrPatchNode: { index, node, context, r in
                 if node == nil {
                     node = Element._makeNode(view.value[index], context: context, reconciler: &r)
@@ -300,7 +294,7 @@ extension _HTMLArray: _Mountable, View where Element: View {
 }
 
 extension ForEach: _Mountable, View where Content: _KeyReadableView, Data: Collection {
-    public typealias _MountedNode = _KeyedNode<Content.Value._MountedNode>
+    public typealias _MountedNode = _KeyedNode
 
     public init<V: View>(
         _ data: Data,
@@ -348,7 +342,8 @@ extension ForEach: _Mountable, View where Content: _KeyReadableView, Data: Colle
         let views = view._data.map { value in view._contentBuilder(value) }
         node.patch(
             views.map { $0._key },
-            context: &reconciler
+            context: &reconciler,
+            as: Content.Value._MountedNode.self,
         ) { index, node, context, r in
             if node == nil {
                 node = Content.Value._makeNode(views[index]._value, context: context, reconciler: &r)

@@ -1,5 +1,5 @@
 public struct _KeyedView<Value: View>: View {
-    public typealias _MountedNode = _KeyedNode<Value._MountedNode>
+    public typealias _MountedNode = _KeyedNode
 
     var key: _ViewKey
     var value: Value
@@ -24,6 +24,7 @@ public struct _KeyedView<Value: View>: View {
         node.patch(
             key: view.key,
             context: &reconciler,
+            as: Value._MountedNode.self,
             makeOrPatchNode: { node, context, r in
                 if node == nil {
                     node = Value._makeNode(view.value, context: context, reconciler: &r)
