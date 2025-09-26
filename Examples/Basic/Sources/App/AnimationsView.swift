@@ -15,22 +15,22 @@ struct AnimationsView {
             div(.style(["display": "flex", "flex-direction": "row", "gap": "10px"])) {
                 button { "Animate" }
                     .onClick { _ in
-                        withAnimation(.linear(duration: 3)) {
+                        withAnimation(.smooth) {
                             angle += 1
                             isBallFading.toggle()
                         }
                     }
                 Square(color: "blue")
-                    //.rotationEffect(.degrees(0))
+                    .rotationEffect(.degrees(0))
                     .rotationEffect(.radians(angle), anchor: .topTrailing)
                 Square(color: "red")
                     .rotationEffect(.degrees(isRotated ? 360 : 0))
                     .offset(x: isOffset ? 100 : 0)
                     .onClick { _ in
-                        withAnimation(.easeInOut(duration: 5)) {
+                        withAnimation(.bouncy(duration: 3)) {
                             isOffset.toggle()
                         }
-                        withAnimation(.bouncy(duration: 3).delay(isRotated ? 0 : 2)) {
+                        withAnimation(.easeIn(duration: 1).delay(1)) {
                             isRotated.toggle()
                         }
                     }

@@ -14,7 +14,7 @@ extension DOM {
 }
 
 extension DOM.Animation {
-    public enum CompositeOperation: String, Sendable {
+    public enum CompositeOperation: Sendable {
         case replace
         case add
         case accumulate

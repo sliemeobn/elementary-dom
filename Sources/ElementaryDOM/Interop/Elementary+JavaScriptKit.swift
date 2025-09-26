@@ -258,7 +258,7 @@ private extension DOM.Animation.KeyframeEffect {
         object["duration"] = duration.jsValue
         object["fill"] = "forwards".jsValue
         if composite != .replace {
-            object["composite"] = composite.rawValue.jsValue
+            object["composite"] = composite.jsValue
         }
 
         return object.jsValue
@@ -268,5 +268,18 @@ private extension DOM.Animation.KeyframeEffect {
         //     "fill": "forwards".jsValue,
         //     "composite": composite.rawValue.jsValue,
         // ].jsValue
+    }
+}
+
+extension DOM.Animation.CompositeOperation {
+    var jsValue: JSValue {
+        switch self {
+        case .replace:
+            return "replace".jsValue
+        case .add:
+            return "add".jsValue
+        case .accumulate:
+            return "accumulate".jsValue
+        }
     }
 }
