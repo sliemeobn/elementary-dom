@@ -7,6 +7,17 @@ internal var __omg_this_was_annoying_I_am_false: Bool = false
 // FIXME: embedded - remove once https://github.com/swiftlang/swift/issues/83460 lands
 // also, implementation is AI slop, I would not trust it with anything
 #if hasFeature(Embedded)
+@_silgen_name("swift_float32ToString")
+@_noAllocation
+public func _swift_float32ToString(
+    _ buffer: UnsafeMutablePointer<UInt8>,
+    _ bufferLength: UInt,
+    _ value: Float,
+    _ isDebug: Bool
+) -> UInt64 {
+    _swift_float64ToString(buffer, bufferLength, Double(value), isDebug)
+}
+
 @_silgen_name("swift_float64ToString")
 @_noAllocation
 public func _swift_float64ToString(

@@ -5,18 +5,31 @@ import _ElementaryMath
 struct AnimationsView {
     @State var angle: Double = 0
     @State var isBallFading: Bool = false
+    @State var toggleOffset: Bool = false
 
     var content: some View {
 
         div {
             AnimatedView(angle: angle, isBallFading: isBallFading)
-            button { "Animate" }
-                .onClick { _ in
-                    withAnimation(.smooth(duration: 1.2)) {
-                        angle += 1
-                        isBallFading.toggle()
+            div(.style(["display": "flex", "flex-direction": "row", "gap": "10px"])) {
+                button { "Animate" }
+                    .onClick { _ in
+                        withAnimation(.linear(duration: 3)) {
+                            angle += 1
+                            isBallFading.toggle()
+                        }
                     }
-                }
+                Square(color: "blue")
+                    //.rotationEffect(.degrees(0))
+                    .rotationEffect(.radians(angle), anchor: .topTrailing)
+                Square(color: "red")
+                    .offset(x: toggleOffset ? 100 : 0)
+                    .onClick { _ in
+                        withAnimation(.linear(duration: 5)) {
+                            toggleOffset.toggle()
+                        }
+                    }
+            }
         }
     }
 }
@@ -31,7 +44,6 @@ struct AnimatedView {
     var y: Double { size * (1 - sin(angle)) }
 
     var content: some View {
-        let _ = print("body with angle: \(angle) and isBallFading: \(isBallFading)")
         p { "Angle: \(angle) x: \(x) y: \(y)" }
         div {
             Ball()
@@ -49,6 +61,22 @@ struct AnimatedView {
                 "position": "relative",
             ])
         )
+    }
+}
+
+@View
+struct Square {
+    var color: String
+
+    var content: some View {
+        span {}
+            .attributes(
+                .style([
+                    "background": color,
+                    "height": "20px",
+                    "width": "20px",
+                ])
+            )
     }
 }
 
