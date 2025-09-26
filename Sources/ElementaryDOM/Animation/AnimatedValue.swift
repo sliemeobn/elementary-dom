@@ -99,6 +99,7 @@ struct AnimatedValue<Value: AnimatableVectorConvertible>: ~Copyable {
         var results: [Value] = []
         var contextCopy = context
         var runningAnimations = runningAnimations[...]
+        var base = animationBase
 
         results.reserveCapacity(times.underestimatedCount)
 
@@ -109,16 +110,20 @@ struct AnimatedValue<Value: AnimatableVectorConvertible>: ~Copyable {
                 context: &contextCopy
             )
 
-            results.append(Value(self.animationBase + animatedVector))
-
             if let completedIndex {
-                //TODO: update base
+                for i in runningAnimations.startIndex...completedIndex {
+                    base += runningAnimations[i].target
+                }
                 runningAnimations = runningAnimations[(completedIndex + 1)...]
             }
 
             if runningAnimations.isEmpty {
+                results.append(self.currentTarget)
                 break
             }
+
+            results.append(Value(base + animatedVector))
+
         }
         return results
     }
@@ -141,6 +146,7 @@ private func calculateAnimationAtTime<AnimationList>(
 ) -> (animatedVector: AnimatableVector, finishedAnimationIndex: AnimationList.Index?)
 where AnimationList: Collection<RunningAnimation> {
     guard runningAnimations.count > 1 else {
+        assert(runningAnimations.first != nil, "Running animations should not be empty")
         if let vector = runningAnimations.first!.animate(time: time, context: &context, additionalVector: nil) {
             return (vector, nil)
         } else {
@@ -164,7 +170,7 @@ where AnimationList: Collection<RunningAnimation> {
             carryOverVector = runningAnimation.target - vector
         } else {
             finishedAnimationIndex = index
-            totalAnimationVector += runningAnimation.target
+            //totalAnimationVector = zero
             carryOverVector = zero
         }
 
