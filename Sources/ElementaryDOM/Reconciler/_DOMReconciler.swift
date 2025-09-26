@@ -28,7 +28,7 @@ struct CommitAction {
 
 public struct _RenderContext: ~Copyable {
     let scheduler: Scheduler
-    var currentTime: Double
+    var currentFrameTime: Double
     var transaction: Transaction?
 
     private(set) var pendingFunctions: PendingFunctionQueue
@@ -43,7 +43,7 @@ public struct _RenderContext: ~Copyable {
     ) {
         self.pendingFunctions = pendingFunctions
         self.scheduler = scheduler
-        self.currentTime = currentTime
+        self.currentFrameTime = currentTime
         self.transaction = transaction
 
         depth = 0
@@ -69,12 +69,14 @@ public struct _RenderContext: ~Copyable {
 
 public struct _CommitContext: ~Copyable {
     let dom: any DOM.Interactor
+    let currentFrameTime: Double
 
     private var prePaintActions: [() -> Void] = []
     private var postPaintActions: [() -> Void] = []
 
-    init(dom: any DOM.Interactor) {
+    init(dom: any DOM.Interactor, currentFrameTime: Double) {
         self.dom = dom
+        self.currentFrameTime = currentFrameTime
     }
 
     mutating func addPrePaintAction(_ action: @escaping () -> Void) {

@@ -112,3 +112,35 @@ public func withReactiveTracking<T>(
     }
     return result
 }
+
+package struct TrackingSession {
+    var _cancel: (() -> Void)?
+
+    init() {}
+
+    init(_ cancel: @escaping () -> Void) {
+        _cancel = cancel
+    }
+
+    package consuming func cancel() {
+        _cancel?()
+    }
+}
+
+package func withReactiveTrackingSession<T>(
+    _ apply: () -> T,
+    onWillSet: @autoclosure () -> @Sendable () -> Void
+) -> (T, TrackingSession) {
+    let (result, accessList) = withAccessTracking {
+        apply()
+    }
+    if let accessList = accessList {
+        let onWillSet = onWillSet()
+        let session = ReactiveTrackingSession()
+        session.trackWillSet(for: accessList) { [onWillSet] _ in
+            onWillSet()
+        }
+        return (result, TrackingSession(session.cancel))
+    }
+    return (result, TrackingSession())
+}

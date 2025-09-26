@@ -26,6 +26,7 @@ public func withTransaction<Result, Failure>(
     defer {
         Transaction._current = previous
     }
+    logTrace("withTransaction \(transaction._id)")
     return try body()
 }
 

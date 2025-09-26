@@ -63,6 +63,7 @@ final class TestDOM: DOM.Interactor {
         let tag: String
         var children: [NodeRef] = []
         var attributes: [String: String?] = [:]
+        var inlineStyles: [String: String] = [:]
         var listeners: Set<String> = []
         var sink: EventSink?
 
@@ -137,6 +138,22 @@ final class TestDOM: DOM.Interactor {
         fatalError("Not implemented")
     }
 
+    func makeStyleAccessor(_ node: DOM.Node, cssName: String) -> DOM.StyleAccessor {
+        fatalError("Not implemented")
+    }
+
+    func setStyleProperty(_ node: DOM.Node, name: String, value: String) {
+        guard case let .element(data) = node.value.kind else { return }
+        data.inlineStyles[name] = value
+        // Model as attribute op for trace? We keep ops minimal; no op appended here.
+    }
+
+    func removeStyleProperty(_ node: DOM.Node, name: String) {
+        guard case let .element(data) = node.value.kind else { return }
+        data.inlineStyles.removeValue(forKey: name)
+        // No op trace for simplicity
+    }
+
     func createText(_ text: String) -> DOM.Node {
         ops.append(.createText(text))
         return DOM.Node(NodeRef(kind: .text(text)))
@@ -157,6 +174,19 @@ final class TestDOM: DOM.Interactor {
         guard case let .element(data) = node.value.kind else { return }
         data.attributes.removeValue(forKey: name)
         ops.append(.removeAttr(node: label(node), name: name))
+    }
+
+    func animateElement(_ node: DOM.Node, _ effect: DOM.Animation.KeyframeEffect, onFinish: @escaping () -> Void) -> DOM.Animation {
+        .init(
+            _cancel: {
+                // TODO: implement
+                print("TESTDOM: cancel animation")
+            },
+            _update: { effect in
+                // TODO: implement
+                print("TESTDOM: update animation \(effect)")
+            }
+        )
     }
 
     func addEventListener(_ node: DOM.Node, event: String, sink: DOM.EventSink) {

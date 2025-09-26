@@ -50,13 +50,18 @@ struct AnimatedValueTests {
     }
 
     @Test
-    func peeksValues() {
-        // var value = AnimatedValue(value: TestValue(0))
-        // value.animate(to: 10, animation: .init(startTime: 0, animation: .linear(duration: 1)))
-        // let peeked = value.peekFutureValues(stride(from: 0.0, through: 1.5, by: 0.2))
-        // #expect(peeked == [0, 2, 4, 6, 8, 10, 10, 10])
-        // #expect(value.presentation == 0)
-        // #expect(value.isAnimating == true)
+    func peeksChunkOfNextValues() {
+        var value = AnimatedValue(value: TestValue(0))
+        value.animate(to: 10, animation: .init(startTime: 0, animation: .linear(duration: 1)))
+        let peeked = value.peekFutureValues(stride(from: 0.0, through: 0.7, by: 0.2))
+        let peekedAgain = value.peekFutureValues(stride(from: 0.2, through: 0.7, by: 0.2))
+        let peekedEvenMore = value.peekFutureValues(stride(from: 0.9, through: 1.4, by: 0.2))
+
+        #expect(peeked == [0, 2, 4, 6])
+        #expect(peekedAgain == [2, 4, 6])
+        #expect(peekedEvenMore == [9, 10])
+        #expect(value.presentation == 0)
+        #expect(value.isAnimating == true)
     }
 }
 

@@ -42,13 +42,13 @@ struct DOMMountingTests {
                 p(.id("1")) {
                     span {}
                 }
-            }.attributes(.style("foo"))
+            }.attributes(.class("foo"))
         }
 
         #expect(
             ops == [
                 .createElement("div"),
-                .setAttr(node: "<div>", name: "style", value: "foo"),
+                .setAttr(node: "<div>", name: "class", value: "foo"),
                 .createElement("p"),
                 .setAttr(node: "<p>", name: "id", value: "1"),
                 .createElement("span"),

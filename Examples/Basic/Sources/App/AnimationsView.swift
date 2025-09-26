@@ -4,17 +4,37 @@ import _ElementaryMath
 @View
 struct AnimationsView {
     @State var angle: Double = 0
+    @State var isBallFading: Bool = false
+    @State var isOffset: Bool = false
+    @State var isRotated: Bool = false
 
     var content: some View {
 
         div {
-            AnimatedView(angle: angle)
-            button { "Animate" }
-                .onClick { _ in
-                    withAnimation(.bouncy(duration: 1)) {
-                        angle += 1
+            AnimatedView(angle: angle, isBallFading: isBallFading)
+            div(.style(["display": "flex", "flex-direction": "row", "gap": "10px"])) {
+                button { "Animate" }
+                    .onClick { _ in
+                        withAnimation(.smooth) {
+                            angle += 1
+                            isBallFading.toggle()
+                        }
                     }
-                }
+                Square(color: "blue")
+                    .rotationEffect(.degrees(0))
+                    .rotationEffect(.radians(angle), anchor: .topTrailing)
+                Square(color: "red")
+                    .rotationEffect(.degrees(isRotated ? 360 : 0))
+                    .offset(x: isOffset ? 100 : 0)
+                    .onClick { _ in
+                        withAnimation(.bouncy(duration: 3)) {
+                            isOffset.toggle()
+                        }
+                        withAnimation(.easeIn(duration: 1).delay(1)) {
+                            isRotated.toggle()
+                        }
+                    }
+            }
         }
     }
 }
@@ -22,6 +42,7 @@ struct AnimationsView {
 @View
 struct AnimatedView {
     var angle: Double
+    var isBallFading: Bool
 
     let size = 100.0
     var x: Double { size * (1 - cos(angle)) }
@@ -37,6 +58,7 @@ struct AnimatedView {
                         "position": "relative",
                     ])
                 )
+                .opacity(isBallFading ? 0.1 : 1)
         }.attributes(
             .style([
                 "height": "\(2 * size + 10)px",
@@ -44,6 +66,22 @@ struct AnimatedView {
                 "position": "relative",
             ])
         )
+    }
+}
+
+@View
+struct Square {
+    var color: String
+
+    var content: some View {
+        span {}
+            .attributes(
+                .style([
+                    "background": color,
+                    "height": "20px",
+                    "width": "20px",
+                ])
+            )
     }
 }
 

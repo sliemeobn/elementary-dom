@@ -81,18 +81,17 @@ struct AnimatedValue<Value: AnimatableVectorConvertible>: ~Copyable {
             context: &context
         )
 
-        self.currentAnimationValue = Value(animationBase + animatedVector)
-
         if let finishedAnimationIndex {
             removeAnimations(upThrough: finishedAnimationIndex)
         }
 
-        #if DEBUG
-        if !isAnimating {
-            assert(self.currentAnimationValue == self.currentTarget)
-            assert(self.animationBase == self.currentTarget.animatableVector)
+        if isAnimating {
+            self.currentAnimationValue = Value(animationBase + animatedVector)
+        } else {
+            // NOTE: avoid floating point weirdness
+            self.currentAnimationValue = self.currentTarget
+            self.animationBase = self.currentTarget.animatableVector
         }
-        #endif
     }
 
     // TODO: figure out the shape for this
@@ -100,6 +99,7 @@ struct AnimatedValue<Value: AnimatableVectorConvertible>: ~Copyable {
         var results: [Value] = []
         var contextCopy = context
         var runningAnimations = runningAnimations[...]
+        var base = animationBase
 
         results.reserveCapacity(times.underestimatedCount)
 
@@ -110,12 +110,19 @@ struct AnimatedValue<Value: AnimatableVectorConvertible>: ~Copyable {
                 context: &contextCopy
             )
 
-            results.append(Value(self.animationBase + animatedVector))
-
             if let completedIndex {
-                //TODO: update base
+                for i in runningAnimations.startIndex...completedIndex {
+                    base += runningAnimations[i].target
+                }
                 runningAnimations = runningAnimations[(completedIndex + 1)...]
             }
+
+            if runningAnimations.isEmpty {
+                results.append(self.currentTarget)
+                break
+            }
+
+            results.append(Value(base + animatedVector))
         }
         return results
     }
@@ -138,6 +145,7 @@ private func calculateAnimationAtTime<AnimationList>(
 ) -> (animatedVector: AnimatableVector, finishedAnimationIndex: AnimationList.Index?)
 where AnimationList: Collection<RunningAnimation> {
     guard runningAnimations.count > 1 else {
+        assert(runningAnimations.first != nil, "Running animations should not be empty")
         if let vector = runningAnimations.first!.animate(time: time, context: &context, additionalVector: nil) {
             return (vector, nil)
         } else {
@@ -161,7 +169,7 @@ where AnimationList: Collection<RunningAnimation> {
             carryOverVector = runningAnimation.target - vector
         } else {
             finishedAnimationIndex = index
-            totalAnimationVector += runningAnimation.target
+            //totalAnimationVector = zero
             carryOverVector = zero
         }
 
@@ -169,4 +177,18 @@ where AnimationList: Collection<RunningAnimation> {
     }
 
     return (totalAnimationVector, finishedAnimationIndex)
+}
+
+internal extension AnimatedValue {
+    mutating func setValueAndReturnIfAnimationWasStarted(_ value: Value, context: borrowing _RenderContext) -> Bool {
+        let wasAnimating = isAnimating
+
+        if let animation = context.transaction?.animation {
+            self.animate(to: value, animation: AnimationInstance(startTime: context.currentFrameTime, animation: animation))
+        } else {
+            self.setValue(value)
+        }
+
+        return isAnimating && !wasAnimating
+    }
 }

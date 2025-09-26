@@ -8,6 +8,7 @@ where Value: __FunctionView, ChildNode: _Reconcilable, ChildNode == Value.Conten
     private var value: Value?
     private var context: _ViewContext?
     private var animatedValue: AnimatedValue<AnimatableVector>
+    private var trackingSession: TrackingSession? = nil
 
     var parentElement: AnyParentElememnt!
     public var depthInTree: Int
@@ -78,7 +79,7 @@ where Value: __FunctionView, ChildNode: _Reconcilable, ChildNode == Value.Conten
         assert(!animatedValue.model.isEmpty, "animation should never be called without an animatable value")
         guard animatedValue.isAnimating else { return false }
 
-        animatedValue.progressToTime(context.currentTime)
+        animatedValue.progressToTime(context.currentFrameTime)
         runFunction(reconciler: &context)
 
         return animatedValue.isAnimating
@@ -98,19 +99,21 @@ where Value: __FunctionView, ChildNode: _Reconcilable, ChildNode == Value.Conten
             Value.__setAnimatableData(animatedValue.presentation.animatableVector, to: &value)
         }
 
-        // TODO: expose cancellation mechanism of reactivity and keep track of it
-        // canceling on unmount/recalc maybe important for retain cycles
+        self.trackingSession.take()?.cancel()
 
         reconciler.withCurrentLayoutContainer(parentElement) { reconciler in
-            // TODO: only track the .content access here, entangle the dependencies a bit (especially environment)
-            withReactiveTracking {
-                if child == nil {
-                    self.child = Value.Content._makeNode(value.content, context: context!, reconciler: &reconciler)
-                } else {
-                    Value.Content._patchNode(value.content, node: &child!, reconciler: &reconciler)
-                }
-            } onChange: { [scheduler = reconciler.scheduler, asFunctionNode = asFunctionNode!] in
+            let (newContent, session) = withReactiveTrackingSession {
+                value.content
+            } onWillSet: { [scheduler = reconciler.scheduler, asFunctionNode = asFunctionNode!] in
                 scheduler.scheduleFunction(asFunctionNode)
+            }
+
+            self.trackingSession = session
+
+            if child == nil {
+                self.child = Value.Content._makeNode(newContent, context: context!, reconciler: &reconciler)
+            } else {
+                Value.Content._patchNode(newContent, node: &child!, reconciler: &reconciler)
             }
         }
     }
@@ -127,6 +130,8 @@ extension _FunctionNode: _Reconcilable {
     }
 
     public consuming func unmount(_ context: inout _CommitContext) {
+        self.trackingSession.take()?.cancel()
+
         let c = self.child.take()
         c?.unmount(&context)
 
@@ -142,19 +147,5 @@ extension AnyFunctionNode {
         self.identifier = ObjectIdentifier(function)
         self.depthInTree = function.depthInTree
         self.runUpdate = function.runFunction
-    }
-}
-
-private extension AnimatedValue {
-    mutating func setValueAndReturnIfAnimationWasStarted(_ value: Value, context: borrowing _RenderContext) -> Bool {
-        let wasAnimating = isAnimating
-
-        if let animation = context.transaction?.animation {
-            self.animate(to: value, animation: AnimationInstance(startTime: context.currentTime, animation: animation))
-        } else {
-            self.setValue(value)
-        }
-
-        return isAnimating && !wasAnimating
     }
 }

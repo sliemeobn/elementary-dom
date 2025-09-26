@@ -74,6 +74,7 @@ final class JSKitDOMInteractor: DOM.Interactor {
             _ = JSFunction()
             _ = JSFunction?(nil)
             _ = JSArray.constructor?.jsValue
+            _ = _parseInlineStyle("")
             // _ = JSClosure?(nil)
         }
         #endif
@@ -103,6 +104,26 @@ final class JSKitDOMInteractor: DOM.Interactor {
         )
     }
 
+    func makeStyleAccessor(_ node: DOM.Node, cssName: String) -> DOM.StyleAccessor {
+        let propertyName = JSString(cssName)
+        let style = node.jsObject.style
+
+        return .init(
+            get: { style.getPropertyValue(propertyName.jsValue).string ?? "" },
+            set: { _ = style.setProperty(propertyName.jsValue, $0.jsValue) }
+        )
+    }
+
+    func setStyleProperty(_ node: DOM.Node, name: String, value: String) {
+        let style = node.jsObject.style
+        _ = style.setProperty(JSString(name).jsValue, JSString(value).jsValue)
+    }
+
+    func removeStyleProperty(_ node: DOM.Node, name: String) {
+        let style = node.jsObject.style
+        _ = style.removeProperty(JSString(name).jsValue)
+    }
+
     func createText(_ text: String) -> DOM.Node {
         .init(jsDocument.createTextNode(text).object!)
     }
@@ -118,6 +139,40 @@ final class JSKitDOMInteractor: DOM.Interactor {
 
     func removeAttribute(_ node: DOM.Node, name: String) {
         _ = node.jsObject.removeAttribute!(name)
+    }
+
+    func animateElement(_ element: DOM.Node, _ effect: DOM.Animation.KeyframeEffect, onFinish: @escaping () -> Void) -> DOM.Animation {
+        let animation = element.jsObject.animate!(
+            effect.jsKeyframes,
+            effect.jsTiming
+        )
+
+        _ = animation.persist()
+
+        if effect.duration == 0 {
+            _ = animation.pause()
+        }
+
+        animation.onfinish =
+            JSClosure { _ in
+                onFinish()
+                return .undefined
+            }.jsValue
+
+        return .init(
+            _cancel: {
+                _ = animation.cancel()
+            },
+            _update: { effect in
+                logTrace("updating animation with effect \(effect)")
+                _ = animation.effect.setKeyframes(effect.jsKeyframes)
+                _ = animation.effect.updateTiming(effect.jsTiming)
+                animation.currentTime = 0.jsValue
+                if effect.duration > 0 {
+                    _ = animation.play()
+                }
+            }
+        )
     }
 
     func addEventListener(_ node: DOM.Node, event: String, sink: DOM.EventSink) {
@@ -184,5 +239,47 @@ final class JSKitDOMInteractor: DOM.Interactor {
 
     func getCurrentTime() -> Double {
         jsPerformance.now!().number! / 1000
+    }
+}
+
+private extension DOM.Animation.KeyframeEffect {
+    var jsKeyframes: JSValue {
+        let object = JSObject()
+        object[property] = values.jsValue
+        return object.jsValue
+        // FIXME EMBEDDED: below does not compile for embedded - test with main, report issue
+        // [
+        //     property: values.jsValue,
+        // ].jsValue
+    }
+
+    var jsTiming: JSValue {
+        let object = JSObject()
+        object["duration"] = duration.jsValue
+        object["fill"] = "forwards".jsValue
+        if composite != .replace {
+            object["composite"] = composite.jsValue
+        }
+
+        return object.jsValue
+        // FIXME EMBEDDED: below does not compile for embedded - test with main, report issue
+        // [
+        //     "duration": duration.jsValue,
+        //     "fill": "forwards".jsValue,
+        //     "composite": composite.rawValue.jsValue,
+        // ].jsValue
+    }
+}
+
+extension DOM.Animation.CompositeOperation {
+    var jsValue: JSValue {
+        switch self {
+        case .replace:
+            return "replace".jsValue
+        case .add:
+            return "add".jsValue
+        case .accumulate:
+            return "accumulate".jsValue
+        }
     }
 }
