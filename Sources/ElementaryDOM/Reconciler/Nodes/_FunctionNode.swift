@@ -10,7 +10,6 @@ where Value: __FunctionView, ChildNode: _Reconcilable, ChildNode == Value.Conten
     private var animatedValue: AnimatedValue<AnimatableVector>
     private var trackingSession: TrackingSession? = nil
 
-    var parentElement: AnyParentElememnt!
     public var depthInTree: Int
 
     var asFunctionNode: AnyFunctionNode!
@@ -26,12 +25,7 @@ where Value: __FunctionView, ChildNode: _Reconcilable, ChildNode == Value.Conten
         context: borrowing _ViewContext,
         reconciler: inout _RenderContext
     ) {
-        guard let parentElement = reconciler.parentElement else {
-            preconditionFailure("function without parent element")
-        }
-
-        self.parentElement = parentElement
-        self.depthInTree = reconciler.depth
+        self.depthInTree = context.functionDepth
 
         self.state = Value.__initializeState(from: value)
         self.animatedValue = AnimatedValue(value: Value.__getAnimatableData(from: value))
@@ -40,6 +34,7 @@ where Value: __FunctionView, ChildNode: _Reconcilable, ChildNode == Value.Conten
 
         self.value = value
         self.context = copy context
+        self.context!.functionDepth += 1
 
         self.asFunctionNode = AnyFunctionNode(self)
 
@@ -87,7 +82,6 @@ where Value: __FunctionView, ChildNode: _Reconcilable, ChildNode == Value.Conten
 
     func runFunction(reconciler: inout _RenderContext) {
         logTrace("running function \(identifier)")
-        reconciler.depth = depthInTree + 1
 
         precondition(self.value != nil, "value must be set")
         precondition(self.context != nil, "context must be set")
@@ -101,20 +95,18 @@ where Value: __FunctionView, ChildNode: _Reconcilable, ChildNode == Value.Conten
 
         self.trackingSession.take()?.cancel()
 
-        reconciler.withCurrentLayoutContainer(parentElement) { reconciler in
-            let (newContent, session) = withReactiveTrackingSession {
-                value.content
-            } onWillSet: { [scheduler = reconciler.scheduler, asFunctionNode = asFunctionNode!] in
-                scheduler.scheduleFunction(asFunctionNode)
-            }
+        let (newContent, session) = withReactiveTrackingSession {
+            value.content
+        } onWillSet: { [scheduler = reconciler.scheduler, asFunctionNode = asFunctionNode!] in
+            scheduler.scheduleFunction(asFunctionNode)
+        }
 
-            self.trackingSession = session
+        self.trackingSession = session
 
-            if child == nil {
-                self.child = Value.Content._makeNode(newContent, context: context!, reconciler: &reconciler)
-            } else {
-                Value.Content._patchNode(newContent, node: child!, reconciler: &reconciler)
-            }
+        if child == nil {
+            self.child = Value.Content._makeNode(newContent, context: context!, reconciler: &reconciler)
+        } else {
+            Value.Content._patchNode(newContent, node: child!, reconciler: &reconciler)
         }
     }
 }
@@ -138,7 +130,6 @@ extension _FunctionNode: _Reconcilable {
         self.state = nil
         self.value = nil
         self.context = nil
-        self.parentElement = nil
     }
 }
 

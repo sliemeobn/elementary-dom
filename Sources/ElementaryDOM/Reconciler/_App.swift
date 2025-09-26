@@ -1,6 +1,6 @@
 // TODO: main-actor stuff very unclear at the moment, ideally not needed at all
 final class App<DOMInteractor: DOM.Interactor> {
-    private var root: AnyParentElememnt?
+    private var root: _ElementNode?
     private var scheduler: Scheduler
 
     // TODO: rethink this whole API - maybe once usage of async is clearer
@@ -25,18 +25,18 @@ final class App<DOMInteractor: DOM.Interactor> {
                     self.root =
                         _ElementNode(
                             root: dom.root,
+                            viewContext: _ViewContext(),
                             context: &context,
-                            makeChild: { [rootView] context in
+                            makeChild: { [rootView] viewContext, context in
                                 AnyReconcilable(
                                     RootView._makeNode(
                                         rootView,
-                                        context: _ViewContext(),
+                                        context: viewContext,
                                         reconciler: &context
                                     )
                                 )
                             }
                         )
-                        .asParentRef
                 }
             )
         )

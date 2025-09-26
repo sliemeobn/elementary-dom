@@ -3,12 +3,14 @@ public final class _TextNode: _Reconcilable {
     var value: String
     var domNode: ManagedDOMReference?
     var isDirty: Bool = false
+    var parentElement: _ElementNode?
 
-    init(_ newValue: String, context: inout _RenderContext) {
+    init(_ newValue: String, viewContext: borrowing _ViewContext, context: inout _RenderContext) {
         self.value = newValue
         self.domNode = nil
+        self.parentElement = viewContext.parentElement
 
-        context.parentElement?.reportChangedChildren(.elementAdded, &context)
+        self.parentElement?.reportChangedChildren(.elementAdded, context: &context)
 
         isDirty = true
         context.scheduler.addNodeAction(
@@ -46,16 +48,17 @@ public final class _TextNode: _Reconcilable {
         switch op {
         case .startRemoval:
             domNode?.status = .removed
-            reconciler.parentElement?.reportChangedChildren(.elementRemoved, &reconciler)
+            self.parentElement?.reportChangedChildren(.elementRemoved, context: &reconciler)
         case .cancelRemoval:
             fatalError("not implemented")
         case .markAsMoved:
             domNode?.status = .moved
-            reconciler.parentElement?.reportChangedChildren(.elementChanged, &reconciler)
+            self.parentElement?.reportChangedChildren(.elementChanged, context: &reconciler)
         }
     }
 
     public func unmount(_ context: inout _CommitContext) {
         self.domNode = nil
+        self.parentElement = nil
     }
 }

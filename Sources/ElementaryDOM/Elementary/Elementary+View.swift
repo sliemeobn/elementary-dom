@@ -45,10 +45,13 @@ extension Never: _Mountable {
     ) {}
 }
 
-// TODO: does this need to be extra?
 public struct _ViewContext {
     var environment: EnvironmentValues = .init()
+
+    // built-in typed environment values (maybe using plain-old keys might be better?)
     var modifiers: DOMElementModifiers = .init()
+    var functionDepth: Int = 0
+    var parentElement: _ElementNode?
 
     mutating func takeModifiers() -> [any DOMElementModifier] {
         modifiers.takeModifiers()
@@ -90,10 +93,10 @@ extension HTMLElement: _Mountable, View where Content: _Mountable {
     ) {
         node.state.updateValue(view._attributes, &reconciler)
 
-        node.child.updateChild(&reconciler) { child, r in
+        node.child.updateChild(&reconciler, as: Content._MountedNode.self) { child, r in
             Content._patchNode(
                 view.content,
-                node: child.unwrap(as: Content._MountedNode.self),
+                node: child,
                 reconciler: &r
             )
         }
@@ -141,7 +144,7 @@ extension HTMLText: _Mountable, View {
         context: borrowing _ViewContext,
         reconciler: inout _RenderContext
     ) -> _MountedNode {
-        _MountedNode(view.text, context: &reconciler)
+        _MountedNode(view.text, viewContext: context, context: &reconciler)
     }
 
     public static func _patchNode(

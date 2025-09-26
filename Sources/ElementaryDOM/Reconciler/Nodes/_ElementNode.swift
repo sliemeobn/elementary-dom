@@ -1,10 +1,3 @@
-private extension AnyParentElememnt {
-    init(_ element: _ElementNode) {
-        self.identifier = element.identifier
-        self.reportChangedChildren = element.reportChangedChildren
-    }
-}
-
 public final class _ElementNode: _Reconcilable {
     var identifier: String = ""
     var child: AnyReconcilable!
@@ -19,22 +12,23 @@ public final class _ElementNode: _Reconcilable {
         var count: Int = 0
     }
 
-    private(set) var asParentRef: AnyParentElememnt?
+    private(set) var parentNode: _ElementNode?
 
     init(
         tag: String,
-        viewContext: consuming _ViewContext,
+        viewContext: borrowing _ViewContext,
         context: inout _RenderContext,
         makeChild: (borrowing _ViewContext, inout _RenderContext) -> AnyReconcilable
     ) {
-        precondition(context.parentElement != nil, "parent element must be set")
+        precondition(viewContext.parentElement != nil, "parent element must be set")
 
         self.identifier = "\(tag):\(ObjectIdentifier(self))"
-        self.asParentRef = AnyParentElememnt(self)
 
-        logTrace("created element \(identifier) in \(context.parentElement!.identifier)")
+        logTrace("created element \(identifier) in \(viewContext.parentElement!.identifier)")
+        viewContext.parentElement!.reportChangedChildren(.elementAdded, context: &context)
 
         var viewContext = copy viewContext
+        viewContext.parentElement = self
         let modifiers = viewContext.takeModifiers()
 
         context.scheduler.addNodeAction(
@@ -48,34 +42,33 @@ public final class _ElementNode: _Reconcilable {
                 }
             }
         )
-        context.parentElement?.reportChangedChildren(.elementAdded, &context)
 
-        context.withCurrentLayoutContainer(asParentRef!) { context in
-            self.child = makeChild(viewContext, &context)
-        }
+        self.child = makeChild(viewContext, &context)
     }
 
     init(
         root: DOM.Node,
+        viewContext: consuming _ViewContext,
         context: inout _RenderContext,
-        makeChild: (inout _RenderContext) -> AnyReconcilable
+        makeChild: (borrowing _ViewContext, inout _RenderContext) -> AnyReconcilable
     ) {
         self.domNode = .init(reference: root, status: .unchanged)
-        self.asParentRef = AnyParentElememnt(self)
         self.identifier = "\("_root_"):\(ObjectIdentifier(self))"
 
-        context.withCurrentLayoutContainer(asParentRef!) { context in
-            self.child = makeChild(&context)
-        }
+        viewContext.parentElement = self
+
+        self.child = makeChild(viewContext, &context)
     }
 
-    func updateChild(_ context: inout _RenderContext, block: (_ node: AnyReconcilable, _ context: inout _RenderContext) -> Void) {
-        context.withCurrentLayoutContainer(asParentRef!) { context in
-            block(self.child, &context)
-        }
+    func updateChild<Node: _Reconcilable>(
+        _ context: inout _RenderContext,
+        as: Node.Type = Node.self,
+        block: (_ node: Node, _ context: inout _RenderContext) -> Void
+    ) {
+        block(self.child.unwrap(), &context)
     }
 
-    func reportChangedChildren(_ change: AnyParentElememnt.Change, context: inout _RenderContext) {
+    func reportChangedChildren(_ change: ElementNodeChildrenChange, context: inout _RenderContext) {
         // TODO: count needed storage for children
 
         if !childrenLayoutStatus.isDirty {
@@ -96,13 +89,13 @@ public final class _ElementNode: _Reconcilable {
             assert(domNode != nil, "unitialized element in startRemoval")
             // TODO: transitions
             domNode?.status = .removed
-            reconciler.parentElement!.reportChangedChildren(.elementRemoved, &reconciler)
+            parentNode?.reportChangedChildren(.elementRemoved, context: &reconciler)
         case .cancelRemoval:
             fatalError("not implemented")
         case .markAsMoved:
             assert(domNode != nil, "unitialized element in markAsMoved")
             domNode?.status = .moved
-            reconciler.parentElement!.reportChangedChildren(.elementChanged, &reconciler)
+            parentNode?.reportChangedChildren(.elementChanged, context: &reconciler)
         }
     }
 
@@ -116,7 +109,7 @@ public final class _ElementNode: _Reconcilable {
         self.mountedModifieres = nil
 
         self.domNode = nil
-        self.asParentRef = nil
+        self.parentNode = nil
     }
 
     func performLayout(_ context: inout _CommitContext) {

@@ -1,13 +1,8 @@
-struct AnyParentElememnt {
-    enum Change {
-        case elementAdded
-        case elementChanged
-        // TODO: leaving?
-        case elementRemoved
-    }
-
-    let identifier: String  // TODO: make this an object identifier
-    let reportChangedChildren: (Change, inout _RenderContext) -> Void
+enum ElementNodeChildrenChange {
+    case elementAdded
+    case elementChanged
+    // TODO: leaving?
+    case elementRemoved
 }
 
 // TODO: find a better name for this
@@ -26,14 +21,13 @@ struct CommitAction {
     let run: (inout _CommitContext) -> Void
 }
 
+// TOOD: finally find a good name for this
 public struct _RenderContext: ~Copyable {
     let scheduler: Scheduler
     var currentFrameTime: Double
     var transaction: Transaction?
 
     private(set) var pendingFunctions: PendingFunctionQueue
-    private(set) var parentElement: AnyParentElememnt?
-    var depth: Int = 0
 
     init(
         scheduler: Scheduler,
@@ -45,19 +39,10 @@ public struct _RenderContext: ~Copyable {
         self.scheduler = scheduler
         self.currentFrameTime = currentTime
         self.transaction = transaction
-
-        depth = 0
     }
 
     mutating func addFunction(_ function: AnyFunctionNode) {
         pendingFunctions.registerFunctionForUpdate(function)
-    }
-
-    mutating func withCurrentLayoutContainer(_ container: AnyParentElememnt, block: (inout Self) -> Void) {
-        let previous = parentElement
-        parentElement = container
-        block(&self)
-        parentElement = previous
     }
 
     consuming func drain() {
