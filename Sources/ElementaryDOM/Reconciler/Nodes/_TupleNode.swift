@@ -180,11 +180,11 @@ public final class _TupleNode6<
     }
 }
 
-@available(macOS 26, *)
-final class TupleNode<let count: Int> {
-    let values: [count of AnyReconcilable]
+// @available(macOS 26, *)
+// final class TupleNode<let count: Int> {
+//     let values: [count of AnyReconcilable]
 
-    init(_ values: [count of AnyReconcilable]) {
-        self.values = values
-    }
-}
+//     init(_ values: [count of AnyReconcilable]) {
+//         self.values = values
+//     }
+// }
