@@ -30,9 +30,7 @@ final class MountedStyleModifier<Instance: CSSAnimatedValueInstance>: Unmountabl
     }
 
     func updateDOMNode(_ context: inout _CommitContext) {
-        logTrace("updating opacity modifier")
         if let combined = reduceCombinedSingleValue() {
-            logTrace("setting combined value \(combined.cssString)")
             clearAllAnimations()
             accessor.set(combined.cssString)
         } else {
@@ -78,9 +76,10 @@ final class MountedStyleModifier<Instance: CSSAnimatedValueInstance>: Unmountabl
                 )
             }
         } else {
+            assert(animations.count == values.count, "animations and values must have the same count")
             for (index, (animation, value)) in zip(animations, values).enumerated() {
                 guard value.isDirty else { continue }
-                logTrace("updating animation")
+                logTrace("updating animation index \(index)")
                 animation.update(DOM.Animation.KeyframeEffect(value.value, isFirst: index == 0))
             }
         }

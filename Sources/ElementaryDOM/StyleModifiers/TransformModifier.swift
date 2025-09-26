@@ -30,7 +30,12 @@ final class TransformModifier: DOMElementModifier {
     }
 
     private func makeLayers(_ context: inout _CommitContext) -> [AnyCSSAnimatedValueInstance<CSSTransform>] {
-        [AnyCSSAnimatedValueInstance(value.makeInstance())]
+        if var layers = upstream.map({ $0.makeLayers(&context) }) {
+            layers.append(AnyCSSAnimatedValueInstance(value.makeInstance()))
+            return layers
+        } else {
+            return [AnyCSSAnimatedValueInstance(value.makeInstance())]
+        }
     }
 }
 

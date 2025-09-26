@@ -5,7 +5,8 @@ import _ElementaryMath
 struct AnimationsView {
     @State var angle: Double = 0
     @State var isBallFading: Bool = false
-    @State var toggleOffset: Bool = false
+    @State var isOffset: Bool = false
+    @State var isRotated: Bool = false
 
     var content: some View {
 
@@ -23,10 +24,14 @@ struct AnimationsView {
                     //.rotationEffect(.degrees(0))
                     .rotationEffect(.radians(angle), anchor: .topTrailing)
                 Square(color: "red")
-                    .offset(x: toggleOffset ? 100 : 0)
+                    .rotationEffect(.degrees(isRotated ? 360 : 0))
+                    .offset(x: isOffset ? 100 : 0)
                     .onClick { _ in
-                        withAnimation(.linear(duration: 5)) {
-                            toggleOffset.toggle()
+                        withAnimation(.easeInOut(duration: 5)) {
+                            isOffset.toggle()
+                        }
+                        withAnimation(.bouncy(duration: 3).delay(isRotated ? 0 : 2)) {
+                            isRotated.toggle()
                         }
                     }
             }

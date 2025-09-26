@@ -93,6 +93,7 @@ final class Scheduler {
             isAnimationFramePending = true
             dom.requestAnimationFrame { [self] _ in
                 isAnimationFramePending = false
+                currentTransaction = nil
                 flushCommitPlan()
                 if !runningAnimations.isEmpty {
                     dom.runNext {

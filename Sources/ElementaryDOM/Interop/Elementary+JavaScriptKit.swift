@@ -147,6 +147,12 @@ final class JSKitDOMInteractor: DOM.Interactor {
             effect.jsTiming
         )
 
+        _ = animation.persist()
+
+        if effect.duration == 0 {
+            _ = animation.pause()
+        }
+
         animation.onfinish =
             JSClosure { _ in
                 onFinish()
@@ -162,7 +168,9 @@ final class JSKitDOMInteractor: DOM.Interactor {
                 _ = animation.effect.setKeyframes(effect.jsKeyframes)
                 _ = animation.effect.updateTiming(effect.jsTiming)
                 animation.currentTime = 0.jsValue
-                _ = animation.play()
+                if effect.duration > 0 {
+                    _ = animation.play()
+                }
             }
         )
     }
@@ -238,12 +246,10 @@ private extension DOM.Animation.KeyframeEffect {
     var jsKeyframes: JSValue {
         let object = JSObject()
         object[property] = values.jsValue
-        object["composite"] = composite.rawValue.jsValue
         return object.jsValue
         // FIXME EMBEDDED: below does not compile for embedded - test with main, report issue
         // [
         //     property: values.jsValue,
-        //     "composite": composite.rawValue.jsValue,
         // ].jsValue
     }
 
@@ -251,11 +257,16 @@ private extension DOM.Animation.KeyframeEffect {
         let object = JSObject()
         object["duration"] = duration.jsValue
         object["fill"] = "forwards".jsValue
+        if composite != .replace {
+            object["composite"] = composite.rawValue.jsValue
+        }
+
         return object.jsValue
         // FIXME EMBEDDED: below does not compile for embedded - test with main, report issue
         // [
         //     "duration": duration.jsValue,
         //     "fill": "forwards".jsValue,
+        //     "composite": composite.rawValue.jsValue,
         // ].jsValue
     }
 }

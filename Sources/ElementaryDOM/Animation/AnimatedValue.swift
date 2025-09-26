@@ -123,7 +123,6 @@ struct AnimatedValue<Value: AnimatableVectorConvertible>: ~Copyable {
             }
 
             results.append(Value(base + animatedVector))
-
         }
         return results
     }

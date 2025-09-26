@@ -32,7 +32,7 @@ enum CSSAnimatedValue<CSSValue: CSSPropertyValue> {
 extension DOM.Animation.KeyframeEffect {
     init<CSSValue: CSSPropertyValue>(_ value: CSSAnimatedValue<CSSValue>, isFirst: Bool) {
         self.property = CSSValue.styleKey
-        self.composite = isFirst ? .replace : .accumulate
+        self.composite = isFirst ? .replace : .add
 
         switch value {
         case .single(let value):
