@@ -11,7 +11,7 @@ struct DeinitSnifferView: View {
 
     static func _patchNode(
         _ view: consuming DeinitSnifferView,
-        node: inout _MountedNode,
+        node: _MountedNode,
         reconciler: inout ElementaryDOM._RenderContext
     ) {
         node.callback = view.callback

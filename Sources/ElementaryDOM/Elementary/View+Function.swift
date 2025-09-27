@@ -28,7 +28,7 @@ public extension __FunctionView {
 
     static func _patchNode(
         _ view: consuming Self,
-        node: inout _MountedNode,
+        node: _MountedNode,
         reconciler: inout _RenderContext
     ) {
         node.patch(view, context: &reconciler)

@@ -44,10 +44,10 @@ struct DOMEffectView<Effect: DOMElementModifier, Wrapped: View>: View {
 
     static func _patchNode(
         _ view: consuming Self,
-        node: inout _MountedNode,
+        node: _MountedNode,
         reconciler: inout _RenderContext
     ) {
         node.state.updateValue(view.value, &reconciler)
-        Wrapped._patchNode(view.wrapped, node: &node.child, reconciler: &reconciler)
+        Wrapped._patchNode(view.wrapped, node: node.child, reconciler: &reconciler)
     }
 }

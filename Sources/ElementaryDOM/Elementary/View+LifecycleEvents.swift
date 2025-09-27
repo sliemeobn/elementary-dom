@@ -21,7 +21,7 @@ public extension View {
 
 public struct _LifecycleEventView<Wrapped: View>: View {
     public typealias Tag = Wrapped.Tag
-    public typealias _MountedNode = _LifecycleNode<Wrapped._MountedNode>
+    public typealias _MountedNode = _LifecycleNode
 
     let wrapped: Wrapped
     let listener: LifecycleHook
@@ -40,10 +40,12 @@ public struct _LifecycleEventView<Wrapped: View>: View {
 
     public static func _patchNode(
         _ view: consuming Self,
-        node: inout _MountedNode,
+        node: _MountedNode,
         reconciler: inout _RenderContext
     ) {
         //TODO: should we patch something? maybe update values?
-        Wrapped._patchNode(view.wrapped, node: &node.child, reconciler: &reconciler)
+        node.patch(context: &reconciler) { n, r in
+            Wrapped._patchNode(view.wrapped, node: n, reconciler: &r)
+        }
     }
 }

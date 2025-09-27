@@ -1,40 +1,40 @@
-// FIXME:NONCOPYABLE this should be ~Copyable once associatedtype is supported (will be fun to implement a noncopyable version of this ; )
-public struct _KeyedNode<ChildNode: _Reconcilable> {
+public final class _KeyedNode {
     private var keys: [_ViewKey]
-    private var children: [ChildNode?]
+    private var children: [AnyReconcilable?]
     private var leavingChildren: LeavingChildrenTracker = .init()
     private let viewContext: _ViewContext
 
-    init(keys: [_ViewKey], children: [ChildNode?], context: borrowing _ViewContext) {
+    init(keys: [_ViewKey], children: [AnyReconcilable?], context: borrowing _ViewContext) {
         assert(keys.count == children.count)
         self.keys = keys
         self.children = children
         self.viewContext = copy context
     }
 
-    init(_ value: some Sequence<(key: _ViewKey, node: ChildNode)>, context: borrowing _ViewContext) {
+    convenience init(_ value: some Sequence<(key: _ViewKey, node: some _Reconcilable)>, context: borrowing _ViewContext) {
         var keys = [_ViewKey]()
-        var children = [ChildNode?]()
+        var children = [AnyReconcilable?]()
 
         keys.reserveCapacity(value.underestimatedCount)
         children.reserveCapacity(value.underestimatedCount)
 
         for entry in value {
             keys.append(entry.key)
-            children.append(entry.node)
+            children.append(AnyReconcilable(entry.node))
         }
 
         self.init(keys: keys, children: children, context: context)
     }
 
-    init(key: _ViewKey, child: ChildNode, context: borrowing _ViewContext) {
+    convenience init(key: _ViewKey, child: some _Reconcilable, context: borrowing _ViewContext) {
         self.init(CollectionOfOne((key: key, node: child)), context: context)
     }
 
-    mutating func patch(
+    func patch<Node: _Reconcilable>(
         key: _ViewKey,
         context: inout _RenderContext,
-        makeOrPatchNode: (inout ChildNode?, consuming _ViewContext, inout _RenderContext) -> Void
+        as: Node.Type = Node.self,
+        makeOrPatchNode: (inout Node?, borrowing _ViewContext, inout _RenderContext) -> Void
     ) {
         patch(
             CollectionOfOne(key),
@@ -43,17 +43,18 @@ public struct _KeyedNode<ChildNode: _Reconcilable> {
         )
     }
 
-    mutating func patch(
+    func patch<Node: _Reconcilable>(
         _ newKeys: some BidirectionalCollection<_ViewKey>,
         context: inout _RenderContext,
-        makeOrPatchNode: (Int, inout ChildNode?, consuming _ViewContext, inout _RenderContext) -> Void
+        as: Node.Type = Node.self,
+        makeOrPatchNode: (Int, inout Node?, borrowing _ViewContext, inout _RenderContext) -> Void
     ) {
         // TODO: add fast-pass for empty key list
         let diff = newKeys.difference(from: keys).inferringMoves()
         keys = Array(newKeys)
 
         if !diff.isEmpty {
-            var moversCache: [Int: ChildNode] = [:]
+            var moversCache: [Int: AnyReconcilable] = [:]
 
             // is there a way to completely do this in-place?
             // is there a way to do this more sub-rangy?
@@ -62,7 +63,7 @@ public struct _KeyedNode<ChildNode: _Reconcilable> {
             for change in diff {
                 switch change {
                 case let .remove(offset, element: key, associatedWith: movedTo):
-                    guard var node = children.remove(at: offset) else {
+                    guard let node = children.remove(at: offset) else {
                         fatalError("unexpected nil child on collection")
                     }
 
@@ -71,11 +72,11 @@ public struct _KeyedNode<ChildNode: _Reconcilable> {
                         moversCache[offset] = consume node
                     } else {
                         node.apply(.startRemoval, &context)
-                        context.parentElement?.reportChangedChildren(.elementChanged, &context)
+                        self.viewContext.parentElement?.reportChangedChildren(.elementChanged, context: &context)
                         leavingChildren.append(key, atIndex: offset, value: node)
                     }
                 case let .insert(offset, element: key, associatedWith: movedFrom):
-                    var node: ChildNode? = nil
+                    var node: AnyReconcilable? = nil
 
                     if let movedFrom {
                         logTrace("move \(key) from \(movedFrom) to \(offset)")
@@ -92,20 +93,20 @@ public struct _KeyedNode<ChildNode: _Reconcilable> {
 
         // run update / patch functions on all nodes
         for index in children.indices {
-            makeOrPatchNode(index, &children[index], self.viewContext, &context)
+            makeOrPatchNode(index, &children[unwrapped: index, as: Node.self], self.viewContext, &context)
             assert(children[index] != nil, "unexpected nil child on collection")
         }
     }
 }
 
 extension _KeyedNode: _Reconcilable {
-    public mutating func apply(_ op: _ReconcileOp, _ reconciler: inout _RenderContext) {
+    public func apply(_ op: _ReconcileOp, _ reconciler: inout _RenderContext) {
         for index in children.indices {
             children[index]?.apply(op, &reconciler)
         }
     }
 
-    public mutating func collectChildren(_ ops: inout ContainerLayoutPass, _ context: inout _CommitContext) {
+    public func collectChildren(_ ops: inout ContainerLayoutPass, _ context: inout _CommitContext) {
         // the trick here is to efficiently interleave the leaving nodes with the active nodes to match the DOM order
         // the other trick is to stay noncopyable compatible (one fine day we will have lists, associated types and stuff like that)
         // in any case, we need to mutate in place
@@ -131,7 +132,7 @@ extension _KeyedNode: _Reconcilable {
         }
     }
 
-    public consuming func unmount(_ context: inout _CommitContext) {
+    public func unmount(_ context: inout _CommitContext) {
         for index in children.indices {
             children[index]?.unmount(&context)
         }
@@ -145,12 +146,11 @@ extension _KeyedNode: _Reconcilable {
 }
 
 private extension _KeyedNode {
-    // FIXME:NONCOPYABLE
-    struct LeavingChildrenTracker {  //: ~Copyable {
+    struct LeavingChildrenTracker: ~Copyable {
         struct Entry {
             let key: _ViewKey
             var originalMountIndex: Int
-            var value: ChildNode
+            var value: AnyReconcilable
         }
 
         var entries: [Entry] = []
@@ -161,7 +161,7 @@ private extension _KeyedNode {
             return entries[index].originalMountIndex
         }
 
-        mutating func append(_ key: _ViewKey, atIndex index: Int, value: consuming ChildNode) {
+        mutating func append(_ key: _ViewKey, atIndex index: Int, value: consuming AnyReconcilable) {
             // insert in key order
             // Perform a sorted insert by key
             // maybe do it backwards?
@@ -199,6 +199,22 @@ private extension _KeyedNode {
                     entries[i].originalMountIndex += amount
                 }
             }
+        }
+    }
+}
+
+extension [AnyReconcilable?] {
+    subscript<Node: _Reconcilable>(unwrapped index: Index, as type: Node.Type = Node.self) -> Node? {
+        get {
+            self[index]?.unwrap(as: Node.self)
+        }
+        _modify {
+            var slot = self[index].take()?.unwrap(as: Node.self)
+            yield &slot
+            self[index] = slot.map(AnyReconcilable.init)
+        }
+        set {
+            self[index] = newValue.map(AnyReconcilable.init)
         }
     }
 }

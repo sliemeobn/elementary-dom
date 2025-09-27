@@ -16,10 +16,10 @@
 //     public static func _patchNode(
 //         _ view: consuming Self,
 //         context: borrowing _ViewContext,
-//         node: inout _MountedNode,
+//         node: _MountedNode,
 //         reconciler: inout _RenderContext
 //     ) {
 //         view.modifier(&context)
-//         V._patchNode(view.wrapped, node: &node, reconciler: &reconciler)
+//         V._patchNode(view.wrapped, node: node, reconciler: &reconciler)
 //     }
 // }
