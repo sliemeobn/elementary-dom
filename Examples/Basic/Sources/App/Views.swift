@@ -29,10 +29,13 @@ struct App {
         div {
             for _ in 0..<bindingViewCount {
                 BindingsView()
+                    .transition(.fade)
             }
             button { "Add bindings view" }
                 .onClick { _ in
-                    bindingViewCount += 1
+                    withAnimation {
+                        bindingViewCount += 1
+                    }
                 }
             button { "Remove bindings view" }
                 .onClick { _ in
