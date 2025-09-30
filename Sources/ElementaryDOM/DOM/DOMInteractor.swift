@@ -1,5 +1,4 @@
 import Elementary
-import JavaScriptKit
 
 // Type-erased node reference
 public enum DOM {
@@ -61,6 +60,7 @@ extension DOM.Interactor {
                 let oldValue = previous.remove(at: previousIndex)
                 if !oldValue.value.utf8Equals(attribute.value) {
                     if attribute.name.utf8Equals("style") {
+                        // TODO: really, really don't do this. expose the style dictionary from Elementary and use it directly
                         let oldMap = _parseInlineStyle(oldValue.value)
                         let newMap = _parseInlineStyle(attribute.value)
                         _applyInlineStyles(node, old: oldMap, new: newMap)

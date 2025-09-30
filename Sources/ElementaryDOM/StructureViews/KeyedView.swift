@@ -1,4 +1,5 @@
 public struct _KeyedView<Value: View>: View {
+    public typealias Tag = Value.Tag
     public typealias _MountedNode = _KeyedNode
 
     var key: _ViewKey

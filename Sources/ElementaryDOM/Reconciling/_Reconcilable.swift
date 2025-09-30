@@ -1,7 +1,10 @@
+// TODO: either get rid of this procol entirely, or at least move the apply/collectChildren stuff somewhere out of this
 public protocol _Reconcilable: AnyObject {
     func apply(_ op: _ReconcileOp, _ reconciler: inout _RenderContext)
 
     func collectChildren(_ ops: inout ContainerLayoutPass, _ context: inout _CommitContext)
+
+    // TODO: should this be destroy?
     func unmount(_ context: inout _CommitContext)
 }
 
@@ -9,29 +12,6 @@ public enum _ReconcileOp {
     case startRemoval
     case cancelRemoval
     case markAsMoved
-}
-
-final class UnmountTracker {
-    var unmountables: [AnyUnmountable] = []
-    var removable: Bool = true
-}
-
-public struct UnmountParent {
-    var tracker: UnmountTracker
-    func onUnmount(_ unmountable: some Unmountable) {
-        tracker.unmountables.append(AnyUnmountable(unmountable))
-    }
-
-    func onRemoval() {
-    }
-}
-
-public final class _EmptyNode: _Reconcilable {
-    public func apply(_ op: _ReconcileOp, _ reconciler: inout _RenderContext) {}
-
-    public func collectChildren(_ ops: inout ContainerLayoutPass, _ context: inout _CommitContext) {}
-
-    public func unmount(_ context: inout _CommitContext) {}
 }
 
 struct AnyReconcilable {

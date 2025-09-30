@@ -157,6 +157,18 @@ public final class _ElementNode: _Reconcilable {
     }
 }
 
+enum ElementNodeChildrenChange {
+    case elementAdded
+    case elementChanged
+    // TODO: leaving?
+    case elementRemoved
+}
+
+struct ManagedDOMReference: ~Copyable {
+    let reference: DOM.Node
+    var status: ContainerLayoutPass.Entry.Status
+}
+
 extension ManagedDOMReference {
     mutating func collectLayoutChanges(_ ops: inout ContainerLayoutPass) {
         ops.append(.init(kind: status, reference: reference))

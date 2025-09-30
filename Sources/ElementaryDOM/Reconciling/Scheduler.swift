@@ -1,3 +1,24 @@
+// TODO: find a better name for this
+struct AnyFunctionNode {
+    let identifier: ObjectIdentifier
+    let depthInTree: Int
+    let runUpdate: (inout _RenderContext) -> Void
+}
+
+enum AnimationProgressResult {
+    case stillRunning
+    case completed
+}
+
+struct AnyAnimatable {
+    let progressAnimation: (inout _RenderContext) -> AnimationProgressResult
+}
+
+struct CommitAction {
+    // TODO: is there a way to make this allocation-free?
+    let run: (inout _CommitContext) -> Void
+}
+
 // TODO: this ain't such a great shape...
 final class Scheduler {
     private var dom: any DOM.Interactor
