@@ -2,29 +2,30 @@
 public struct _RenderContext: ~Copyable {
     let scheduler: Scheduler
     var currentFrameTime: Double
-    var transaction: Transaction?
+    var transaction: Transaction
 
     private(set) var pendingFunctions: PendingFunctionQueue
 
     init(
         scheduler: Scheduler,
         currentTime: Double,
-        transaction: Transaction?,
+        transaction: Transaction? = nil,
         pendingFunctions: consuming PendingFunctionQueue = .init()
     ) {
         self.pendingFunctions = pendingFunctions
         self.scheduler = scheduler
         self.currentFrameTime = currentTime
-        self.transaction = transaction
+        self.transaction = transaction ?? .init()
     }
 
-    mutating func addFunction(_ function: AnyFunctionNode) {
-        pendingFunctions.registerFunctionForUpdate(function)
+    mutating func addFunction(_ function: AnyFunctionNode, transaction: Transaction) {
+        pendingFunctions.registerFunctionForUpdate(function, transaction: transaction)
     }
 
     consuming func drain() {
-        while let next = pendingFunctions.next() {
-            next.runUpdate(&self)
+        while let (node, transaction) = pendingFunctions.next() {
+            self.transaction = transaction ?? .init()
+            node.runUpdate(&self)
         }
     }
 }

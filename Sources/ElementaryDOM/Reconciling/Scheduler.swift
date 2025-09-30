@@ -30,6 +30,7 @@ final class Scheduler {
 
     private var isAnimationFramePending: Bool = false
 
+    // TODO: we could now remove this as transaction are now stored with function queue
     private var currentTransaction: Transaction?
     private var currentFrameTime: Double = 0
 
@@ -46,7 +47,7 @@ final class Scheduler {
         // NOTE: this is a bit of a hack to scheduel function in the same reconciler run if environment values change
         // we currently uses the same Reactivity tracking for environment changes, but they always happen during reconciliation
         guard ambientRenderContext == nil else {
-            ambientRenderContext!.addFunction(function)
+            ambientRenderContext!.addFunction(function, transaction: ambientRenderContext!.transaction)
             return
         }
 
@@ -62,7 +63,7 @@ final class Scheduler {
             currentTransaction = Transaction._current
         }
 
-        pendingFunctionsQueue.registerFunctionForUpdate(function)
+        pendingFunctionsQueue.registerFunctionForUpdate(function, transaction: currentTransaction)
     }
 
     // TODO: maybe add a second call for scheduleing a one-short "nextFrame" callback

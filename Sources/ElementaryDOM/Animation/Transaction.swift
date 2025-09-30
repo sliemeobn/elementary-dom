@@ -1,3 +1,4 @@
+// NOTE: don't let this get to big, it is passed around quite a bit
 public struct Transaction {
     // TODO: either main actor or thread local for multi-threaded environments
     internal static var _current: Transaction? = nil
@@ -6,14 +7,14 @@ public struct Transaction {
     let _id: UInt32
     var _animationTracker: AnimationTracker?
 
+    public var animation: Animation?
+    public var disablesAnimation: Bool = false
+
     public init(animation: Animation? = nil) {
         defer { Transaction.lastId &+= 1 }
         self._id = Transaction.lastId
         self.animation = animation
     }
-
-    public var animation: Animation?
-    public var disablesAnimation: Bool = false
 
     public mutating func addAnimationCompletion(
         criteria: AnimationCompletionCriteria = .logicallyComplete,
@@ -23,7 +24,7 @@ public struct Transaction {
     }
 
     internal mutating func newAnimation(at frameTime: Double) -> AnimationInstance? {
-        guard let animation = animation else { return nil }
+        guard !disablesAnimation, let animation = animation else { return nil }
         let instanceID = tracker.addAnimation()
         return AnimationInstance(
             startTime: frameTime,

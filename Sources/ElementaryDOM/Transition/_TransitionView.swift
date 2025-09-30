@@ -1,12 +1,13 @@
 extension View {
-    public func transition<T: Transition>(_ transition: T) -> _TransitionView<T, Self> {
-        _TransitionView(transition: transition, wrapped: self)
+    public func transition<T: Transition>(_ transition: T, animation: Animation? = nil) -> _TransitionView<T, Self> {
+        _TransitionView(transition: transition, animation: animation, wrapped: self)
     }
 }
 
 public struct _TransitionView<T: Transition, V: View>: View {
     public typealias Content = Never
     var transition: T
+    var animation: Animation?
     var wrapped: V
 
     public typealias _MountedNode = _TransitionNode<T, V>
@@ -16,7 +17,7 @@ public struct _TransitionView<T: Transition, V: View>: View {
         context: borrowing _ViewContext,
         reconciler: inout _RenderContext
     ) -> _MountedNode {
-        .init(transition: view.transition, wrapped: view.wrapped, context: context, reconciler: &reconciler)
+        .init(view: view, context: context, reconciler: &reconciler)
     }
 
     public static func _patchNode(
@@ -24,6 +25,6 @@ public struct _TransitionView<T: Transition, V: View>: View {
         node: _MountedNode,
         reconciler: inout _RenderContext
     ) {
-        node.update(transition: view.transition, wrapped: view.wrapped, context: &reconciler)
+        node.update(view: view, context: &reconciler)
     }
 }

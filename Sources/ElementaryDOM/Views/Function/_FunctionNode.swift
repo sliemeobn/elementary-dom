@@ -41,7 +41,7 @@ where Value: __FunctionView, ChildNode: _Reconcilable, ChildNode == Value.Conten
         logTrace("added function \(identifier)")
 
         // we need to break here for scoped reactivity tracking
-        reconciler.addFunction(asFunctionNode)
+        reconciler.addFunction(asFunctionNode, transaction: reconciler.transaction)
     }
 
     func patch(_ value: consuming Value, context: inout _RenderContext) {
@@ -66,7 +66,7 @@ where Value: __FunctionView, ChildNode: _Reconcilable, ChildNode == Value.Conten
                 context.scheduler.registerAnimation(.init(progressAnimation: self.progressAnimation(_:)))
             }
 
-            context.addFunction(asFunctionNode)
+            context.addFunction(asFunctionNode, transaction: context.transaction)
         }
     }
 

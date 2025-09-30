@@ -200,7 +200,7 @@ internal extension AnimatedValue {
 
         let wasAnimating = isAnimating
 
-        if let animation = context.transaction?.newAnimation(at: context.currentFrameTime) {
+        if let animation = context.transaction.newAnimation(at: context.currentFrameTime) {
             self.animate(to: value, animation: animation)
         } else {
             self.setValue(value)

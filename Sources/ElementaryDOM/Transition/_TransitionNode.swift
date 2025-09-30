@@ -1,6 +1,5 @@
 public final class _TransitionNode<T: Transition, V: View>: _Reconcilable {
-    private var transition: T
-    private var wrapped: V
+    private var value: _TransitionView<T, V>
     private var node: T.Body._MountedNode?
 
     private var placeholderView: PlaceholderContentView<T>?
@@ -8,15 +7,18 @@ public final class _TransitionNode<T: Transition, V: View>: _Reconcilable {
     // a transition can theoretically duplicate the content node, but it will be rare
     private var additionalPlaceholderNodes: [_PlaceholderNode] = []
 
-    init(transition: T, wrapped: V, context: borrowing _ViewContext, reconciler: inout _RenderContext) {
-        self.transition = transition
-        self.wrapped = wrapped
-
+    init(view: consuming _TransitionView<T, V>, context: borrowing _ViewContext, reconciler: inout _RenderContext) {
+        self.value = view
         placeholderView = PlaceholderContentView<T>(makeNodeFn: self.makePlaceholderNode)
 
-        guard reconciler.transaction?.animation != nil else {
+        if let animation = value.animation {
+            reconciler.transaction.animation = animation
+        }
+
+        // the idea is that with disablesAnimation set to true, only the top-level transition will be animated after a mount will be animated
+        guard reconciler.transaction.isAnimated == true else {
             self.node = T.Body._makeNode(
-                transition.body(content: placeholderView!, phase: .identity),
+                self.value.transition.body(content: placeholderView!, phase: .identity),
                 context: context,
                 reconciler: &reconciler
             )
@@ -24,19 +26,21 @@ public final class _TransitionNode<T: Transition, V: View>: _Reconcilable {
         }
 
         let transaction = reconciler.transaction
-        reconciler.transaction?.disablesAnimation = true
+
+        reconciler.transaction.disablesAnimation = true
         self.node = T.Body._makeNode(
-            transition.body(content: placeholderView!, phase: .willAppear),
+            self.value.transition.body(content: placeholderView!, phase: .willAppear),
             context: context,
             reconciler: &reconciler
         )
 
+        // NOTE: ideally we apply the animation before first-paint, but currently we DOM nodes mount their effect during commit
         reconciler.scheduler.registerAnimation(
             AnyAnimatable { [self] context in
                 guard let node = self.node, let placeholderView = self.placeholderView else { return .completed }
                 context.transaction = transaction
                 T.Body._patchNode(
-                    transition.body(content: placeholderView, phase: .identity),
+                    self.value.transition.body(content: placeholderView, phase: .identity),
                     node: node,
                     reconciler: &context
                 )
@@ -45,20 +49,20 @@ public final class _TransitionNode<T: Transition, V: View>: _Reconcilable {
         )
     }
 
-    func update(transition: T, wrapped: V, context: inout _RenderContext) {
-        self.transition = transition
+    func update(view: consuming _TransitionView<T, V>, context: inout _RenderContext) {
+        self.value = view
 
         if let placeholderNode {
-            V._patchNode(wrapped, node: placeholderNode.node.unwrap(), reconciler: &context)
+            V._patchNode(self.value.wrapped, node: placeholderNode.node.unwrap(), reconciler: &context)
         }
 
         for placeholder in additionalPlaceholderNodes {
-            V._patchNode(wrapped, node: placeholder.node.unwrap(), reconciler: &context)
+            V._patchNode(self.value.wrapped, node: placeholder.node.unwrap(), reconciler: &context)
         }
     }
 
     private func makePlaceholderNode(context: borrowing _ViewContext, reconciler: inout _RenderContext) -> _PlaceholderNode {
-        let node = _PlaceholderNode(node: AnyReconcilable(V._makeNode(wrapped, context: context, reconciler: &reconciler)))
+        let node = _PlaceholderNode(node: AnyReconcilable(V._makeNode(value.wrapped, context: context, reconciler: &reconciler)))
         if placeholderNode == nil {
             placeholderNode = node
         } else {
@@ -71,12 +75,25 @@ public final class _TransitionNode<T: Transition, V: View>: _Reconcilable {
         guard let placeholderView = placeholderView else { return }
         switch op {
         case .startRemoval:
-            guard reconciler.transaction?.isAnimated == true else {
+            if let animation = value.animation {
+                reconciler.transaction.animation = animation
+            }
+
+            guard reconciler.transaction.isAnimated == true else {
                 node?.apply(op, &reconciler)
                 return
             }
 
-            reconciler.transaction?.addAnimationCompletion(criteria: .removed) { [scheduler = reconciler.scheduler] in
+            // the patch does not go past the placeholder, so this only animates the transition
+            T.Body._patchNode(
+                value.transition.body(content: placeholderView, phase: .didDisappear),
+                node: node!,
+                reconciler: &reconciler
+            )
+
+            reconciler.transaction.addAnimationCompletion(criteria: .removed) { [scheduler = reconciler.scheduler] in
+                // TODO: think if this is the right scheduling, we remove the node in the frame after we flush the final values
+                // probably correct, actually...
                 scheduler.registerAnimation(
                     AnyAnimatable { [self] context in
                         guard let node = self.node else { return .completed }
@@ -85,15 +102,10 @@ public final class _TransitionNode<T: Transition, V: View>: _Reconcilable {
                     }
                 )
             }
-
-            T.Body._patchNode(
-                transition.body(content: placeholderView, phase: .didDisappear),
-                node: node!,
-                reconciler: &reconciler
-            )
         case .cancelRemoval:
+            // TODO: check this, stuff is for sure missing for reversible transitions
             T.Body._patchNode(
-                transition.body(content: placeholderView, phase: .identity),
+                value.transition.body(content: placeholderView, phase: .identity),
                 node: node!,
                 reconciler: &reconciler
             )
@@ -117,6 +129,6 @@ public final class _TransitionNode<T: Transition, V: View>: _Reconcilable {
 
 private extension Transaction {
     var isAnimated: Bool {
-        animation != nil
+        animation != nil && !disablesAnimation
     }
 }
