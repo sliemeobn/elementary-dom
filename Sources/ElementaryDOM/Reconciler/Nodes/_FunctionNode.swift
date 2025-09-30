@@ -59,7 +59,7 @@ where Value: __FunctionView, ChildNode: _Reconcilable, ChildNode == Value.Conten
         if needsRerender {
             let didStartAnimation = animatedValue.setValueAndReturnIfAnimationWasStarted(
                 Value.__getAnimatableData(from: self.value!),
-                context: context
+                context: &context
             )
 
             if didStartAnimation == true {
@@ -70,14 +70,14 @@ where Value: __FunctionView, ChildNode: _Reconcilable, ChildNode == Value.Conten
         }
     }
 
-    func progressAnimation(_ context: inout _RenderContext) -> Bool {
+    func progressAnimation(_ context: inout _RenderContext) -> AnimationProgressResult {
         assert(!animatedValue.model.isEmpty, "animation should never be called without an animatable value")
-        guard animatedValue.isAnimating else { return false }
+        guard animatedValue.isAnimating else { return .completed }
 
         animatedValue.progressToTime(context.currentFrameTime)
         runFunction(reconciler: &context)
 
-        return animatedValue.isAnimating
+        return animatedValue.isAnimating ? .stillRunning : .completed
     }
 
     func runFunction(reconciler: inout _RenderContext) {

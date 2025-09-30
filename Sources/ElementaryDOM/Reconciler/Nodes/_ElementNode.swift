@@ -21,7 +21,7 @@ public final class _ElementNode: _Reconcilable {
         makeChild: (borrowing _ViewContext, inout _RenderContext) -> AnyReconcilable
     ) {
         precondition(viewContext.parentElement != nil, "parent element must be set")
-
+        self.parentNode = viewContext.parentElement
         self.identifier = "\(tag):\(ObjectIdentifier(self))"
 
         logTrace("created element \(identifier) in \(viewContext.parentElement!.identifier)")

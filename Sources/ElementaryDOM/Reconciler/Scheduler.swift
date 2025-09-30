@@ -4,8 +4,8 @@ final class Scheduler {
     private var pendingFunctionsQueue: PendingFunctionQueue = .init()
     private var runningAnimations: [AnyAnimatable] = []
 
-    private var nodes: [CommitAction] = []
-    private var placements: [CommitAction] = []
+    private var nodeActions: [CommitAction] = []
+    private var placementActions: [CommitAction] = []
 
     private var isAnimationFramePending: Bool = false
 
@@ -15,7 +15,7 @@ final class Scheduler {
     // TODO: this is a bit hacky, ideally we can use explicit depencies on Environment
     private var ambientRenderContext: _RenderContext?
 
-    var needsFrame: Bool { !nodes.isEmpty || !placements.isEmpty || !runningAnimations.isEmpty }
+    private var needsFrame: Bool { !nodeActions.isEmpty || !placementActions.isEmpty || !runningAnimations.isEmpty }
 
     init(dom: any DOM.Interactor) {
         self.dom = dom
@@ -44,17 +44,18 @@ final class Scheduler {
         pendingFunctionsQueue.registerFunctionForUpdate(function)
     }
 
+    // TODO: maybe add a second call for scheduleing a one-short "nextFrame" callback
     func registerAnimation(_ node: AnyAnimatable) {
         runningAnimations.append(node)
         scheduleFrameIfNecessary()
     }
 
     func addNodeAction(_ action: CommitAction) {
-        nodes.append(action)
+        nodeActions.append(action)
     }
 
     func addPlacementAction(_ action: CommitAction) {
-        placements.append(action)
+        placementActions.append(action)
     }
 
     func withAmbientRenderContext(_ context: inout _RenderContext, _ block: () -> Void) {
@@ -108,16 +109,16 @@ final class Scheduler {
         var context = _CommitContext(dom: dom, currentFrameTime: currentFrameTime)
         currentFrameTime = 0
 
-        for node in nodes {
+        for node in nodeActions {
             node.run(&context)
         }
-        nodes.removeAll(keepingCapacity: true)
+        nodeActions.removeAll(keepingCapacity: true)
 
-        for placement in placements.reversed() {
+        for placement in placementActions.reversed() {
             placement.run(&context)
         }
 
-        placements.removeAll(keepingCapacity: true)
+        placementActions.removeAll(keepingCapacity: true)
         context.drain()
     }
 
@@ -127,8 +128,11 @@ final class Scheduler {
         var removedAnimations: [Int] = []
 
         for index in runningAnimations.indices {
-            if !progressAnimation(runningAnimations[index]) {
+            switch progressAnimation(runningAnimations[index]) {
+            case .completed:
                 removedAnimations.append(index)
+            case .stillRunning:
+                break
             }
         }
 
@@ -139,16 +143,16 @@ final class Scheduler {
         scheduleFrameIfNecessary()
     }
 
-    private func progressAnimation(_ animation: AnyAnimatable) -> Bool {
+    private func progressAnimation(_ animation: AnyAnimatable) -> AnimationProgressResult {
         var context = _RenderContext(
             scheduler: self,
             currentTime: currentFrameTime,
             transaction: nil
         )
 
-        let isStillRunning = animation.progressAnimation(&context)
+        let result = animation.progressAnimation(&context)
 
         context.drain()
-        return isStillRunning
+        return result
     }
 }
