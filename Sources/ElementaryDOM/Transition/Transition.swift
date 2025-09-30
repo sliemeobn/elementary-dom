@@ -7,7 +7,6 @@ public protocol Transition {
 
 public struct FadeTransition: Transition {
     public func body(content: Content, phase: TransitionPhase) -> some View {
-        let _ = logTrace("FadeTransition body \(phase)")
         content.opacity(phase.isIdentity ? 1.0 : 0.0)
     }
 }
@@ -106,6 +105,8 @@ public final class _PlaceholderNode: _Reconcilable {
     }
 
     public func unmount(_ context: inout _CommitContext) {
+        // TODO: we should maybe remove ourself from the parent list?
+        // or at least prevent updates to unmounted placeholders
         node.unmount(&context)
     }
 }
@@ -115,19 +116,20 @@ public final class _TransitionNode<T: Transition, V: View>: _Reconcilable {
     private var wrapped: V
     private var node: T.Body._MountedNode?
 
-    private var placeholder: _PlaceholderNode?
+    private var placeholderView: PlaceholderContentView<T>?
+    private var placeholderNode: _PlaceholderNode?
     // a transition can theoretically duplicate the content node, but it will be rare
-    private var additionalPlaceholders: [_PlaceholderNode] = []
+    private var additionalPlaceholderNodes: [_PlaceholderNode] = []
 
     init(transition: T, wrapped: V, context: borrowing _ViewContext, reconciler: inout _RenderContext) {
         self.transition = transition
         self.wrapped = wrapped
 
-        let placeholder = PlaceholderContentView<T>(makeNodeFn: self.makePlaceholderNode)
+        placeholderView = PlaceholderContentView<T>(makeNodeFn: self.makePlaceholderNode)
 
         guard reconciler.transaction?.animation != nil else {
             self.node = T.Body._makeNode(
-                transition.body(content: placeholder, phase: .identity),
+                transition.body(content: placeholderView!, phase: .identity),
                 context: context,
                 reconciler: &reconciler
             )
@@ -137,21 +139,21 @@ public final class _TransitionNode<T: Transition, V: View>: _Reconcilable {
         let transaction = reconciler.transaction
         reconciler.transaction?.disablesAnimation = true
         self.node = T.Body._makeNode(
-            transition.body(content: placeholder, phase: .willAppear),
+            transition.body(content: placeholderView!, phase: .willAppear),
             context: context,
             reconciler: &reconciler
         )
 
         reconciler.scheduler.registerAnimation(
             AnyAnimatable { [self] context in
-                guard let node = self.node else { return false }
+                guard let node = self.node, let placeholderView = self.placeholderView else { return .completed }
                 context.transaction = transaction
                 T.Body._patchNode(
-                    transition.body(content: placeholder, phase: .identity),
+                    transition.body(content: placeholderView, phase: .identity),
                     node: node,
                     reconciler: &context
                 )
-                return false
+                return .completed
             }
         )
     }
@@ -159,27 +161,58 @@ public final class _TransitionNode<T: Transition, V: View>: _Reconcilable {
     func update(transition: T, wrapped: V, context: inout _RenderContext) {
         self.transition = transition
 
-        if let placeholder {
-            V._patchNode(wrapped, node: placeholder.node.unwrap(), reconciler: &context)
+        if let placeholderNode {
+            V._patchNode(wrapped, node: placeholderNode.node.unwrap(), reconciler: &context)
         }
 
-        for placeholder in additionalPlaceholders {
+        for placeholder in additionalPlaceholderNodes {
             V._patchNode(wrapped, node: placeholder.node.unwrap(), reconciler: &context)
         }
     }
 
     private func makePlaceholderNode(context: borrowing _ViewContext, reconciler: inout _RenderContext) -> _PlaceholderNode {
         let node = _PlaceholderNode(node: AnyReconcilable(V._makeNode(wrapped, context: context, reconciler: &reconciler)))
-        if placeholder == nil {
-            placeholder = node
+        if placeholderNode == nil {
+            placeholderNode = node
         } else {
-            additionalPlaceholders.append(node)
+            additionalPlaceholderNodes.append(node)
         }
         return node
     }
 
     public func apply(_ op: _ReconcileOp, _ reconciler: inout _RenderContext) {
-        node?.apply(op, &reconciler)
+        guard let placeholderView = placeholderView else { return }
+        switch op {
+        case .startRemoval:
+            guard reconciler.transaction?.isAnimated == true else {
+                node?.apply(op, &reconciler)
+                return
+            }
+
+            reconciler.transaction?.addAnimationCompletion(criteria: .removed) { [scheduler = reconciler.scheduler] in
+                scheduler.registerAnimation(
+                    AnyAnimatable { [self] context in
+                        guard let node = self.node else { return .completed }
+                        node.apply(.startRemoval, &context)
+                        return .completed
+                    }
+                )
+            }
+
+            T.Body._patchNode(
+                transition.body(content: placeholderView, phase: .didDisappear),
+                node: node!,
+                reconciler: &reconciler
+            )
+        case .cancelRemoval:
+            T.Body._patchNode(
+                transition.body(content: placeholderView, phase: .identity),
+                node: node!,
+                reconciler: &reconciler
+            )
+        case .markAsMoved:
+            node?.apply(op, &reconciler)
+        }
     }
 
     public func collectChildren(_ ops: inout ContainerLayoutPass, _ context: inout _CommitContext) {
@@ -190,7 +223,13 @@ public final class _TransitionNode<T: Transition, V: View>: _Reconcilable {
         node?.unmount(&context)
 
         node = nil
-        placeholder = nil
-        additionalPlaceholders.removeAll()
+        placeholderNode = nil
+        additionalPlaceholderNodes.removeAll()
+    }
+}
+
+private extension Transaction {
+    var isAnimated: Bool {
+        animation != nil
     }
 }

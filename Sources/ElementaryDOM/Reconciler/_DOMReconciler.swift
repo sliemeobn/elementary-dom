@@ -12,8 +12,13 @@ struct AnyFunctionNode {
     let runUpdate: (inout _RenderContext) -> Void
 }
 
+enum AnimationProgressResult {
+    case stillRunning
+    case completed
+}
+
 struct AnyAnimatable {
-    let progressAnimation: (inout _RenderContext) -> Bool
+    let progressAnimation: (inout _RenderContext) -> AnimationProgressResult
 }
 
 struct CommitAction {
@@ -92,6 +97,7 @@ struct PendingFunctionQueue: ~Copyable {
 
     var isEmpty: Bool { functionsToRun.isEmpty }
 
+    // TODO: add transaction here?
     mutating func registerFunctionForUpdate(_ node: AnyFunctionNode) {
         logTrace("registering function run \(node.identifier)")
         // sorted insert by depth in reverse order, avoiding duplicates

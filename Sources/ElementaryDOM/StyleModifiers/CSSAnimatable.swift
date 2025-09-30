@@ -85,16 +85,16 @@ final class CSSValueSource<Value: CSSAnimatable & Equatable> {
         }
 
         func invalidate(_ context: inout _RenderContext) {
-            _ = animatedValue.setValueAndReturnIfAnimationWasStarted(source.value, context: context)
+            _ = animatedValue.setValueAndReturnIfAnimationWasStarted(source.value, context: &context)
             updateValue(&context)
         }
 
-        func progressAnimation(_ context: inout _RenderContext) -> Bool {
+        func progressAnimation(_ context: inout _RenderContext) -> AnimationProgressResult {
             animatedValue.progressToTime(context.currentFrameTime)
 
             updateValue(&context)
             // NOTE: this is always false because we send down chunks of peaked values and do not progress the animation on every frame
-            return false
+            return .completed
         }
 
         func unmount(_ context: inout _CommitContext) {
@@ -132,11 +132,11 @@ protocol CSSAnimatedValueInstance<CSSValue> {
     var isDirty: Bool { get nonmutating set }
     func setTarget(_ target: AnyInvalidateable)
     func unmount(_ context: inout _CommitContext)
-    func progressAnimation(_ context: inout _RenderContext) -> Bool
+    func progressAnimation(_ context: inout _RenderContext) -> AnimationProgressResult
 }
 
 struct AnyCSSAnimatedValueInstance<CSSProperty: CSSPropertyValue>: CSSAnimatedValueInstance {
-    let _progressAnimation: (inout _RenderContext) -> Bool
+    let _progressAnimation: (inout _RenderContext) -> AnimationProgressResult
     let _getValue: () -> CSSAnimatedValue<CSSProperty>
     let _getIsDirty: () -> Bool
     let _setIsDirty: (Bool) -> Void
@@ -152,7 +152,7 @@ struct AnyCSSAnimatedValueInstance<CSSProperty: CSSPropertyValue>: CSSAnimatedVa
         self._unmount = { value.unmount(&$0) }
     }
 
-    func progressAnimation(_ context: inout _RenderContext) -> Bool {
+    func progressAnimation(_ context: inout _RenderContext) -> AnimationProgressResult {
         _progressAnimation(&context)
     }
 

@@ -40,7 +40,9 @@ struct App {
             button { "Remove bindings view" }
                 .onClick { _ in
                     guard bindingViewCount > 0 else { return }
-                    bindingViewCount -= 1
+                    withAnimation {
+                        bindingViewCount -= 1
+                    }
                 }
         }
         hr()

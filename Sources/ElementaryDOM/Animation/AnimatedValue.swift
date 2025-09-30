@@ -1,7 +1,26 @@
 struct AnimationInstance {
+    struct TrackingReference {
+        let instanceID: AnimationTracker.InstanceID
+        let tracker: AnimationTracker
+    }
+
     let startTime: Double
     let animation: Animation
-    let onComplete: (() -> Void)? = nil
+    let trackingReference: TrackingReference?
+
+    init(startTime: Double, animation: Animation, trackingReference: TrackingReference? = nil) {
+        self.startTime = startTime
+        self.animation = animation
+        self.trackingReference = trackingReference
+    }
+
+    func reportLogicallyComplete() {
+        trackingReference?.tracker.reportLogicallyComplete(trackingReference!.instanceID)
+    }
+
+    func reportRemoved() {
+        trackingReference?.tracker.reportRemoved(trackingReference!.instanceID)
+    }
 }
 
 private struct RunningAnimation {
@@ -37,18 +56,14 @@ struct AnimatedValue<Value: AnimatableVectorConvertible>: ~Copyable {
     }
 
     mutating func setValue(_ value: Value) {
-        guard value != currentTarget else { return }
-
         self.animationBase = value.animatableVector
         self.currentTarget = value
         self.currentAnimationValue = value
 
-        self.runningAnimations.removeAll()  // TODO: run callbacks
+        removeAnimations(upThrough: runningAnimations.endIndex - 1, skipBaseUpdate: true)
     }
 
     mutating func animate(to value: Value, animation: AnimationInstance) {
-        guard value != currentTarget else { return }
-
         self.progressToTime(animation.startTime)
         var animationTarget = value.animatableVector - currentTarget.animatableVector
 
@@ -128,13 +143,13 @@ struct AnimatedValue<Value: AnimatableVectorConvertible>: ~Copyable {
     }
 
     private mutating func removeAnimations(upThrough index: Int, skipBaseUpdate: Bool = false) {
-        if !skipBaseUpdate {
-            for i in 0...index {
+        for i in 0...index {
+            runningAnimations[i].instance.reportRemoved()
+            if !skipBaseUpdate {
                 self.animationBase += runningAnimations[i].target
             }
         }
         runningAnimations.removeSubrange(0...index)
-        // TODO: run callbacks
     }
 }
 
@@ -180,11 +195,13 @@ where AnimationList: Collection<RunningAnimation> {
 }
 
 internal extension AnimatedValue {
-    mutating func setValueAndReturnIfAnimationWasStarted(_ value: Value, context: borrowing _RenderContext) -> Bool {
+    mutating func setValueAndReturnIfAnimationWasStarted(_ value: Value, context: inout _RenderContext) -> Bool {
+        guard value != currentTarget else { return false }
+
         let wasAnimating = isAnimating
 
-        if let animation = context.transaction?.animation {
-            self.animate(to: value, animation: AnimationInstance(startTime: context.currentFrameTime, animation: animation))
+        if let animation = context.transaction?.newAnimation(at: context.currentFrameTime) {
+            self.animate(to: value, animation: animation)
         } else {
             self.setValue(value)
         }
