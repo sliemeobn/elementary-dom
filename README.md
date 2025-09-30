@@ -30,7 +30,10 @@ For embedded builds, a recent main or 6.2 snapshot with matching *Swift SDKs for
 - "model-bindings" for inputs (i.e., bind a @Binding<String> to a text box, or bind a @Binding<Bool> to a checkbox)
 - ~~view value comparing (generated comparing and custom equatable support)~~
 - ~~different handling of environment (individual reactivity needed)~~
-- transitions and animations (ideally CSS-based, probably svelte-like custom easing functions applied through WAAPI)
+- ~~transitions and animations (ideally CSS-based, probably svelte-like custom easing functions applied through WAAPI)~~
+- better control over animations and basic phaseAnimator
+- support for combined and reversible transitions
+- somehow migrate over to "var body" instead of "var content" (what was I thinking....)
 - proper unit testing (once APIs firm up a bit more, partially started)
 - implement @ViewEquatableIgnored
 - split out JavaScriptKit stuff in separate module to contain spread, maybe one day we can switch to faster interop somehow
