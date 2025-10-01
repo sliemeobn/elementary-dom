@@ -127,6 +127,7 @@ extension _FunctionNode: _Reconcilable {
         let c = self.child.take()
         c?.unmount(&context)
 
+        self.animatedValue.cancelAnimation()
         self.state = nil
         self.value = nil
         self.context = nil

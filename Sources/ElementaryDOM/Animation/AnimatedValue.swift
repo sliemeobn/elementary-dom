@@ -1,38 +1,30 @@
-struct AnimationInstance {
-    struct TrackingReference {
-        let instanceID: AnimationTracker.InstanceID
-        let tracker: AnimationTracker
-    }
-
-    let startTime: Double
-    let animation: Animation
-    let trackingReference: TrackingReference?
-
-    init(startTime: Double, animation: Animation, trackingReference: TrackingReference? = nil) {
-        self.startTime = startTime
-        self.animation = animation
-        self.trackingReference = trackingReference
-    }
-
-    func reportLogicallyComplete() {
-        trackingReference?.tracker.reportLogicallyComplete(trackingReference!.instanceID)
-    }
-
-    func reportRemoved() {
-        trackingReference?.tracker.reportRemoved(trackingReference!.instanceID)
-    }
-}
-
 private struct RunningAnimation {
-    let instance: AnimationInstance
+    let trackedInstance: AnimationTracker.Instance?
+    let animation: Animation
+    let startTime: Double
     let target: AnimatableVector
+    var context: AnimationContext
+    var hasLogicallyCompleted: Bool = false
 
-    borrowing func animate(time: Double, context: inout AnimationContext, additionalVector: AnimatableVector?) -> AnimatableVector? {
+    mutating func animate(time: Double, additionalVector: AnimatableVector?, dryRun: Bool = false) -> AnimatableVector? {
+        let result: AnimatableVector?
         if let additionalVector {
-            instance.animation.animate(value: target + additionalVector, time: time - instance.startTime, context: &context)
+            result = animation.animate(value: target + additionalVector, time: time - startTime, context: &context)
         } else {
-            instance.animation.animate(value: target, time: time - instance.startTime, context: &context)
+            result = animation.animate(value: target, time: time - startTime, context: &context)
         }
+
+        if !dryRun && !hasLogicallyCompleted && context.isLogicallyComplete {
+            trackedInstance?.reportLogicallyComplete()
+            hasLogicallyCompleted = true
+        }
+
+        return result
+    }
+
+    mutating func reportRemoved() {
+        // TODO: maybe make this non-copyable and have a consuming remove func
+        trackedInstance?.reportRemoved()
     }
 }
 
@@ -42,7 +34,6 @@ struct AnimatedValue<Value: AnimatableVectorConvertible>: ~Copyable {
     private var currentAnimationValue: Value
 
     private var animationBase: AnimatableVector
-    private var context: AnimationContext
 
     var model: Value { borrowing get { currentTarget } }
     var presentation: Value { borrowing get { currentAnimationValue } }
@@ -52,7 +43,6 @@ struct AnimatedValue<Value: AnimatableVectorConvertible>: ~Copyable {
         self.animationBase = value.animatableVector
         self.currentTarget = value
         self.currentAnimationValue = value
-        self.context = AnimationContext()
     }
 
     mutating func setValue(_ value: Value) {
@@ -63,28 +53,49 @@ struct AnimatedValue<Value: AnimatableVectorConvertible>: ~Copyable {
         removeAnimations(upThrough: runningAnimations.endIndex - 1, skipBaseUpdate: true)
     }
 
-    mutating func animate(to value: Value, animation: AnimationInstance) {
-        self.progressToTime(animation.startTime)
+    mutating func cancelAnimation() {
+        guard isAnimating else { return }
+
+        // setting value cancels all animations
+        setValue(currentTarget)
+    }
+
+    mutating func animate(to value: Value, startTime: Double, animation: Animation, tracker: AnimationTracker? = nil) {
+
+        self.progressToTime(startTime)
         var animationTarget = value.animatableVector - currentTarget.animatableVector
+        var context = AnimationContext()
 
         if let previous = runningAnimations.last {
-            let elapsedTime = animation.startTime - previous.instance.startTime
-            let shouldMerge = animation.animation.shouldMerge(
-                previous: previous.instance.animation,
+            var previousContext = previous.context
+            let elapsedTime = startTime - previous.startTime
+            let shouldMerge = animation.shouldMerge(
+                previous: previous.animation,
                 value: previous.target,
                 time: elapsedTime,
-                context: &context
+                context: &previousContext
             )
 
             if shouldMerge {
                 self.animationBase = currentAnimationValue.animatableVector
                 self.removeAnimations(upThrough: runningAnimations.endIndex - 1, skipBaseUpdate: true)
                 animationTarget = value.animatableVector - self.animationBase
+                context = previousContext
+                // FIXME: this feels very hacky....
+                context.isLogicallyComplete = false
             }
         }
 
         self.currentTarget = value
-        runningAnimations.append(RunningAnimation(instance: animation, target: animationTarget))
+        runningAnimations.append(
+            RunningAnimation(
+                trackedInstance: tracker?.addAnimation(),
+                animation: animation,
+                startTime: startTime,
+                target: animationTarget,
+                context: context
+            )
+        )
     }
 
     mutating func progressToTime(_ time: Double) {
@@ -92,8 +103,7 @@ struct AnimatedValue<Value: AnimatableVectorConvertible>: ~Copyable {
 
         let (animatedVector, finishedAnimationIndex) = calculateAnimationAtTime(
             time,
-            runningAnimations: runningAnimations,
-            context: &context
+            runningAnimations: &runningAnimations[...],
         )
 
         if let finishedAnimationIndex {
@@ -112,7 +122,6 @@ struct AnimatedValue<Value: AnimatableVectorConvertible>: ~Copyable {
     // TODO: figure out the shape for this
     func peekFutureValues(_ times: StrideThrough<Double>) -> [Value] {
         var results: [Value] = []
-        var contextCopy = context
         var runningAnimations = runningAnimations[...]
         var base = animationBase
 
@@ -121,8 +130,7 @@ struct AnimatedValue<Value: AnimatableVectorConvertible>: ~Copyable {
         for time in times {
             let (animatedVector, completedIndex) = calculateAnimationAtTime(
                 time,
-                runningAnimations: runningAnimations,
-                context: &contextCopy
+                runningAnimations: &runningAnimations,
             )
 
             if let completedIndex {
@@ -144,31 +152,36 @@ struct AnimatedValue<Value: AnimatableVectorConvertible>: ~Copyable {
 
     private mutating func removeAnimations(upThrough index: Int, skipBaseUpdate: Bool = false) {
         for i in 0...index {
-            runningAnimations[i].instance.reportRemoved()
+            runningAnimations[i].trackedInstance?.reportRemoved()
             if !skipBaseUpdate {
                 self.animationBase += runningAnimations[i].target
             }
         }
         runningAnimations.removeSubrange(0...index)
     }
+
+    deinit {
+        if isAnimating {
+            logWarning("AnimatedValue deinit with running animations")
+        }
+    }
 }
 
-private func calculateAnimationAtTime<AnimationList>(
+private func calculateAnimationAtTime(
     _ time: Double,
-    runningAnimations: AnimationList,
-    context: inout AnimationContext,
-) -> (animatedVector: AnimatableVector, finishedAnimationIndex: AnimationList.Index?)
-where AnimationList: Collection<RunningAnimation> {
+    runningAnimations: inout ArraySlice<RunningAnimation>,
+    dryRun: Bool = false
+) -> (animatedVector: AnimatableVector, finishedAnimationIndex: Int?) {
     guard runningAnimations.count > 1 else {
         assert(runningAnimations.first != nil, "Running animations should not be empty")
-        if let vector = runningAnimations.first!.animate(time: time, context: &context, additionalVector: nil) {
+        if let vector = runningAnimations[0].animate(time: time, additionalVector: nil) {
             return (vector, nil)
         } else {
-            return (runningAnimations.first!.target, runningAnimations.indices.first)
+            return (runningAnimations[0].target, runningAnimations.indices.first)
         }
     }
 
-    var finishedAnimationIndex: AnimationList.Index?
+    var finishedAnimationIndex: Int?
     var index = runningAnimations.startIndex
 
     let zero = AnimatableVector.zero(runningAnimations.first!.target)
@@ -177,11 +190,9 @@ where AnimationList: Collection<RunningAnimation> {
     var carryOverVector = zero
 
     while index < runningAnimations.endIndex {
-        let runningAnimation = runningAnimations[index]
-
-        if let vector = runningAnimation.animate(time: time, context: &context, additionalVector: carryOverVector) {
+        if let vector = runningAnimations[index].animate(time: time, additionalVector: carryOverVector, dryRun: dryRun) {
             totalAnimationVector += vector
-            carryOverVector = runningAnimation.target - vector
+            carryOverVector = runningAnimations[index].target - vector
         } else {
             finishedAnimationIndex = index
             //totalAnimationVector = zero
@@ -200,8 +211,15 @@ internal extension AnimatedValue {
 
         let wasAnimating = isAnimating
 
-        if let animation = context.transaction.newAnimation(at: context.currentFrameTime) {
-            self.animate(to: value, animation: animation)
+        if !context.transaction.disablesAnimation,
+            let animation = context.transaction.animation
+        {
+            self.animate(
+                to: value,
+                startTime: context.currentFrameTime,
+                animation: animation,
+                tracker: context.transaction._animationTracker
+            )
         } else {
             self.setValue(value)
         }

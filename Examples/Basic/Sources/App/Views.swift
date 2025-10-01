@@ -29,7 +29,7 @@ struct App {
         div {
             for _ in 0..<bindingViewCount {
                 BindingsView()
-                    .transition(.fade, animation: .bouncy(duration: 3))
+                    .transition(.fade, animation: .bouncy)
             }
             button { "Add bindings view" }
                 .onClick { _ in

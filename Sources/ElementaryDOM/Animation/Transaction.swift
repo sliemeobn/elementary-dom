@@ -23,16 +23,6 @@ public struct Transaction {
         tracker.addAnimationCompletion(criteria: criteria, onComplete)
     }
 
-    internal mutating func newAnimation(at frameTime: Double) -> AnimationInstance? {
-        guard !disablesAnimation, let animation = animation else { return nil }
-        let instanceID = tracker.addAnimation()
-        return AnimationInstance(
-            startTime: frameTime,
-            animation: animation,
-            trackingReference: .init(instanceID: instanceID, tracker: tracker)
-        )
-    }
-
     private var tracker: AnimationTracker {
         mutating get {
             if _animationTracker == nil {
@@ -82,13 +72,27 @@ public struct AnimationCompletionCriteria: Hashable {
 }
 
 final class AnimationTracker {
-    struct InstanceID: Equatable, Hashable {
-        let value: Int
+    struct Instance {
+        private let instanceID: Int
+        private let tracker: AnimationTracker
+
+        init(instanceID: Int, tracker: AnimationTracker) {
+            self.instanceID = instanceID
+            self.tracker = tracker
+        }
+
+        func reportLogicallyComplete() {
+            tracker.reportLogicallyComplete(instanceID)
+        }
+
+        func reportRemoved() {
+            tracker.reportRemoved(instanceID)
+        }
     }
 
     private var _nextInstanceID: Int = 0
-    private var openRemovals: Set<InstanceID> = []
-    private var openCompletions: Set<InstanceID> = []
+    private var openRemovals: Set<Int> = []
+    private var openCompletions: Set<Int> = []
     private var completionCallbacks: [() -> Void] = []
     private var removalCallbacks: [() -> Void] = []
 
@@ -96,20 +100,21 @@ final class AnimationTracker {
         completionCallbacks.isEmpty && removalCallbacks.isEmpty
     }
 
-    func addAnimation() -> InstanceID {
+    func addAnimation() -> Instance {
         _nextInstanceID &+= 1
-        let instanceID = InstanceID(value: _nextInstanceID)
+        let instanceID = _nextInstanceID
         openRemovals.insert(instanceID)
         openCompletions.insert(instanceID)
-        return instanceID
+
+        return Instance(instanceID: _nextInstanceID, tracker: self)
     }
 
-    func reportLogicallyComplete(_ instanceID: InstanceID) {
+    private func reportLogicallyComplete(_ instanceID: Int) {
         openCompletions.remove(instanceID)
         checkCallbacks()
     }
 
-    func reportRemoved(_ instanceID: InstanceID) {
+    private func reportRemoved(_ instanceID: Int) {
         openCompletions.remove(instanceID)
         openRemovals.remove(instanceID)
         checkCallbacks()

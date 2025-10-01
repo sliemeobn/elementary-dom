@@ -7,7 +7,7 @@ struct AnimatedValueTests {
     @Test
     func progressesAnimation() {
         var value = AnimatedValue(value: TestValue(0))
-        value.animate(to: 10, animation: .init(startTime: 0, animation: .linear(duration: 1)))
+        value.animate(to: 10, startTime: 0, animation: .linear(duration: 1))
         #expect(value.presentation == 0)
         value.progressToTime(0.2)
         #expect(value.presentation == 2)
@@ -29,30 +29,30 @@ struct AnimatedValueTests {
     @Test
     func delaysAnimation() {
         var value = AnimatedValue(value: TestValue(0))
-        value.animate(to: 10, animation: .init(startTime: 0, animation: .linear(duration: 1).delay(0.5)))
+        value.animate(to: 10, startTime: 0, animation: .linear(duration: 1).delay(0.5))
         #expect(value.progressToEnd(sampling: 0.2) == [0, 0, 0, 1, 3, 5, 7, 9, 10])
     }
 
     @Test
     func speedsUpAnimation() {
         var value = AnimatedValue(value: TestValue(0))
-        value.animate(to: 10, animation: .init(startTime: 0, animation: .linear(duration: 1).speed(2)))
+        value.animate(to: 10, startTime: 0, animation: .linear(duration: 1).speed(2))
         #expect(value.progressToEnd(sampling: 0.2) == [0, 4, 8, 10])
     }
 
     @Test
     func combinesDelaysAndSpeeds() {
         var value = AnimatedValue(value: TestValue(0))
-        value.animate(to: 10, animation: .init(startTime: 0, animation: .linear(duration: 2).speed(2).delay(0.5)))
+        value.animate(to: 10, startTime: 0, animation: .linear(duration: 2).speed(2).delay(0.5))
         #expect(value.progressToEnd(sampling: 0.2) == [0, 0, 0, 1, 3, 5, 7, 9, 10])
-        value.animate(to: 0, animation: .init(startTime: 0, animation: .linear(duration: 0.5).delay(0.5).speed(0.5)))
+        value.animate(to: 0, startTime: 0, animation: .linear(duration: 0.5).delay(0.5).speed(0.5))
         #expect(value.progressToEnd(sampling: 0.2) == [10, 10, 10, 10, 10, 10, 8, 6, 4, 2, 0, 0])
     }
 
     @Test
     func peeksChunkOfNextValues() {
         var value = AnimatedValue(value: TestValue(0))
-        value.animate(to: 10, animation: .init(startTime: 0, animation: .linear(duration: 1)))
+        value.animate(to: 10, startTime: 0, animation: .linear(duration: 1))
         let peeked = value.peekFutureValues(stride(from: 0.0, through: 0.7, by: 0.2))
         let peekedAgain = value.peekFutureValues(stride(from: 0.2, through: 0.7, by: 0.2))
         let peekedEvenMore = value.peekFutureValues(stride(from: 0.9, through: 1.4, by: 0.2))
@@ -62,6 +62,84 @@ struct AnimatedValueTests {
         #expect(peekedEvenMore == [9, 10])
         #expect(value.presentation == 0)
         #expect(value.isAnimating == true)
+    }
+
+    @Test
+    func triggersCompletions() {
+        var value = AnimatedValue(value: TestValue(0))
+        let testTracker = TestTracker()
+
+        value.animate(to: 10, startTime: 0, animation: .linear(duration: 1), tracker: testTracker.tracker)
+
+        value.progressToTime(1.0)
+        #expect(testTracker.logicallyCompleteCount == 0)
+        #expect(testTracker.removedCount == 0)
+
+        value.progressToTime(1.1)
+        #expect(testTracker.logicallyCompleteCount == 1)
+        #expect(testTracker.removedCount == 1)
+    }
+
+    @Test
+    func triggersLogicallyCompleteBeforeRemoval() {
+        var value = AnimatedValue(value: TestValue(0))
+        let testTracker = TestTracker()
+
+        value.animate(to: 10, startTime: 0, animation: .bouncy(duration: 0.5), tracker: testTracker.tracker)
+
+        value.progressToTime(0.4)
+        #expect(testTracker.logicallyCompleteCount == 0)
+        #expect(testTracker.removedCount == 0)
+
+        value.progressToTime(0.7)
+        #expect(testTracker.logicallyCompleteCount == 1)
+        #expect(testTracker.removedCount == 0)
+
+        value.progressToTime(1.5)
+        #expect(testTracker.logicallyCompleteCount == 1)
+        #expect(testTracker.removedCount == 1)
+    }
+
+    @Test
+    func removesAnimationWhenMerged() {
+        var value = AnimatedValue(value: TestValue(0))
+        let tracker1 = TestTracker()
+        let tracker2 = TestTracker()
+
+        value.animate(to: 10, startTime: 0, animation: .smooth, tracker: tracker1.tracker)
+        value.animate(to: 10, startTime: 0.1, animation: .smooth, tracker: tracker2.tracker)
+
+        #expect(tracker1.logicallyCompleteCount == 1)
+        #expect(tracker1.removedCount == 1)
+        #expect(tracker2.logicallyCompleteCount == 0)
+        #expect(tracker2.removedCount == 0)
+    }
+
+    @Test
+    func removesAllAnimationsWhenUpdated() {
+        var value = AnimatedValue(value: TestValue(0))
+        let tracker1 = TestTracker()
+        let tracker2 = TestTracker()
+
+        value.animate(to: 10, startTime: 0, animation: .linear, tracker: tracker1.tracker)
+        value.animate(to: 10, startTime: 0.1, animation: .linear, tracker: tracker2.tracker)
+
+        value.setValue(TestValue(10))
+
+        #expect(tracker1.logicallyCompleteCount == 1)
+        #expect(tracker1.removedCount == 1)
+        #expect(tracker2.logicallyCompleteCount == 1)
+        #expect(tracker2.removedCount == 1)
+    }
+
+    @Test
+    func removesAllAnimationsWhenCanceled() {
+        var value = AnimatedValue(value: TestValue(0))
+        let tracker1 = TestTracker()
+        let tracker2 = TestTracker()
+
+        value.animate(to: 10, startTime: 0, animation: .linear, tracker: tracker1.tracker)
+        value.animate(to: 10, startTime: 0.1, animation: .linear, tracker: tracker2.tracker)
     }
 }
 
@@ -108,5 +186,20 @@ extension TestValue: Equatable, CustomStringConvertible {
 
     var description: String {
         value.description
+    }
+}
+
+private final class TestTracker {
+    let tracker = AnimationTracker()
+    var logicallyCompleteCount = 0
+    var removedCount = 0
+
+    init() {
+        tracker.addAnimationCompletion(criteria: .logicallyComplete) {
+            self.logicallyCompleteCount += 1
+        }
+        tracker.addAnimationCompletion(criteria: .removed) {
+            self.removedCount += 1
+        }
     }
 }

@@ -98,6 +98,7 @@ final class CSSValueSource<Value: CSSAnimatable & Equatable> {
         }
 
         func unmount(_ context: inout _CommitContext) {
+            animatedValue.cancelAnimation()
             source.dependencies.removeDependency(self)
         }
 
