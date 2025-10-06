@@ -5,7 +5,7 @@ public struct Transaction {
     internal static var lastId: UInt32 = 0
 
     let _id: UInt32
-    var _animationTracker: AnimationTracker?
+    let _animationTracker: AnimationTracker = .init()
 
     public var animation: Animation?
     public var disablesAnimation: Bool = false
@@ -16,20 +16,11 @@ public struct Transaction {
         self.animation = animation
     }
 
-    public mutating func addAnimationCompletion(
+    public func addAnimationCompletion(
         criteria: AnimationCompletionCriteria = .logicallyComplete,
         _ onComplete: @escaping () -> Void
     ) {
-        tracker.addAnimationCompletion(criteria: criteria, onComplete)
-    }
-
-    private var tracker: AnimationTracker {
-        mutating get {
-            if _animationTracker == nil {
-                _animationTracker = AnimationTracker()
-            }
-            return _animationTracker!
-        }
+        _animationTracker.addAnimationCompletion(criteria: criteria, onComplete)
     }
 
     // TODO: extendable storage via typed keys
