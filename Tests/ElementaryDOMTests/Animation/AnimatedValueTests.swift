@@ -53,9 +53,9 @@ struct AnimatedValueTests {
     func peeksChunkOfNextValues() {
         var value = AnimatedValue(value: TestValue(0))
         value.animate(to: 10, startTime: 0, animation: .linear(duration: 1))
-        let peeked = value.peekFutureValues(stride(from: 0.0, through: 0.7, by: 0.2))
-        let peekedAgain = value.peekFutureValues(stride(from: 0.2, through: 0.7, by: 0.2))
-        let peekedEvenMore = value.peekFutureValues(stride(from: 0.9, through: 1.4, by: 0.2))
+        let peeked = value.peekFutureValuesUnlessCompletedOrFinished(stride(from: 0.0, through: 0.7, by: 0.2))
+        let peekedAgain = value.peekFutureValuesUnlessCompletedOrFinished(stride(from: 0.2, through: 0.7, by: 0.2))
+        let peekedEvenMore = value.peekFutureValuesUnlessCompletedOrFinished(stride(from: 0.9, through: 1.4, by: 0.2))
 
         #expect(peeked == [0, 2, 4, 6])
         #expect(peekedAgain == [2, 4, 6])
@@ -140,6 +140,56 @@ struct AnimatedValueTests {
 
         value.animate(to: 10, startTime: 0, animation: .linear, tracker: tracker1.tracker)
         value.animate(to: 10, startTime: 0.1, animation: .linear, tracker: tracker2.tracker)
+
+        value.cancelAnimation()
+
+        #expect(value.isAnimating == false)
+        #expect(tracker1.logicallyCompleteCount == 1)
+        #expect(tracker1.removedCount == 1)
+        #expect(tracker2.logicallyCompleteCount == 1)
+        #expect(tracker2.removedCount == 1)
+    }
+
+    @Test
+    func scheudlesACallbackForLogicallyCompletingWhenPeeking() {
+        var value = AnimatedValue(value: TestValue(0))
+        value.animate(to: 10, startTime: 0, animation: .smooth(duration: 0.5))
+        let peeked = value.peekFutureValuesUnlessCompletedOrFinished(stride(from: 0.0, through: 1.5, by: 0.1))
+        #expect(peeked == [0, 3, 7, 8, 9, 9, 9])
+    }
+
+    @Test
+    func peekDoesNotMutateOrTriggerCallbacks() {
+        var value = AnimatedValue(value: TestValue(0))
+        let tracker = TestTracker()
+
+        value.animate(to: 10, startTime: 0, animation: .linear(duration: 1), tracker: tracker.tracker)
+
+        let beforePresentation = value.presentation
+        let beforeAnimating = value.isAnimating
+        _ = value.peekFutureValuesUnlessCompletedOrFinished(stride(from: 0.0, through: 1.0, by: 0.1))
+
+        #expect(value.presentation == beforePresentation)
+        #expect(value.isAnimating == beforeAnimating)
+        #expect(tracker.logicallyCompleteCount == 0)
+        #expect(tracker.removedCount == 0)
+    }
+
+    @Test
+    func mergeReportsCompletionBeforeRemovalForInterruptedAnimation() {
+        var value = AnimatedValue(value: TestValue(0))
+        var events: [String] = []
+
+        let tracker1 = AnimationTracker()
+        tracker1.addAnimationCompletion(criteria: .logicallyComplete) { events.append("C1") }
+        tracker1.addAnimationCompletion(criteria: .removed) { events.append("R1") }
+
+        let tracker2 = AnimationTracker()
+
+        value.animate(to: 10, startTime: 0.0, animation: .smooth, tracker: tracker1)
+        value.animate(to: 20, startTime: 0.1, animation: .smooth, tracker: tracker2)
+
+        #expect(events == ["C1", "R1"])
     }
 }
 

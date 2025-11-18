@@ -45,6 +45,17 @@ public func withAnimation<Result, Failure>(
     try withTransaction(.init(animation: animation), body)
 }
 
+public func withAnimation<Result, Failure>(
+    _ animation: Animation? = .default,
+    completionCriteria: AnimationCompletionCriteria = .logicallyComplete,
+    _ body: () throws(Failure) -> Result,    
+    completion: @escaping () -> Void
+) throws(Failure) -> Result {
+    let transaction = Transaction(animation: animation)
+    transaction.addAnimationCompletion(criteria: completionCriteria, completion)
+    return try withTransaction(transaction, body)
+}
+
 public struct AnimationCompletionCriteria: Hashable {
     internal enum Value {
         case logicallyComplete
