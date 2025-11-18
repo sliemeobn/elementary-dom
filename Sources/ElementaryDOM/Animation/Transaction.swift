@@ -48,7 +48,7 @@ public func withAnimation<Result, Failure>(
 public func withAnimation<Result, Failure>(
     _ animation: Animation? = .default,
     completionCriteria: AnimationCompletionCriteria = .logicallyComplete,
-    _ body: () throws(Failure) -> Result,    
+    _ body: () throws(Failure) -> Result,
     completion: @escaping () -> Void
 ) throws(Failure) -> Result {
     let transaction = Transaction(animation: animation)
