@@ -92,6 +92,7 @@ public extension Animation {
 
 public struct AnimationContext {
     var initialVelocity: AnimatableVector?
+    var isLogicallyComplete: Bool = false
     //TODO: provide container for custom values
 }
 

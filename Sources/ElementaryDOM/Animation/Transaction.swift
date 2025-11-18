@@ -1,10 +1,14 @@
+// NOTE: don't let this get to big, it is passed around quite a bit
 public struct Transaction {
     // TODO: either main actor or thread local for multi-threaded environments
     internal static var _current: Transaction? = nil
     internal static var lastId: UInt32 = 0
 
     let _id: UInt32
-    var _animationTracker: AnimationTracker?
+    let _animationTracker: AnimationTracker = .init()
+
+    public var animation: Animation?
+    public var disablesAnimation: Bool = false
 
     public init(animation: Animation? = nil) {
         defer { Transaction.lastId &+= 1 }
@@ -12,33 +16,11 @@ public struct Transaction {
         self.animation = animation
     }
 
-    public var animation: Animation?
-    public var disablesAnimation: Bool = false
-
-    public mutating func addAnimationCompletion(
+    public func addAnimationCompletion(
         criteria: AnimationCompletionCriteria = .logicallyComplete,
         _ onComplete: @escaping () -> Void
     ) {
-        tracker.addAnimationCompletion(criteria: criteria, onComplete)
-    }
-
-    internal mutating func newAnimation(at frameTime: Double) -> AnimationInstance? {
-        guard let animation = animation else { return nil }
-        let instanceID = tracker.addAnimation()
-        return AnimationInstance(
-            startTime: frameTime,
-            animation: animation,
-            trackingReference: .init(instanceID: instanceID, tracker: tracker)
-        )
-    }
-
-    private var tracker: AnimationTracker {
-        mutating get {
-            if _animationTracker == nil {
-                _animationTracker = AnimationTracker()
-            }
-            return _animationTracker!
-        }
+        _animationTracker.addAnimationCompletion(criteria: criteria, onComplete)
     }
 
     // TODO: extendable storage via typed keys
@@ -63,6 +45,17 @@ public func withAnimation<Result, Failure>(
     try withTransaction(.init(animation: animation), body)
 }
 
+public func withAnimation<Result, Failure>(
+    _ animation: Animation? = .default,
+    completionCriteria: AnimationCompletionCriteria = .logicallyComplete,
+    _ body: () throws(Failure) -> Result,
+    completion: @escaping () -> Void
+) throws(Failure) -> Result {
+    let transaction = Transaction(animation: animation)
+    transaction.addAnimationCompletion(criteria: completionCriteria, completion)
+    return try withTransaction(transaction, body)
+}
+
 public struct AnimationCompletionCriteria: Hashable {
     internal enum Value {
         case logicallyComplete
@@ -81,13 +74,27 @@ public struct AnimationCompletionCriteria: Hashable {
 }
 
 final class AnimationTracker {
-    struct InstanceID: Equatable, Hashable {
-        let value: Int
+    struct Instance {
+        private let instanceID: Int
+        private let tracker: AnimationTracker
+
+        init(instanceID: Int, tracker: AnimationTracker) {
+            self.instanceID = instanceID
+            self.tracker = tracker
+        }
+
+        func reportLogicallyComplete() {
+            tracker.reportLogicallyComplete(instanceID)
+        }
+
+        func reportRemoved() {
+            tracker.reportRemoved(instanceID)
+        }
     }
 
     private var _nextInstanceID: Int = 0
-    private var openRemovals: Set<InstanceID> = []
-    private var openCompletions: Set<InstanceID> = []
+    private var openRemovals: Set<Int> = []
+    private var openCompletions: Set<Int> = []
     private var completionCallbacks: [() -> Void] = []
     private var removalCallbacks: [() -> Void] = []
 
@@ -95,20 +102,21 @@ final class AnimationTracker {
         completionCallbacks.isEmpty && removalCallbacks.isEmpty
     }
 
-    func addAnimation() -> InstanceID {
+    func addAnimation() -> Instance {
         _nextInstanceID &+= 1
-        let instanceID = InstanceID(value: _nextInstanceID)
+        let instanceID = _nextInstanceID
         openRemovals.insert(instanceID)
         openCompletions.insert(instanceID)
-        return instanceID
+
+        return Instance(instanceID: _nextInstanceID, tracker: self)
     }
 
-    func reportLogicallyComplete(_ instanceID: InstanceID) {
+    private func reportLogicallyComplete(_ instanceID: Int) {
         openCompletions.remove(instanceID)
         checkCallbacks()
     }
 
-    func reportRemoved(_ instanceID: InstanceID) {
+    private func reportRemoved(_ instanceID: Int) {
         openCompletions.remove(instanceID)
         openRemovals.remove(instanceID)
         checkCallbacks()

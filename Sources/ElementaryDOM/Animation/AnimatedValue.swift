@@ -1,38 +1,32 @@
-struct AnimationInstance {
-    struct TrackingReference {
-        let instanceID: AnimationTracker.InstanceID
-        let tracker: AnimationTracker
-    }
-
-    let startTime: Double
-    let animation: Animation
-    let trackingReference: TrackingReference?
-
-    init(startTime: Double, animation: Animation, trackingReference: TrackingReference? = nil) {
-        self.startTime = startTime
-        self.animation = animation
-        self.trackingReference = trackingReference
-    }
-
-    func reportLogicallyComplete() {
-        trackingReference?.tracker.reportLogicallyComplete(trackingReference!.instanceID)
-    }
-
-    func reportRemoved() {
-        trackingReference?.tracker.reportRemoved(trackingReference!.instanceID)
-    }
-}
-
 private struct RunningAnimation {
-    let instance: AnimationInstance
+    let trackedInstance: AnimationTracker.Instance?
+    let animation: Animation
+    let startTime: Double
     let target: AnimatableVector
+    var context: AnimationContext
+    var hasLogicallyCompleted: Bool = false
 
-    borrowing func animate(time: Double, context: inout AnimationContext, additionalVector: AnimatableVector?) -> AnimatableVector? {
+    mutating func animate(time: Double, additionalVector: AnimatableVector?) -> (AnimatableVector, Bool)? {
+        let result: AnimatableVector?
+
+        let before = context.isLogicallyComplete
+
         if let additionalVector {
-            instance.animation.animate(value: target + additionalVector, time: time - instance.startTime, context: &context)
+            result = animation.animate(value: target + additionalVector, time: time - startTime, context: &context)
         } else {
-            instance.animation.animate(value: target, time: time - instance.startTime, context: &context)
+            result = animation.animate(value: target, time: time - startTime, context: &context)
         }
+
+        return result.map { ($0, !before && context.isLogicallyComplete) }
+    }
+
+    mutating func reportRemoved() {
+        // TODO: maybe make this non-copyable and have a consuming remove func
+        trackedInstance?.reportRemoved()
+    }
+
+    mutating func reportLogicallyComplete() {
+        trackedInstance?.reportLogicallyComplete()
     }
 }
 
@@ -42,7 +36,6 @@ struct AnimatedValue<Value: AnimatableVectorConvertible>: ~Copyable {
     private var currentAnimationValue: Value
 
     private var animationBase: AnimatableVector
-    private var context: AnimationContext
 
     var model: Value { borrowing get { currentTarget } }
     var presentation: Value { borrowing get { currentAnimationValue } }
@@ -52,49 +45,75 @@ struct AnimatedValue<Value: AnimatableVectorConvertible>: ~Copyable {
         self.animationBase = value.animatableVector
         self.currentTarget = value
         self.currentAnimationValue = value
-        self.context = AnimationContext()
     }
 
     mutating func setValue(_ value: Value) {
         self.animationBase = value.animatableVector
         self.currentTarget = value
         self.currentAnimationValue = value
-
-        removeAnimations(upThrough: runningAnimations.endIndex - 1, skipBaseUpdate: true)
+        if !runningAnimations.isEmpty {
+            removeAnimations(upThrough: runningAnimations.endIndex - 1, skipBaseUpdate: true)
+        }
     }
 
-    mutating func animate(to value: Value, animation: AnimationInstance) {
-        self.progressToTime(animation.startTime)
+    mutating func cancelAnimation() {
+        guard isAnimating else { return }
+
+        // setting value cancels all animations
+        setValue(currentTarget)
+    }
+
+    mutating func animate(to value: Value, startTime: Double, animation: Animation, tracker: AnimationTracker? = nil) {
+
+        self.progressToTime(startTime)
         var animationTarget = value.animatableVector - currentTarget.animatableVector
+        var context = AnimationContext()
 
         if let previous = runningAnimations.last {
-            let elapsedTime = animation.startTime - previous.instance.startTime
-            let shouldMerge = animation.animation.shouldMerge(
-                previous: previous.instance.animation,
+            var previousContext = previous.context
+            let elapsedTime = startTime - previous.startTime
+            let shouldMerge = animation.shouldMerge(
+                previous: previous.animation,
                 value: previous.target,
                 time: elapsedTime,
-                context: &context
+                context: &previousContext
             )
 
             if shouldMerge {
                 self.animationBase = currentAnimationValue.animatableVector
                 self.removeAnimations(upThrough: runningAnimations.endIndex - 1, skipBaseUpdate: true)
                 animationTarget = value.animatableVector - self.animationBase
+                context = previousContext
+                // FIXME: this feels very hacky....
+                context.isLogicallyComplete = false
             }
         }
 
         self.currentTarget = value
-        runningAnimations.append(RunningAnimation(instance: animation, target: animationTarget))
+        runningAnimations.append(
+            RunningAnimation(
+                trackedInstance: tracker?.addAnimation(),
+                animation: animation,
+                startTime: startTime,
+                target: animationTarget,
+                context: context
+            )
+        )
     }
 
     mutating func progressToTime(_ time: Double) {
         guard isAnimating else { return }
 
-        let (animatedVector, finishedAnimationIndex) = calculateAnimationAtTime(
+        let (animatedVector, completedIndexes, finishedAnimationIndex) = calculateAnimationAtTime(
             time,
-            runningAnimations: runningAnimations,
-            context: &context
+            runningAnimations: &runningAnimations[...],
         )
+
+        // Report logical completion for any animations that became logically complete at this time.
+        // This must happen here (mutating path), not inside calculateAnimationAtTime, so peeking stays non-mutating.
+        for index in completedIndexes {
+            runningAnimations[index].reportLogicallyComplete()
+        }
 
         if let finishedAnimationIndex {
             removeAnimations(upThrough: finishedAnimationIndex)
@@ -109,42 +128,52 @@ struct AnimatedValue<Value: AnimatableVectorConvertible>: ~Copyable {
         }
     }
 
-    // TODO: figure out the shape for this
-    func peekFutureValues(_ times: StrideThrough<Double>) -> [Value] {
+    // TODO: this can't be the best shape of this function...
+    func peekFutureValuesUnlessCompletedOrFinished(_ times: StrideThrough<Double>) -> [Value] {
         var results: [Value] = []
-        var contextCopy = context
         var runningAnimations = runningAnimations[...]
         var base = animationBase
 
         results.reserveCapacity(times.underestimatedCount)
 
         for time in times {
-            let (animatedVector, completedIndex) = calculateAnimationAtTime(
+            var shouldBailEarly = false
+
+            let (animatedVector, completedIndexes, removedUpToIndex) = calculateAnimationAtTime(
                 time,
-                runningAnimations: runningAnimations,
-                context: &contextCopy
+                runningAnimations: &runningAnimations,
             )
 
-            if let completedIndex {
-                for i in runningAnimations.startIndex...completedIndex {
+            if !completedIndexes.isEmpty {
+                shouldBailEarly = true
+            }
+
+            if let removedUpToIndex {
+                for i in runningAnimations.startIndex...removedUpToIndex {
                     base += runningAnimations[i].target
                 }
-                runningAnimations = runningAnimations[(completedIndex + 1)...]
+                runningAnimations = runningAnimations[(removedUpToIndex + 1)...]
+                shouldBailEarly = true
             }
 
             if runningAnimations.isEmpty {
                 results.append(self.currentTarget)
-                break
+                shouldBailEarly = true
+            } else {
+                results.append(Value(base + animatedVector))
             }
 
-            results.append(Value(base + animatedVector))
+            if shouldBailEarly {
+                break
+            }
         }
         return results
     }
 
     private mutating func removeAnimations(upThrough index: Int, skipBaseUpdate: Bool = false) {
         for i in 0...index {
-            runningAnimations[i].instance.reportRemoved()
+            // NOTE: completion is triggered automatically on removal, no extra handling needed here
+            runningAnimations[i].reportRemoved()
             if !skipBaseUpdate {
                 self.animationBase += runningAnimations[i].target
             }
@@ -153,22 +182,22 @@ struct AnimatedValue<Value: AnimatableVectorConvertible>: ~Copyable {
     }
 }
 
-private func calculateAnimationAtTime<AnimationList>(
+private func calculateAnimationAtTime(
     _ time: Double,
-    runningAnimations: AnimationList,
-    context: inout AnimationContext,
-) -> (animatedVector: AnimatableVector, finishedAnimationIndex: AnimationList.Index?)
-where AnimationList: Collection<RunningAnimation> {
+    runningAnimations: inout ArraySlice<RunningAnimation>
+) -> (animatedVector: AnimatableVector, completedIndexes: [Int], finishedAnimationIndex: Int?) {
     guard runningAnimations.count > 1 else {
         assert(runningAnimations.first != nil, "Running animations should not be empty")
-        if let vector = runningAnimations.first!.animate(time: time, context: &context, additionalVector: nil) {
-            return (vector, nil)
+        let index = runningAnimations.startIndex
+        if let (vector, logicallyCompleted) = runningAnimations[index].animate(time: time, additionalVector: nil) {
+            return (vector, logicallyCompleted ? [index] : [], nil)
         } else {
-            return (runningAnimations.first!.target, runningAnimations.indices.first)
+            return (runningAnimations[0].target, [], index)
         }
     }
 
-    var finishedAnimationIndex: AnimationList.Index?
+    var finishedAnimationIndex: Int?
+    var completedIndexes: [Int] = []
     var index = runningAnimations.startIndex
 
     let zero = AnimatableVector.zero(runningAnimations.first!.target)
@@ -177,11 +206,12 @@ where AnimationList: Collection<RunningAnimation> {
     var carryOverVector = zero
 
     while index < runningAnimations.endIndex {
-        let runningAnimation = runningAnimations[index]
-
-        if let vector = runningAnimation.animate(time: time, context: &context, additionalVector: carryOverVector) {
+        if let (vector, logicallyCompleted) = runningAnimations[index].animate(time: time, additionalVector: carryOverVector) {
             totalAnimationVector += vector
-            carryOverVector = runningAnimation.target - vector
+            carryOverVector = runningAnimations[index].target - vector
+            if logicallyCompleted {
+                completedIndexes.append(index)
+            }
         } else {
             finishedAnimationIndex = index
             //totalAnimationVector = zero
@@ -191,7 +221,7 @@ where AnimationList: Collection<RunningAnimation> {
         runningAnimations.formIndex(after: &index)
     }
 
-    return (totalAnimationVector, finishedAnimationIndex)
+    return (totalAnimationVector, completedIndexes, finishedAnimationIndex)
 }
 
 internal extension AnimatedValue {
@@ -200,8 +230,15 @@ internal extension AnimatedValue {
 
         let wasAnimating = isAnimating
 
-        if let animation = context.transaction?.newAnimation(at: context.currentFrameTime) {
-            self.animate(to: value, animation: animation)
+        if !context.transaction.disablesAnimation,
+            let animation = context.transaction.animation
+        {
+            self.animate(
+                to: value,
+                startTime: context.currentFrameTime,
+                animation: animation,
+                tracker: context.transaction._animationTracker
+            )
         } else {
             self.setValue(value)
         }

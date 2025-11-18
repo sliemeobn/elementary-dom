@@ -98,6 +98,7 @@ final class CSSValueSource<Value: CSSAnimatable & Equatable> {
         }
 
         func unmount(_ context: inout _CommitContext) {
+            animatedValue.cancelAnimation()
             source.dependencies.removeDependency(self)
         }
 
@@ -105,7 +106,7 @@ final class CSSValueSource<Value: CSSAnimatable & Equatable> {
             if animatedValue.isAnimating {
                 let sampleInterval = 1.0 / 40.0
                 let maxDuration = 1.5
-                let frames = animatedValue.peekFutureValues(
+                let frames = animatedValue.peekFutureValuesUnlessCompletedOrFinished(
                     stride(from: context.currentFrameTime, through: context.currentFrameTime + maxDuration, by: sampleInterval)
                 )
 

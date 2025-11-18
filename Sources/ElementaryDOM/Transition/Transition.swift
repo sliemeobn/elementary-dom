@@ -1,5 +1,3 @@
-// TODO: split this file up
-
 public protocol Transition {
     associatedtype Body: View
     typealias Content = PlaceholderContentView<Self>

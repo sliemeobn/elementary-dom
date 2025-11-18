@@ -15,7 +15,7 @@ struct AnimationsView {
             div(.style(["display": "flex", "flex-direction": "row", "gap": "10px"])) {
                 button { "Animate" }
                     .onClick { _ in
-                        withAnimation(.smooth) {
+                        withAnimation(.bouncy) {
                             angle += 1
                             isBallFading.toggle()
                         }

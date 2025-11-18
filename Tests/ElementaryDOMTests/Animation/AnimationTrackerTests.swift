@@ -13,8 +13,8 @@ struct AnimationTrackerTests {
             completionCount += 1
         }
 
-        let id = tracker.addAnimation()
-        tracker.reportLogicallyComplete(id)
+        let instance = tracker.addAnimation()
+        instance.reportLogicallyComplete()
 
         #expect(completionCount == 1)
         #expect(tracker.areAllCallbacksRun)
@@ -29,8 +29,8 @@ struct AnimationTrackerTests {
             removalCount += 1
         }
 
-        let id = tracker.addAnimation()
-        tracker.reportRemoved(id)
+        let instance = tracker.addAnimation()
+        instance.reportRemoved()
 
         #expect(removalCount == 1)
         #expect(tracker.areAllCallbacksRun)
@@ -49,21 +49,21 @@ struct AnimationTrackerTests {
             removalCount += 1
         }
 
-        let id1 = tracker.addAnimation()
-        let id2 = tracker.addAnimation()
+        let instance1 = tracker.addAnimation()
+        let instance2 = tracker.addAnimation()
 
-        tracker.reportLogicallyComplete(id1)
+        instance1.reportLogicallyComplete()
         #expect(completionCount == 0)
         #expect(removalCount == 0)
 
-        tracker.reportLogicallyComplete(id2)
+        instance2.reportLogicallyComplete()
         #expect(completionCount == 1)
         #expect(removalCount == 0)
 
-        tracker.reportRemoved(id1)
+        instance1.reportRemoved()
         #expect(removalCount == 0)
 
-        tracker.reportRemoved(id2)
+        instance2.reportRemoved()
         #expect(removalCount == 1)
         #expect(tracker.areAllCallbacksRun)
     }
@@ -80,8 +80,8 @@ struct AnimationTrackerTests {
             order.append("R")
         }
 
-        let id = tracker.addAnimation()
-        tracker.reportRemoved(id)
+        let instance = tracker.addAnimation()
+        instance.reportRemoved()
 
         #expect(order == ["C", "R"])
         #expect(tracker.areAllCallbacksRun)

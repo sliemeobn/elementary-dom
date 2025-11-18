@@ -5,3 +5,4 @@
 @_extern(c) public func sin(_ x: Double) -> Double
 @_extern(c) public func pow(_ x: Double, _ y: Double) -> Double
 @_extern(c) public func exp(_ x: Double) -> Double
+@_extern(c) public func log(_ x: Double) -> Double

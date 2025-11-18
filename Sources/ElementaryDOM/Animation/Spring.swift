@@ -25,6 +25,10 @@ public struct Spring {
     /// The natural frequency (ω₀) of the spring system in rad/s.
     public let naturalFrequency: Double
 
+    internal var logicalDuration: Double {
+        2.0 * .pi / naturalFrequency
+    }
+
     /// pre-calculated damping regime
     private var regime: DampingRegime
 
@@ -60,25 +64,12 @@ public struct Spring {
         )
     }
 
-    public init(settlingDuration: Double = 0.5, bounce: Double = 0.0) {
-        let clampedBounce = min(max(bounce, 0.0), 1.0)
-        let safeDuration = max(settlingDuration, 1e-6)
+    public init(duration: Double = 0.5, bounce: Double = 0.0) {
+        let clampedBounce = min(max(bounce, -1.0), 1.0)
+        let safeDuration = max(duration, 1e-6)
         self.init(
             dampingRatio: 1.0 - clampedBounce,
             naturalFrequency: 2.0 * .pi / safeDuration
-        )
-    }
-
-    /// Creates a spring with response and damping fraction.
-    /// - Parameters:
-    ///   - response: The response time of the spring.
-    ///   - dampingFraction: The damping fraction (0.0 = undamped, 1.0 = critically damped).
-    public init(response: Double, dampingFraction: Double = 1.0) {
-        let safeResponse = max(response, 1e-6)
-        let clampedDamping = max(dampingFraction, 0.0)
-        self.init(
-            dampingRatio: clampedDamping,
-            naturalFrequency: 2.0 * .pi / safeResponse
         )
     }
 }
@@ -171,20 +162,27 @@ extension Spring {
     public static var bouncy: Self { bouncy() }
 
     public static func smooth(duration: Double = 0.5, extraBounce: Double = 0.0) -> Self {
-        .init(settlingDuration: duration, bounce: extraBounce + 0.0)
+        .init(duration: duration, bounce: extraBounce + 0.0)
     }
 
     public static func snappy(duration: Double = 0.5, extraBounce: Double = 0.0) -> Self {
-        .init(settlingDuration: duration, bounce: extraBounce + 0.15)
+        .init(duration: duration, bounce: extraBounce + 0.15)
     }
 
     public static func bouncy(duration: Double = 0.5, extraBounce: Double = 0.0) -> Self {
-        .init(settlingDuration: duration, bounce: extraBounce + 0.3)
+        .init(duration: duration, bounce: extraBounce + 0.3)
     }
 }
 
 struct SpringAnimation: CustomAnimation {
-    var spring: Spring
+    private static let settlingTolerance: Float = 0.001
+    let spring: Spring
+    let logicalDuration: Double
+
+    init(spring: Spring) {
+        self.spring = spring
+        self.logicalDuration = spring.logicalDuration
+    }
 
     func animate(value: AnimatableVector, time: Double, context: inout AnimationContext) -> AnimatableVector? {
         // Use the initial velocity from context if available, otherwise use zero velocity
@@ -192,10 +190,12 @@ struct SpringAnimation: CustomAnimation {
 
         let result = spring.value(target: value, initialVelocity: velocity, time: time)
 
-        // Check if animation has settled (within tolerance)
-        let tolerance: Float = 0.001
-        let currentVelocityVector = self.velocity(value: value, time: time, context: context) ?? AnimatableVector.zero(value)
-        let isSettled = isValueSettled(result, target: value, tolerance: tolerance, currentVelocity: currentVelocityVector)
+        // THINK: maybe this can be approximated once and then just to a timestamp compare?
+        let isSettled = isValueSettled(result, target: value, time: time, context: context)
+
+        if !context.isLogicallyComplete && time > logicalDuration {
+            context.isLogicallyComplete = true
+        }
 
         return isSettled ? nil : result
     }
@@ -219,11 +219,18 @@ struct SpringAnimation: CustomAnimation {
     private func isValueSettled(
         _ current: AnimatableVector,
         target: AnimatableVector,
-        tolerance: Float,
-        currentVelocity: AnimatableVector
+        time: Double,
+        context: AnimationContext
     ) -> Bool {
-        let positionSettled = (current - target).magnitude < tolerance
-        let velocitySettled = currentVelocity.magnitude < tolerance
+        let threshold = Self.settlingTolerance * target.magnitude
+
+        let positionSettled = (current - target).magnitude < threshold
+
+        guard positionSettled else { return false }
+
+        let currentVelocityVector = self.velocity(value: target, time: time, context: context) ?? AnimatableVector.zero(target)
+        let velocitySettled = currentVelocityVector.magnitude < threshold
+
         return positionSettled && velocitySettled
     }
 }

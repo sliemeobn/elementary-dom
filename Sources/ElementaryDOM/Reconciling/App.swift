@@ -3,6 +3,12 @@ final class App<DOMInteractor: DOM.Interactor> {
     private var root: _ElementNode?
     private var scheduler: Scheduler
 
+    var rootTransaction: Transaction {
+        var tx = Transaction()
+        tx.disablesAnimation = true
+        return tx
+    }
+
     // TODO: rethink this whole API - maybe once usage of async is clearer
     // there should probably be a way to "unmount" the app
     init(dom: DOMInteractor) {
@@ -17,28 +23,30 @@ final class App<DOMInteractor: DOM.Interactor> {
 
         // TODO: defer running to a "async run" function that hosts the run loop?
         // wait until async stuff is solid for embedded wasm case
-        scheduler.scheduleFunction(
-            .init(
-                identifier: ObjectIdentifier(self),
-                depthInTree: 0,
-                runUpdate: { [self, rootView] context in
-                    self.root =
-                        _ElementNode(
-                            root: dom.root,
-                            viewContext: _ViewContext(),
-                            context: &context,
-                            makeChild: { [rootView] viewContext, context in
-                                AnyReconcilable(
-                                    RootView._makeNode(
-                                        rootView,
-                                        context: viewContext,
-                                        reconciler: &context
+        withTransaction(rootTransaction) { [rootView] in
+            scheduler.scheduleFunction(
+                .init(
+                    identifier: ObjectIdentifier(self),
+                    depthInTree: 0,
+                    runUpdate: { [self, rootView] context in
+                        self.root =
+                            _ElementNode(
+                                root: dom.root,
+                                viewContext: _ViewContext(),
+                                context: &context,
+                                makeChild: { [rootView] viewContext, context in
+                                    AnyReconcilable(
+                                        RootView._makeNode(
+                                            rootView,
+                                            context: viewContext,
+                                            reconciler: &context
+                                        )
                                     )
-                                )
-                            }
-                        )
-                }
+                                }
+                            )
+                    }
+                )
             )
-        )
+        }
     }
 }
