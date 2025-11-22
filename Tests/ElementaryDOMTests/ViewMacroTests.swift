@@ -24,14 +24,14 @@ struct ViewMacroTests {
 struct MyView {
     @State var number = 0
 
-    var content: some View {
+    var body: some View {
         "Hello \(number)"
     }
 }
 
 @View
 struct StatelessView {
-    var content: some View {
+    var body: some View {
         "Hello"
     }
 }

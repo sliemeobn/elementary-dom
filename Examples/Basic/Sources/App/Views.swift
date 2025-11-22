@@ -11,7 +11,7 @@ struct App {
     @State var data = SomeData()
     @State var bindingViewCount = 1
 
-    var content: some View {
+    var body: some View {
         div {
             AnimationsView()
             hr()
@@ -93,7 +93,7 @@ struct App {
 struct Counter {
     @State var count: Int = 0
 
-    var content: some View {
+    var body: some View {
         div {
             button { "-" }
                 .onClick { _ in count -= 1 }
@@ -115,7 +115,7 @@ struct Counter {
 struct TextField {
     @Binding<String> var value: String
 
-    var content: some View {
+    var body: some View {
         input(.type(.text))
             .bindValue($value)
     }
@@ -131,7 +131,7 @@ final class SomeData {
 struct TestValueView {
     @Environment(#Key(\.myText)) var key
 
-    var content: some View {
+    var body: some View {
         span { "Via environment value: \(key)" }
     }
 }
@@ -141,7 +141,7 @@ struct TestObjectView {
     @Environment(SomeData.self) var data: SomeData
     @Environment(SomeData.self) var optionalData: SomeData?
 
-    var content: some View {
+    var body: some View {
         span { "Via environment object: \(data.name)" }
         br()
         span { "Via optional environment object: \(optionalData?.name ?? "")" }
