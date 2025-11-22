@@ -151,7 +151,7 @@ extension ViewMacro: MemberAttributeMacro {
         providingAttributesFor member: some DeclSyntaxProtocol,
         in context: some MacroExpansionContext
     ) throws -> [AttributeSyntax] {
-        guard let variable = member.as(VariableDeclSyntax.self), variable.isContentProperty else {
+        guard let variable = member.as(VariableDeclSyntax.self), variable.isBodyProperty else {
             return []
         }
 
@@ -164,10 +164,10 @@ extension VariableDeclSyntax {
         bindingSpecifier.trimmed.text == "var"
     }
 
-    var isContentProperty: Bool {
+    var isBodyProperty: Bool {
         guard isVar, let trimmedIdentifier else { return false }
 
-        return trimmedIdentifier.text == "content"
+        return trimmedIdentifier.text == "body"
     }
 
     var trimmedIdentifier: TokenSyntax? {

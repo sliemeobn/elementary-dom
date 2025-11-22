@@ -359,7 +359,7 @@ extension TestDOM {
 private struct DeferredResolutionView<RootView: View> {
     let root: () -> RootView
 
-    var content: some View {
+    var body: some View {
         root()
     }
 }

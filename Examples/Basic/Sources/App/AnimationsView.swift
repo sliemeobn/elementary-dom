@@ -8,7 +8,7 @@ struct AnimationsView {
     @State var isOffset: Bool = false
     @State var isRotated: Bool = false
 
-    var content: some View {
+    var body: some View {
 
         div {
             AnimatedView(angle: angle, isBallFading: isBallFading)
@@ -48,7 +48,7 @@ struct AnimatedView {
     var x: Double { size * (1 - cos(angle)) }
     var y: Double { size * (1 - sin(angle)) }
 
-    var content: some View {
+    var body: some View {
         p { "Angle: \(angle) x: \(x) y: \(y)" }
         div {
             Ball()
@@ -73,7 +73,7 @@ struct AnimatedView {
 struct Square {
     var color: String
 
-    var content: some View {
+    var body: some View {
         span {}
             .attributes(
                 .style([
@@ -94,7 +94,7 @@ extension AnimatedView: Animatable {
 
 @View
 struct Ball {
-    var content: some HTML<HTMLTag.span> & View {
+    var body: some HTML<HTMLTag.span> & View {
         span {}
             .attributes(
                 .style([

@@ -62,7 +62,7 @@ private class State {
 private struct Outer {
     let state: State
 
-    var content: some View {
+    var body: some View {
         Track(name: "Outer") {
             Inner(value: state.directValue)
             let _ = state.toggle
@@ -75,7 +75,7 @@ private struct Outer {
 private struct Inner {
     var value: Int
 
-    var content: some View {
+    var body: some View {
         Track(name: "Inner") {
             ValueView()
         }
@@ -86,7 +86,7 @@ private struct Inner {
 private struct ValueView {
     @Environment(#Key(\.testValue)) var value
 
-    var content: some View {
+    var body: some View {
         Track(name: "value: \(value)") {
         }
     }

@@ -56,7 +56,7 @@ private func areEqual<V: __FunctionView>(_ a: V, _ b: V) -> Bool {
 
 @View
 private struct EmptyView {
-    var content: some View {
+    var body: some View {
         "Hello"
     }
 }
@@ -66,7 +66,7 @@ struct SimpleView {
     var text: String
     let num: Int
 
-    var content: some View {
+    var body: some View {
         text
     }
 }
@@ -79,7 +79,7 @@ private struct EquatableView: Equatable {
 
     let state: State
 
-    var content: some View {}
+    var body: some View {}
 
     static func == (lhs: EquatableView, rhs: EquatableView) -> Bool {
         lhs.state.num == rhs.state.num
@@ -92,7 +92,7 @@ private struct ViewWithStuff {
     @Environment(#Key(\.tracker)) var tracker
     @State var state: Int = 0
 
-    var content: some View {
+    var body: some View {
     }
 }
 
@@ -100,7 +100,7 @@ private struct ViewWithStuff {
 private struct ViewWithState {
     var state: SomeState
 
-    var content: some View {
+    var body: some View {
     }
 }
 

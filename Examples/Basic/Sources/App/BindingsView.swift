@@ -6,7 +6,7 @@ struct BindingsView {
     @State var checked: Bool = false
     @State var text: String = ""
 
-    var content: some View {
+    var body: some View {
         div {
             p {
                 "Text: "

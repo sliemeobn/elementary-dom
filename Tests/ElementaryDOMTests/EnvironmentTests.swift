@@ -113,7 +113,7 @@ private struct TestView {
     @Environment(#Key(\.foo)) var foo
     @Environment(#Key(\.bar)) var bar
 
-    var content: some View {
+    var body: some View {
         "Hello"
     }
 }

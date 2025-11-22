@@ -3,7 +3,7 @@
 // NOTE: ChildNode must be specified as extra argument to avoid a compiler error in embedded
 // FIXME: embedded - try with embedded main-snapshot build, revert extra argument if it works
 public final class _FunctionNode<Value, ChildNode>
-where Value: __FunctionView, ChildNode: _Reconcilable, ChildNode == Value.Content._MountedNode {
+where Value: __FunctionView, ChildNode: _Reconcilable, ChildNode == Value.Body._MountedNode {
     private var state: Value.__ViewState?
     private var value: Value?
     private var context: _ViewContext?
@@ -18,7 +18,7 @@ where Value: __FunctionView, ChildNode: _Reconcilable, ChildNode == Value.Conten
         "\(depthInTree):\(ObjectIdentifier(self).hashValue)"
     }
 
-    var child: Value.Content._MountedNode?
+    var child: Value.Body._MountedNode?
 
     init(
         value: consuming Value,
@@ -96,7 +96,7 @@ where Value: __FunctionView, ChildNode: _Reconcilable, ChildNode == Value.Conten
         self.trackingSession.take()?.cancel()
 
         let (newContent, session) = withReactiveTrackingSession {
-            value.content
+            value.body
         } onWillSet: { [scheduler = reconciler.scheduler, asFunctionNode = asFunctionNode!] in
             scheduler.scheduleFunction(asFunctionNode)
         }
@@ -104,9 +104,9 @@ where Value: __FunctionView, ChildNode: _Reconcilable, ChildNode == Value.Conten
         self.trackingSession = session
 
         if child == nil {
-            self.child = Value.Content._makeNode(newContent, context: context!, reconciler: &reconciler)
+            self.child = Value.Body._makeNode(newContent, context: context!, reconciler: &reconciler)
         } else {
-            Value.Content._patchNode(newContent, node: child!, reconciler: &reconciler)
+            Value.Body._patchNode(newContent, node: child!, reconciler: &reconciler)
         }
     }
 }
