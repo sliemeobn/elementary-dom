@@ -26,7 +26,7 @@ struct Track<Wrapped: View> {
     var name: String
     @HTMLBuilder let wrapped: Wrapped
 
-    var content: some View {
+    var body: some View {
         let _ = tracker.record(name)
         wrapped
     }

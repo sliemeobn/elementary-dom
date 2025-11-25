@@ -2,7 +2,7 @@ import Elementary
 
 // TODO: maybe this should not derive from HTML at all, or maybe HTML should already be "View" and _Mountable is an extra requirement for mounting?
 // TODO: think about how the square MainActor-isolation with server side usage
-public protocol View<Tag>: HTML & _Mountable where Content: HTML & _Mountable {
+public protocol View<Tag>: HTML & _Mountable where Body: HTML & _Mountable {
 }
 
 public protocol _Mountable {
@@ -19,12 +19,6 @@ public protocol _Mountable {
         node: _MountedNode,
         reconciler: inout _RenderContext
     )
-}
-
-public extension View where Content == Never {
-    var content: Content {
-        fatalError("This should never be called")
-    }
 }
 
 extension Never: _Mountable {

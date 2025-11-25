@@ -222,7 +222,7 @@ struct DOMMountingTests {
 @View
 private struct TestView {
     var text: String
-    var content: some View {
+    var body: some View {
         p { text }
     }
 }
@@ -230,7 +230,7 @@ private struct TestView {
 @View
 private struct TestViewWithState {
     @State var number = 12
-    var content: some View {
+    var body: some View {
         p { "\(number)" }
     }
 }

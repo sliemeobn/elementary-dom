@@ -1,4 +1,4 @@
-public protocol __FunctionView: View where _MountedNode == _FunctionNode<Self, Self.Content._MountedNode> {
+public protocol __FunctionView: View where _MountedNode == _FunctionNode<Self, Self.Body._MountedNode> {
     associatedtype __ViewState
 
     static func __initializeState(from view: borrowing Self) -> __ViewState

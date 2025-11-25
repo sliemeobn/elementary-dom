@@ -2,7 +2,7 @@ import ElementaryDOM
 
 @View
 struct App {
-    var content: some View {
+    var body: some View {
         GameView()
     }
 }

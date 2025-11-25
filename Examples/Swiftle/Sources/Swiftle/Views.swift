@@ -9,7 +9,7 @@ struct GameView {
         game.handleKey(key)
     }
 
-    var content: some View {
+    var body: some View {
         FlexColumn(align: .center, gap: 5) {
 
             FlexRow(align: .center, gap: 4) {
@@ -60,7 +60,7 @@ struct GameView {
 
 @View
 struct SwiftLogo {
-    var content: some View {
+    var body: some View {
         img(.src("swift-bird.svg"))
             .style(.height(10))
     }
@@ -70,7 +70,7 @@ struct SwiftLogo {
 struct GuessView {
     var guess: Guess
 
-    var content: some View {
+    var body: some View {
         FlexRow(gap: 1) {
             for letter in guess.letters {
                 LetterView(guess: letter)
@@ -83,7 +83,7 @@ struct GuessView {
 struct LetterView {
     var guess: LetterGuess?
 
-    var content: some View {
+    var body: some View {
         Block(.width(10), .height(10), .display(.flex)) {
             Paragraph(.margin(.auto)) {
                 guess?.letter.value ?? ""
@@ -103,7 +103,7 @@ struct KeyboardView {
     var keyboard: Keyboard
     var onKeyPressed: (EnteredKey) -> Void
 
-    var content: some View {
+    var body: some View {
         FlexColumn(align: .center, gap: 1.5) {
             FlexRow(gap: 1) {
                 for letter in keyboard.topRow {
@@ -131,7 +131,7 @@ struct KeyboardLetterView {
     var guess: LetterGuess
     var onKeyPressed: (EnteredKey) -> Void
 
-    var content: some View {
+    var body: some View {
         button {
             Text(guess.letter.value)
                 .style(.margin(.auto), .fontSize(.lg), .fontWeight(.semiBold))
@@ -150,7 +150,7 @@ struct KeyboardLetterView {
 struct EnterKeyView {
     var onKeyPressed: (EnteredKey) -> Void
 
-    var content: some View {
+    var body: some View {
         button {
             img(.src("enter.svg")).style(
                 .maxWidth("100%")
@@ -177,7 +177,7 @@ struct EnterKeyView {
 struct BackspaceKeyView {
     var onKeyPressed: (EnteredKey) -> Void
 
-    var content: some View {
+    var body: some View {
         button {
             img(.src("backspace.svg")).style(
                 .maxWidth("100%")
@@ -204,7 +204,7 @@ struct BackspaceKeyView {
 struct GameEndOverlay {
     @Binding var game: Game
 
-    var content: some View {
+    var body: some View {
         if game.state != .playing {
             Block(
                 .position(.absolute),
