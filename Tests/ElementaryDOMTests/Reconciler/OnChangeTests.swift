@@ -154,4 +154,3 @@ struct OnChangeTests {
 private class CounterState {
     var number = 0
 }
-
