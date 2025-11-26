@@ -36,7 +36,7 @@ struct _OnChangeView<Wrapped: View, Value: Equatable>: View {
     typealias Tag = Wrapped.Tag
     typealias _MountedNode = _StatefulNode<State, Wrapped._MountedNode>
 
-    final class State {
+    struct State {
         var value: Value
         var action: (Value, Value) -> Void
 

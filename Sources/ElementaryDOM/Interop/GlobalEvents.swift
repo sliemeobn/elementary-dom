@@ -19,7 +19,7 @@ public struct EventSourceSubscription {
 }
 
 public extension View {
-    func receive<Event>(_ eventSource: some EventSource<Event>, handler: @escaping (Event) -> Void) -> _LifecycleEventView<Self> {
+    func receive<Event>(_ eventSource: some EventSource<Event>, handler: @escaping (Event) -> Void) -> some View<Tag> {
         _LifecycleEventView(
             wrapped: self,
             listener: .onMountReturningCancelFunction {

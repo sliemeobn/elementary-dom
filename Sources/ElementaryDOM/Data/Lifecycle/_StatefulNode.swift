@@ -1,14 +1,14 @@
 public final class _StatefulNode<State, Child: _Reconcilable> {
     var state: State
     var child: Child
-    var onUnmount: ((inout _CommitContext) -> Void)?
+    private var onUnmount: ((inout _CommitContext) -> Void)?
 
     init(state: State, child: Child) {
         self.state = state
         self.child = child
     }
 
-    init(_ state: State, _ child: Child) where State: Unmountable {
+    init(state: State, child: Child) where State: Unmountable {
         self.state = state
         self.child = child
         self.onUnmount = state.unmount(_:)

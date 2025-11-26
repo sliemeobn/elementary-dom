@@ -2,16 +2,15 @@ import Elementary
 import _Concurrency
 
 public extension View {
-    // TODO: make rename this to onAppear and onDisappear and reserve mounting lingo for DOM nodes?
-    func onMount(_ action: @escaping () -> Void) -> _LifecycleEventView<Self> {
+    func onMount(_ action: @escaping () -> Void) -> some View<Tag> {
         _LifecycleEventView(wrapped: self, listener: .onMount(action))
     }
 
-    func onUnmount(_ action: @escaping () -> Void) -> _LifecycleEventView<Self> {
+    func onUnmount(_ action: @escaping () -> Void) -> some View<Tag> {
         _LifecycleEventView(wrapped: self, listener: .onUnmount(action))
     }
 
-    func task(_ task: @escaping () async -> Void) -> _LifecycleEventView<Self> {
+    func task(_ task: @escaping () async -> Void) -> some View<Tag> {
         _LifecycleEventView(
             wrapped: self,
             listener: .onMountReturningCancelFunction({ Task { await task() }.cancel })
@@ -19,33 +18,72 @@ public extension View {
     }
 }
 
-public struct _LifecycleEventView<Wrapped: View>: View {
-    public typealias Tag = Wrapped.Tag
-    public typealias _MountedNode = _LifecycleNode
+enum LifecycleHook {
+    case onMount(() -> Void)
+    case onUnmount(() -> Void)
+    case onMountReturningCancelFunction(() -> () -> Void)
+}
+
+struct _LifecycleEventView<Wrapped: View>: View {
+    typealias Tag = Wrapped.Tag
+    typealias _MountedNode = _StatefulNode<LifecycleState, Wrapped._MountedNode>
 
     let wrapped: Wrapped
     let listener: LifecycleHook
 
-    public static func _makeNode(
+    final class LifecycleState: Unmountable {
+        var onUnmount: (() -> Void)?
+        let scheduler: Scheduler
+
+        init(hook: LifecycleHook, scheduler: Scheduler) {
+            self.scheduler = scheduler
+
+            switch hook {
+            case .onMount(let onMount):
+                scheduler.onNextTick { onMount() }
+            case .onUnmount(let callback):
+                self.onUnmount = callback
+            case .onMountReturningCancelFunction(let onMountReturningCancelFunction):
+                scheduler.onNextTick {
+                    let cancelFunc = onMountReturningCancelFunction()
+                    self.onUnmount = cancelFunc
+                }
+            }
+        }
+
+        func unmount(_ context: inout _CommitContext) {
+            scheduler.onNextTick {
+                self.onUnmount?()
+                self.onUnmount = nil
+            }
+        }
+    }
+
+    static func _makeNode(
         _ view: consuming Self,
         context: borrowing _ViewContext,
         reconciler: inout _RenderContext
     ) -> _MountedNode {
-        .init(
-            value: view.listener,
-            child: Wrapped._makeNode(view.wrapped, context: context, reconciler: &reconciler),
-            context: &reconciler
-        )
+        let state = LifecycleState(hook: view.listener, scheduler: reconciler.scheduler)
+        let child = Wrapped._makeNode(view.wrapped, context: context, reconciler: &reconciler)
+
+        let node = _StatefulNode(state: state, child: child)
+        return node
     }
 
-    public static func _patchNode(
+    static func _patchNode(
         _ view: consuming Self,
         node: _MountedNode,
         reconciler: inout _RenderContext
     ) {
-        //TODO: should we patch something? maybe update values?
-        node.patch(context: &reconciler) { n, r in
-            Wrapped._patchNode(view.wrapped, node: n, reconciler: &r)
+        switch view.listener {
+        case .onUnmount(let callback):
+            // unmount is the only lifecycle hook that can be patched
+            node.state.onUnmount = callback
+        default:
+            break
         }
+
+        Wrapped._patchNode(view.wrapped, node: node.child, reconciler: &reconciler)
     }
 }
