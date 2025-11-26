@@ -27,13 +27,17 @@ For embedded builds, a recent main or 6.2 snapshot with matching *Swift SDKs for
 - ~~@Environment system~~
 - ~~dependencies on versioned packages (i.e., build without unsafe flags)~~
 - ~~fix DOM not child-diffing to preserve animations/nodes (the current solution based on `replaceChildren` will not work, it seems)~~
-- "model-bindings" for inputs (i.e., bind a @Binding<String> to a text box, or bind a @Binding<Bool> to a checkbox)
+- ~~"model-bindings" for inputs (i.e., bind a @Binding<String> to a text box, or bind a @Binding<Bool> to a checkbox)~~
 - ~~view value comparing (generated comparing and custom equatable support)~~
 - ~~different handling of environment (individual reactivity needed)~~
 - ~~transitions and animations (ideally CSS-based, probably svelte-like custom easing functions applied through WAAPI)~~
-- better control over animations and basic phaseAnimator
-- support for combined and reversible transitions
+- ~~better control over animations~~
 - ~~somehow migrate over to "var body" instead of "var content" (what was I thinking....)~~
+- automatic FLIP animations for certain layout changes (child-layout after changes, maybe size of containers)
+- basic phaseAnimator implementations
+- think about auto-flip animation for custom CSS values
+- support for combined and reversible transitions
+- mutli-select bindings (options, radio-buttons, tagged check boxes, ...)
 - proper unit testing (once APIs firm up a bit more, partially started)
 - implement @ViewEquatableIgnored
 - split out JavaScriptKit stuff in separate module to contain spread, maybe one day we can switch to faster interop somehow
