@@ -25,6 +25,15 @@ struct App {
             .environment(#Key(\.myText), data.name)
             .environment(data)
         }
+        .onChange(of: bindingViewCount) { oldValue, newValue in
+            print("bindingViewCount changed to \(oldValue) -> \(newValue)")
+        }
+        .onChange(of: bindingViewCount) {
+            if bindingViewCount > 5 {
+                data.name = "Binding View Count > 5"
+            }
+        }
+
         hr()
         div {
             for _ in 0..<bindingViewCount {

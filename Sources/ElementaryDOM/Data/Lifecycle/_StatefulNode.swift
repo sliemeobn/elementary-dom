@@ -8,10 +8,16 @@ public final class _StatefulNode<State, Child: _Reconcilable> {
         self.child = child
     }
 
-    init(state: State, child: Child) where State: Unmountable {
+    private init(state: State, child: Child, onUnmount: ((inout _CommitContext) -> Void)? = nil) {
         self.state = state
         self.child = child
-        self.onUnmount = state.unmount(_:)
+        self.onUnmount = onUnmount
+    }
+
+    // generic initializers must be convenience on final classes for embedded wasm
+    // https://github.com/swiftlang/swift/issues/78150
+    convenience init(state: State, child: Child) where State: Unmountable {
+        self.init(state: state, child: child, onUnmount: state.unmount(_:))
     }
 }
 
