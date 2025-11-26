@@ -1,4 +1,3 @@
-// TODO: find a better name for this
 struct AnyFunctionNode {
     let identifier: ObjectIdentifier
     let depthInTree: Int
@@ -15,29 +14,36 @@ struct AnyAnimatable {
 }
 
 struct CommitAction {
-    // TODO: is there a way to make this allocation-free?
     let run: (inout _CommitContext) -> Void
 }
 
-// TODO: this ain't such a great shape...
 final class Scheduler {
     private var dom: any DOM.Interactor
-    private var pendingFunctionsQueue: PendingFunctionQueue = .init()
-    private var runningAnimations: [AnyAnimatable] = []
 
-    private var nodeActions: [CommitAction] = []
+    // Phase 1: View function updates (reconciliation)
+    private var pendingFunctionsQueue: PendingFunctionQueue = .init()
+
+    // Phase 2: After reconciliation callbacks (onChange)
+    private var afterReconcileCallbacks: [() -> Void] = []
+
+    // Phase 3: DOM operations (RAF)
+    private var commitActions: [CommitAction] = []
     private var placementActions: [CommitAction] = []
 
-    private var isAnimationFramePending: Bool = false
+    // Phase 4: Next tick callbacks (onAppear, onDisappear)
+    private var onNextTickCallbacks: [() -> Void] = []
 
-    // TODO: we could now remove this as transaction are now stored with function queue
+    // Continuous: Animations
+    private var runningAnimations: [AnyAnimatable] = []
+
+    private var isAnimationFramePending: Bool = false
     private var currentTransaction: Transaction?
     private var currentFrameTime: Double = 0
 
-    // TODO: this is a bit hacky, ideally we can use explicit depencies on Environment
+    // TODO: this is a bit hacky, ideally we can use explicit dependencies on Environment
     private var ambientRenderContext: _RenderContext?
 
-    private var needsFrame: Bool { !nodeActions.isEmpty || !placementActions.isEmpty || !runningAnimations.isEmpty }
+    private var needsFrame: Bool { !commitActions.isEmpty || !placementActions.isEmpty || !runningAnimations.isEmpty }
 
     init(dom: any DOM.Interactor) {
         self.dom = dom
@@ -56,6 +62,15 @@ final class Scheduler {
 
             dom.queueMicrotask { [self] in
                 self.reconcileTransaction()
+
+                // Flush afterReconcile callbacks (onChange)
+                if !self.afterReconcileCallbacks.isEmpty {
+                    let callbacks = self.afterReconcileCallbacks
+                    self.afterReconcileCallbacks.removeAll(keepingCapacity: true)
+                    for callback in callbacks {
+                        callback()
+                    }
+                }
             }
         } else if currentTransaction?._id != Transaction._current?._id {
             // in-line a reconcile run if the transaction has changed
@@ -66,18 +81,30 @@ final class Scheduler {
         pendingFunctionsQueue.registerFunctionForUpdate(function, transaction: currentTransaction)
     }
 
-    // TODO: maybe add a second call for scheduleing a one-short "nextFrame" callback
+    /// Register a continuous animation
     func registerAnimation(_ node: AnyAnimatable) {
         runningAnimations.append(node)
         scheduleFrameIfNecessary()
     }
 
-    func addNodeAction(_ action: CommitAction) {
-        nodeActions.append(action)
+    /// Schedule a callback to run after reconciliation completes (for onChange)
+    func afterReconcile(_ callback: @escaping () -> Void) {
+        afterReconcileCallbacks.append(callback)
     }
 
+    /// Schedule a DOM operation for the commit phase (RAF)
+    func addCommitAction(_ action: CommitAction) {
+        commitActions.append(action)
+    }
+
+    /// Schedule a DOM placement for the commit phase (RAF, runs in reverse order)
     func addPlacementAction(_ action: CommitAction) {
         placementActions.append(action)
+    }
+
+    /// Schedule a callback for next tick after RAF (for onAppear, onDisappear)
+    func onNextTick(_ callback: @escaping () -> Void) {
+        onNextTickCallbacks.append(callback)
     }
 
     func withAmbientRenderContext(_ context: inout _RenderContext, _ block: () -> Void) {
@@ -88,10 +115,9 @@ final class Scheduler {
     }
 
     private func reconcileTransaction() {
-        // frame time is set to 0 on every paint, first reconcile after raf established the time
+        // Frame time is set to 0 on every paint, first reconcile after RAF establishes the time
         updateFrameTimeIfNecessary()
 
-        // TODO: this is awkward, refactor the reconciler API
         var functions = PendingFunctionQueue()
         swap(&pendingFunctionsQueue, &functions)
 
@@ -131,17 +157,28 @@ final class Scheduler {
         var context = _CommitContext(dom: dom, currentFrameTime: currentFrameTime)
         currentFrameTime = 0
 
-        for node in nodeActions {
-            node.run(&context)
+        // Phase 3a: DOM mutations
+        for action in commitActions {
+            action.run(&context)
         }
-        nodeActions.removeAll(keepingCapacity: true)
+        commitActions.removeAll(keepingCapacity: true)
 
+        // Phase 3b: DOM placements (reversed order)
         for placement in placementActions.reversed() {
             placement.run(&context)
         }
-
         placementActions.removeAll(keepingCapacity: true)
-        context.drain()
+
+        // Phase 4: Next tick callbacks (onAppear, onDisappear)
+        if !onNextTickCallbacks.isEmpty {
+            let callbacks = onNextTickCallbacks
+            onNextTickCallbacks.removeAll(keepingCapacity: true)
+            dom.runNext {
+                for callback in callbacks {
+                    callback()
+                }
+            }
+        }
     }
 
     private func tickAnimations() {

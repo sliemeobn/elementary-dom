@@ -31,7 +31,7 @@ public final class _ElementNode: _Reconcilable {
         viewContext.parentElement = self
         let modifiers = viewContext.takeModifiers()
 
-        context.scheduler.addNodeAction(
+        context.scheduler.addCommitAction(
             CommitAction { [self] context in
                 precondition(self.domNode == nil, "element already has a DOM node")
                 let ref = context.dom.createElement(tag)

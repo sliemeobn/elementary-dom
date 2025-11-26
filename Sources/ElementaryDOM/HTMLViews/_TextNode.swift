@@ -12,7 +12,7 @@ public final class _TextNode: _Reconcilable {
         self.parentElement?.reportChangedChildren(.elementAdded, context: &context)
 
         isDirty = true
-        context.scheduler.addNodeAction(
+        context.scheduler.addCommitAction(
             CommitAction { [self] context in
                 self.domNode = ManagedDOMReference(reference: context.dom.createText(newValue), status: .added)
                 self.isDirty = false
@@ -27,7 +27,7 @@ public final class _TextNode: _Reconcilable {
         guard needsUpdate else { return }
 
         isDirty = true
-        context.scheduler.addNodeAction(
+        context.scheduler.addCommitAction(
             CommitAction { [self] context in
                 assert(isDirty, "text node is not dirty")
                 assert(domNode != nil, "text node is not mounted")
