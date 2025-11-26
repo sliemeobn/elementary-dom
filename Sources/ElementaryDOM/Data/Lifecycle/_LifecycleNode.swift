@@ -5,8 +5,6 @@ enum LifecycleHook {
     case __none
 }
 
-// TODO: this can probably be folded into a "stateful node"
-// TODO: revise scheduling / timing of these
 public final class _LifecycleNode {
     private var value: LifecycleHook
     private var child: AnyReconcilable
@@ -21,31 +19,30 @@ public final class _LifecycleNode {
     convenience init(value: LifecycleHook, child: consuming some _Reconcilable, context: inout _RenderContext) {
         self.init(value: value, child: AnyReconcilable(child), context: &context)
 
-        context.scheduler.addNodeAction(
-            CommitAction(run: self.commitLifecycleValue)
-        )
-    }
+        let scheduler = context.scheduler
 
-    func patch<Node: _Reconcilable>(context: inout _RenderContext, patchNode: (Node, inout _RenderContext) -> Void) {
-        patchNode(child.unwrap(), &context)
-    }
-
-    private func commitLifecycleValue(_ context: inout _CommitContext) {
+        // Schedule lifecycle hook processing
         switch value {
         case .onMount(let onMount):
-            logTrace("scheduling onMount prePaint")
-            context.addPrePaintAction(onMount)
-        case .onUnmount(let onUnmount):
-            self.onUnmount = onUnmount
+            logTrace("scheduling onMount for next tick")
+            scheduler.onNextTick(onMount)
+        case .onUnmount(let callback):
+            // Capture scheduler so unmount doesn't need it
+            self.onUnmount = { scheduler.onNextTick(callback) }
         case .onMountReturningCancelFunction(let onMountReturningCancelFunction):
-            context.addPrePaintAction {
-                self.onUnmount = onMountReturningCancelFunction()
+            scheduler.onNextTick {
+                let cancelFunc = onMountReturningCancelFunction()
+                // TODO: this looks dangerous, we could race with unmount?
+                self.onUnmount = { scheduler.onNextTick(cancelFunc) }
             }
         case .__none:
             break
         }
-
         self.value = .__none
+    }
+
+    func patch<Node: _Reconcilable>(context: inout _RenderContext, patchNode: (Node, inout _RenderContext) -> Void) {
+        patchNode(child.unwrap(), &context)
     }
 }
 
@@ -61,10 +58,8 @@ extension _LifecycleNode: _Reconcilable {
 
     public func unmount(_ context: inout _CommitContext) {
         self.value = .__none
-        if let onUnmount = onUnmount {
-            context.addPostPaintAction(onUnmount)
-            self.onUnmount = nil
-        }
+        onUnmount?()
+        self.onUnmount = nil
         self.child.unmount(&context)
     }
 }

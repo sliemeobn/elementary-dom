@@ -25,7 +25,7 @@ final class MountedStyleModifier<Instance: CSSAnimatedValueInstance>: Unmountabl
     func invalidate(_ context: inout _RenderContext) {
         guard !isDirty else { return }
         isDirty = true
-        context.scheduler.addNodeAction(CommitAction(run: updateDOMNode(_:)))
+        context.scheduler.addCommitAction(CommitAction(run: updateDOMNode(_:)))
         scheduler = context.scheduler  // FIXME: this is a bit hacky
     }
 
