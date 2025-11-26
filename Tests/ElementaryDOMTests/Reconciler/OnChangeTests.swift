@@ -106,26 +106,6 @@ struct OnChangeTests {
     }
 
     @Test
-    func callsOnChangeMultipleTimesForMultipleChanges() {
-        nonisolated(unsafe) var changeCount = 0
-        let state = CounterState()
-
-        _ = patchOps {
-            div {}
-                .onChange(of: state.number) {
-                    changeCount += 1
-                }
-        } toggle: {
-            state.number = 1
-            state.number = 2
-            state.number = 3
-        }
-
-        // Only the final value change should be observed (batched updates)
-        #expect(changeCount == 1)
-    }
-
-    @Test
     func callsMultipleOnChangeHandlers() {
         var firstHandlerCount = 0
         var secondHandlerCount = 0
@@ -145,6 +125,50 @@ struct OnChangeTests {
 
         #expect(firstHandlerCount == 1)
         #expect(secondHandlerCount == 1)
+    }
+
+    @Test
+    func callsCorrectOnChangeHandler() {
+        var firstHandlerCount = 0
+        var secondHandlerCount = 0
+        let state = CounterState()
+        let state2 = CounterState()
+
+        _ = patchOps {
+            div {}
+                .onChange(of: state.number) {
+                    firstHandlerCount += 1
+                }
+                .onChange(of: state2.number) {
+                    secondHandlerCount += 1
+                }
+        } toggle: {
+            state.number = 1
+        }
+
+        #expect(firstHandlerCount == 1)
+        #expect(secondHandlerCount == 0)
+    }
+
+    @Test
+    func callsOnChangeMultipleTimesForMultipleChanges() {
+        nonisolated(unsafe) var changeCount = 0
+        let state = CounterState()
+
+        _ = patchOps {
+            div {}
+                .onChange(of: state.number) {
+                    changeCount += 1
+                }
+        } toggle: {
+            state.number = 1
+            // force two separate transaction
+            withAnimation {
+                state.number = 2
+            }
+        }
+
+        #expect(changeCount == 2)
     }
 }
 
