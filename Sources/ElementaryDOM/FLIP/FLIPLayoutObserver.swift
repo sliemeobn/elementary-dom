@@ -25,7 +25,11 @@ final class FLIPLayoutObserver: DOMLayoutObserver {
 
     func setLeaveStatus(_ node: DOM.Node, isLeaving: Bool, context: inout _RenderContext) {
         logTrace("setting leave status for node \(node) to \(isLeaving)")
-        context.scheduler.flip.markAsLeaving(node, isReentering: !isLeaving)
+        if isLeaving {
+            context.scheduler.flip.markAsLeaving(node)
+        } else {
+            context.scheduler.flip.markAsReentering(node)
+        }
     }
 
     func didLayoutChildren(parent: DOM.Node, entries: [ContainerLayoutPass.Entry], context: inout _CommitContext) {

@@ -27,7 +27,11 @@ struct App {
                     bindingViewCount -= 1
                 }
         }
-        hr()
+        div {
+            hr()
+            ToggleTestView()
+            hr()
+        }
         // TODE: replaceChildren does not keep animations and similar going....
         // if counters.count > 1 {
         //     span {}.attributes(.style(["display": "none"]))
@@ -70,7 +74,7 @@ struct App {
             }
             div(.style(["display": "flex", "flex-direction": "column", "border": "1px solid red"])) {
                 ForEach(counters, key: { String($0) }) { counter in
-                    div(.style(["display": "flex", "flex-direction": "column"])) {
+                    div {
                         h3 { "Counter \(counter)" }
                         Counter(count: counter)
                         br()
@@ -166,5 +170,30 @@ struct TestObjectView {
         span { "Via environment object: \(data.name)" }
         br()
         span { "Via optional environment object: \(optionalData?.name ?? "")" }
+    }
+}
+
+@View
+struct ToggleTestView {
+    @State var isVisible: Bool = false
+
+    var body: some View {
+        div(.style(["display": "flex", "flex-direction": "column", "border": "1px solid blue"])) {
+            button { "Toggle" }
+                .onClick {
+                    withAnimation(.snappy(duration: 2)) {
+                        isVisible.toggle()
+                    }
+                }
+
+            span { "start " }
+            if isVisible {
+                span { "middle " }
+                    .transition(.fade)
+            }
+
+            span { "end" }
+
+        }.animateContainerLayout()
     }
 }

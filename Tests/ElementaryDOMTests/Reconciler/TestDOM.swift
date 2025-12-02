@@ -270,8 +270,7 @@ final class TestDOM: DOM.Interactor {
 
     func getCurrentTime() -> Double { 0 }
 
-    func getScrollOffset() -> (x: Float, y: Float) {
-        // Test implementation - return (0, 0) for tests
+    func getScrollOffset() -> (x: Double, y: Double) {
         (x: 0, y: 0)
     }
 

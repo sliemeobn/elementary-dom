@@ -4,6 +4,7 @@ final class FLIPScheduler {
     // NOTE: extend this to support css properties as well - for now it is always the bounding rect stuff
     private var scheduledAnimations: [DOM.Node: ScheduledNode] = [:]
     private var runningAnimations: [DOM.Node: GeometryAnimation] = [:]
+    private var absolutePositionOriginals: [DOM.Node: PreviousStyleValues] = [:]
     private var firstWindowScrollOffset: (x: Double, y: Double)? = nil
 
     init(dom: any DOM.Interactor) {
@@ -44,16 +45,25 @@ final class FLIPScheduler {
 
     func markAsRemoved(_ node: DOM.Node) {
         scheduledAnimations.removeValue(forKey: node)
+        absolutePositionOriginals.removeValue(forKey: node)
         let running = runningAnimations.removeValue(forKey: node)
         running?.cancelAll()
     }
 
-    func markAsLeaving(_ node: DOM.Node, isReentering: Bool = false) {
+    func markAsLeaving(_ node: DOM.Node) {
         assert(scheduledAnimations[node] != nil, "node not scheduled for animation")
 
         if dom.needsAbsolutePositioning(node) {
             let rect = dom.getAbsolutePositionCoordinates(node)
             scheduledAnimations[node]?.layoutAction = .moveAbsolute(rect: rect)
+        }
+    }
+
+    func markAsReentering(_ node: DOM.Node) {
+        assert(scheduledAnimations[node] != nil, "node not scheduled for animation")
+
+        if let style = absolutePositionOriginals.removeValue(forKey: node) {
+            scheduledAnimations[node]?.layoutAction = .undoMoveAbsolute(style: style)
         }
     }
 
@@ -82,7 +92,6 @@ final class FLIPScheduler {
 
         for (node, animation) in scheduledAnimations {
             // TODO: find a good way to preserve velocities of redirected animations
-            // TODO: preserve previous position if it was absolute
             // undo all running animations that are effected
             runningAnimations[node]?.cancelAll()
 
@@ -91,8 +100,9 @@ final class FLIPScheduler {
                 continue
             case .moveAbsolute(let rect):
                 let previousValues = context.dom.fixAbsolutePosition(node, toRect: rect)
-                // TODO: store previousValues for reversal when animation completes
-                _ = previousValues
+                absolutePositionOriginals[node] = previousValues
+            case .undoMoveAbsolute(let style):
+                context.dom.undoFixAbsolutePosition(node, style: style)
             }
         }
     }
@@ -159,6 +169,7 @@ private extension FLIPScheduler {
     enum NodeLayoutAction {
         case none
         case moveAbsolute(rect: DOM.Rect)
+        case undoMoveAbsolute(style: PreviousStyleValues)
     }
 
     struct PreviousStyleValues {
@@ -316,7 +327,7 @@ extension DOM.Interactor {
     func needsAbsolutePositioning(_ node: DOM.Node) -> Bool {
         let computedStyle = makeComputedStyleAccessor(node)
         let position = computedStyle.get("position")
-        return position != "absolute" && position != "fixed"
+        return !position.utf8Equals("absolute") && !position.utf8Equals("fixed")
     }
 
     func getAbsolutePositionCoordinates(_ node: DOM.Node) -> DOM.Rect {
@@ -361,5 +372,19 @@ private extension DOM.Interactor {
         styleHeight.set("\(rect.height)px")
 
         return previousValues
+    }
+
+    func undoFixAbsolutePosition(_ node: DOM.Node, style: FLIPScheduler.PreviousStyleValues) {
+        let stylePosition = makeStyleAccessor(node, cssName: "position")
+        let styleLeft = makeStyleAccessor(node, cssName: "left")
+        let styleTop = makeStyleAccessor(node, cssName: "top")
+        let styleWidth = makeStyleAccessor(node, cssName: "width")
+        let styleHeight = makeStyleAccessor(node, cssName: "height")
+
+        stylePosition.set(style.position)
+        styleLeft.set(style.left)
+        styleTop.set(style.top)
+        styleWidth.set(style.width)
+        styleHeight.set(style.height)
     }
 }
