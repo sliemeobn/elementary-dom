@@ -19,6 +19,11 @@ public struct ContainerLayoutPass: ~Copyable {
     }
 
     struct Entry {
+        enum NodeType {
+            case element
+            case text
+        }
+
         enum Status {
             case unchanged
             case added
@@ -29,5 +34,6 @@ public struct ContainerLayoutPass: ~Copyable {
 
         let kind: Status
         let reference: DOM.Node
+        let type: NodeType
     }
 }

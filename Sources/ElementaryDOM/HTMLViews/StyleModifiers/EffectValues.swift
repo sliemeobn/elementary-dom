@@ -55,8 +55,8 @@ struct CSSTransform: CSSPropertyValue {
     static var styleKey: String = "transform"
 
     enum AnyFunction {
-        case rotation(CSSRotation)
-        case translation(CSSTranslation)
+        case rotation(Rotation)
+        case translation(Translation)
     }
 
     var value: [AnyFunction]
@@ -100,61 +100,65 @@ extension CSSTransform.AnyFunction {
     }
 }
 
-struct CSSRotation: CSSAnimatable {
-    var angle: Angle
-    var anchor: UnitPoint
+extension CSSTransform {
+    struct Rotation: CSSAnimatable {
+        var angle: Angle
+        var anchor: UnitPoint
 
-    init(angle: Angle, anchor: UnitPoint) {
-        self.angle = angle
-        self.anchor = anchor
-    }
-
-    var isIdentity: Bool {
-        // TODO: epsilon?
-        angle.degrees == 0
-    }
-
-    var cssValue: CSSTransform {
-        guard !isIdentity else { return .none }
-        return CSSTransform(.rotation(self))
-    }
-
-    init(_ animatableVector: AnimatableVector) {
-        guard case .d4(let value) = animatableVector else {
-            fatalError("Unsupported animatable vector")
+        init(angle: Angle, anchor: UnitPoint) {
+            self.angle = angle
+            self.anchor = anchor
         }
-        self.angle = Angle(degrees: Double(value[0]))
-        self.anchor = UnitPoint(x: value[1], y: value[2])
-    }
 
-    var animatableVector: AnimatableVector {
-        .d4(SIMD4<Float>(Float(angle.degrees), Float(anchor.x), Float(anchor.y), 0))
+        var isIdentity: Bool {
+            // TODO: epsilon?
+            angle.degrees == 0
+        }
+
+        var cssValue: CSSTransform {
+            guard !isIdentity else { return .none }
+            return CSSTransform(.rotation(self))
+        }
+
+        init(_ animatableVector: AnimatableVector) {
+            guard case .d4(let value) = animatableVector else {
+                fatalError("Unsupported animatable vector")
+            }
+            self.angle = Angle(degrees: Double(value[0]))
+            self.anchor = UnitPoint(x: value[1], y: value[2])
+        }
+
+        var animatableVector: AnimatableVector {
+            .d4(SIMD4<Float>(Float(angle.degrees), Float(anchor.x), Float(anchor.y), 0))
+        }
     }
 }
 
-struct CSSTranslation: CSSAnimatable {
-    var x: Float
-    var y: Float
+extension CSSTransform {
+    struct Translation: CSSAnimatable {
+        var x: Float
+        var y: Float
 
-    init(x: Float, y: Float) {
-        self.x = x
-        self.y = y
-    }
-
-    var cssValue: CSSTransform {
-        CSSTransform(.translation(self))
-    }
-
-    init(_ animatableVector: AnimatableVector) {
-        guard case .d2(let x, let y) = animatableVector else {
-            fatalError("Unsupported animatable vector")
+        init(x: Float, y: Float) {
+            self.x = x
+            self.y = y
         }
-        self.x = x
-        self.y = y
-    }
 
-    var animatableVector: AnimatableVector {
-        .d2(x, y)
+        var cssValue: CSSTransform {
+            CSSTransform(.translation(self))
+        }
+
+        init(_ animatableVector: AnimatableVector) {
+            guard case .d2(let x, let y) = animatableVector else {
+                fatalError("Unsupported animatable vector")
+            }
+            self.x = x
+            self.y = y
+        }
+
+        var animatableVector: AnimatableVector {
+            .d2(x, y)
+        }
     }
 }
 
@@ -187,5 +191,105 @@ extension CSSOpacity: CSSPropertyValue {
 
     mutating func combineWith(_ other: CSSOpacity) {
         value *= other.value
+    }
+}
+
+struct CSSTranslate {
+    var x: Double
+    var y: Double
+
+    init(x: Double, y: Double) {
+        self.x = x
+        self.y = y
+    }
+}
+
+extension CSSTranslate: CSSAnimatable {
+    var cssValue: CSSTranslate { self }
+    init(_ animatableVector: AnimatableVector) {
+        guard case .d2(let x, let y) = animatableVector else {
+            fatalError("Unsupported animatable vector")
+        }
+        self.x = Double(x)
+        self.y = Double(y)
+    }
+
+    var animatableVector: AnimatableVector {
+        .d2(Float(x), Float(y))
+    }
+}
+
+extension CSSTranslate: CSSPropertyValue {
+    static var styleKey: String = "translate"
+
+    var cssString: String { "\(x)px \(y)px" }
+
+    mutating func combineWith(_ other: CSSTranslate) {
+        x += other.x
+        y += other.y
+    }
+}
+
+struct CSSWidth {
+    var value: Double
+
+    init(value: Double) {
+        self.value = value
+    }
+}
+
+extension CSSWidth: CSSAnimatable {
+    var cssValue: CSSWidth { self }
+    init(_ animatableVector: AnimatableVector) {
+        guard case .d1(let value) = animatableVector else {
+            fatalError("Unsupported animatable vector")
+        }
+        self.value = Double(value)
+    }
+
+    var animatableVector: AnimatableVector {
+        .d1(Float(value))
+    }
+}
+
+extension CSSWidth: CSSPropertyValue {
+    static var styleKey: String = "width"
+
+    var cssString: String { "\(value)px" }
+
+    mutating func combineWith(_ other: CSSWidth) {
+        value += other.value
+    }
+}
+
+struct CSSHeight {
+    var value: Double
+
+    init(value: Double) {
+        self.value = value
+    }
+}
+
+extension CSSHeight: CSSAnimatable {
+    var cssValue: CSSHeight { self }
+    init(_ animatableVector: AnimatableVector) {
+        guard case .d1(let value) = animatableVector else {
+            fatalError("Unsupported animatable vector")
+        }
+        self.value = Double(value)
+    }
+
+    var animatableVector: AnimatableVector {
+        .d1(Float(value))
+    }
+}
+
+extension CSSHeight: CSSPropertyValue {
+    static var styleKey: String = "height"
+
+    var cssString: String { "\(value)px" }
+
+    mutating func combineWith(_ other: CSSHeight) {
+        value += other.value
     }
 }

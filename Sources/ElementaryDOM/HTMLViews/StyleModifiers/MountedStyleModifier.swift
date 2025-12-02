@@ -1,7 +1,6 @@
 final class MountedStyleModifier<Instance: CSSAnimatedValueInstance>: Unmountable, Invalidateable {
     let accessor: DOM.StyleAccessor
     var values: [Instance]
-    var scheduler: Scheduler?  // TODO: pass this in commit context
 
     let node: DOM.Node
     var animations: [DOM.Animation]
@@ -26,7 +25,6 @@ final class MountedStyleModifier<Instance: CSSAnimatedValueInstance>: Unmountabl
         guard !isDirty else { return }
         isDirty = true
         context.scheduler.addCommitAction(CommitAction(run: updateDOMNode(_:)))
-        scheduler = context.scheduler  // FIXME: this is a bit hacky
     }
 
     func updateDOMNode(_ context: inout _CommitContext) {
@@ -69,9 +67,9 @@ final class MountedStyleModifier<Instance: CSSAnimatedValueInstance>: Unmountabl
                     context.dom.animateElement(
                         node,
                         DOM.Animation.KeyframeEffect(value.value, isFirst: index == 0)
-                    ) { [scheduler, progressAnimation] in
+                    ) { [scheduler = context.scheduler, progressAnimation] in
                         logTrace("animation finished")
-                        scheduler?.registerAnimation(AnyAnimatable(progressAnimation: progressAnimation))
+                        scheduler.registerAnimation(AnyAnimatable(progressAnimation: progressAnimation))
                     }
                 )
             }

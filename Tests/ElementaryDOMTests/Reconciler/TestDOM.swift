@@ -142,6 +142,10 @@ final class TestDOM: DOM.Interactor {
         fatalError("Not implemented")
     }
 
+    func makeComputedStyleAccessor(_ node: DOM.Node) -> DOM.ComputedStyleAccessor {
+        fatalError("Not implemented")
+    }
+
     func setStyleProperty(_ node: DOM.Node, name: String, value: String) {
         guard case let .element(data) = node.value.kind else { return }
         data.inlineStyles[name] = value
@@ -187,6 +191,19 @@ final class TestDOM: DOM.Interactor {
                 print("TESTDOM: update animation \(effect)")
             }
         )
+    }
+
+    /// Mock bounding rect storage for FLIP tests - can be set per node
+    var mockBoundingRects: [ObjectIdentifier: DOM.Rect] = [:]
+
+    func getBoundingClientRect(_ node: DOM.Node) -> DOM.Rect {
+        let id = ObjectIdentifier(node.value)
+        return mockBoundingRects[id] ?? DOM.Rect(x: 0, y: 0, width: 0, height: 0)
+    }
+
+    /// Helper to set mock bounding rect for a node (for testing)
+    func setMockBoundingRect(_ node: DOM.Node, rect: DOM.Rect) {
+        mockBoundingRects[ObjectIdentifier(node.value)] = rect
     }
 
     func addEventListener(_ node: DOM.Node, event: String, sink: DOM.EventSink) {
@@ -248,6 +265,11 @@ final class TestDOM: DOM.Interactor {
     }
 
     func getCurrentTime() -> Double { 0 }
+
+    func getScrollOffset() -> (x: Float, y: Float) {
+        // Test implementation - return (0, 0) for tests
+        (x: 0, y: 0)
+    }
 
     func flushMicrotasks() {
         while !queueMicrotaskCallbacks.isEmpty {

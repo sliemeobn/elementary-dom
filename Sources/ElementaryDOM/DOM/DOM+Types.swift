@@ -1,6 +1,14 @@
 extension DOM {
-    public struct Node {
+    public struct Node: Hashable {
         let ref: AnyObject
+
+        public func hash(into hasher: inout Hasher) {
+            hasher.combine(ObjectIdentifier(ref))
+        }
+
+        public static func == (lhs: Node, rhs: Node) -> Bool {
+            ObjectIdentifier(lhs.ref) == ObjectIdentifier(rhs.ref)
+        }
     }
 
     public struct Event {
@@ -9,6 +17,20 @@ extension DOM {
 
     public struct EventSink {
         let ref: AnyObject
+    }
+
+    public struct Rect: Equatable {
+        public var x: Double
+        public var y: Double
+        public var width: Double
+        public var height: Double
+
+        public init(x: Double, y: Double, width: Double, height: Double) {
+            self.x = x
+            self.y = y
+            self.width = width
+            self.height = height
+        }
     }
 
     public enum PropertyValue {
@@ -59,6 +81,20 @@ extension DOM {
 
         func set(_ value: String) {
             _set(value)
+        }
+    }
+
+    public struct ComputedStyleAccessor {
+        let _get: (String) -> String
+
+        init(
+            get: @escaping (String) -> String
+        ) {
+            self._get = get
+        }
+
+        func get(_ cssName: String) -> String {
+            _get(cssName)
         }
     }
 }

@@ -13,29 +13,6 @@ struct App {
 
     var body: some View {
         div {
-            AnimationsView()
-            hr()
-            TextField(value: #Binding(data.name))
-
-            div {
-                p { "Via Binding: \(data.name)" }
-                p { TestValueView() }
-                p { TestObjectView() }
-            }
-            .environment(#Key(\.myText), data.name)
-            .environment(data)
-        }
-        .onChange(of: bindingViewCount) { oldValue, newValue in
-            print("bindingViewCount changed to \(oldValue) -> \(newValue)")
-        }
-        .onChange(of: bindingViewCount) {
-            if bindingViewCount > 5 {
-                data.name = "Binding View Count > 5"
-            }
-        }
-
-        hr()
-        div {
             for _ in 0..<bindingViewCount {
                 BindingsView()
                     .transition(.fade, animation: .bouncy)
@@ -74,26 +51,55 @@ struct App {
         )
 
         div {
-            hr()
+            div(.style(["display": "flex", "flex-direction": "column"])) {
+                hr()
 
-            ForEach(counters, key: { String($0) }) { counter in
-                div {
-                    h3 { "Counter \(counter)" }
-                    Counter(count: counter)
-                    br()
-                    button { "Remove counter" }
-                        .onClick { _ in
-                            counters.removeAll { $0 == counter }
-                        }
-                    hr()
+                ForEach(counters, key: { String($0) }) { counter in
+                    div {
+                        h3 { "Counter \(counter)" }
+                        Counter(count: counter)
+                        br()
+                        button { "Remove counter" }
+                            .onClick { _ in
+                                withAnimation {
+                                    counters.removeAll { $0 == counter }
+                                }
+                            }
+                        hr()
+                    }
                 }
-            }
+            }.animateChildren()
+                .animation(.smooth(duration: 2), value: counters.count)
 
             button { "Add counter" }
                 .onClick { _ in
                     nextCounterName += 1
-                    counters.append(nextCounterName)
+                    withAnimation {
+                        counters.append(nextCounterName)
+                    }
                 }
+        }
+
+        div {
+            AnimationsView()
+            hr()
+            TextField(value: #Binding(data.name))
+
+            div {
+                p { "Via Binding: \(data.name)" }
+                p { TestValueView() }
+                p { TestObjectView() }
+            }
+            .environment(#Key(\.myText), data.name)
+            .environment(data)
+        }
+        .onChange(of: bindingViewCount) { oldValue, newValue in
+            print("bindingViewCount changed to \(oldValue) -> \(newValue)")
+        }
+        .onChange(of: bindingViewCount) {
+            if bindingViewCount > 5 {
+                data.name = "Binding View Count > 5"
+            }
         }
     }
 }

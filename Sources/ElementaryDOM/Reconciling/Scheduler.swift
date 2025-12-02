@@ -36,6 +36,9 @@ final class Scheduler {
     // Continuous: Animations
     private var runningAnimations: [AnyAnimatable] = []
 
+    // TODO: ideally this could be a completely decoupled extensions-style thing, but for now it's just here
+    let flip: FLIPScheduler
+
     private var isAnimationFramePending: Bool = false
     private var currentTransaction: Transaction?
     private var currentFrameTime: Double = 0
@@ -47,6 +50,7 @@ final class Scheduler {
 
     init(dom: any DOM.Interactor) {
         self.dom = dom
+        self.flip = FLIPScheduler(dom: dom)  // TODO: make this more pluggable
     }
 
     func scheduleFunction(_ function: AnyFunctionNode) {
@@ -95,6 +99,7 @@ final class Scheduler {
     /// Schedule a DOM operation for the commit phase (RAF)
     func addCommitAction(_ action: CommitAction) {
         commitActions.append(action)
+        scheduleFrameIfNecessary()
     }
 
     /// Schedule a DOM placement for the commit phase (RAF, runs in reverse order)
@@ -154,22 +159,27 @@ final class Scheduler {
     }
 
     private func flushCommitPlan() {
-        var context = _CommitContext(dom: dom, currentFrameTime: currentFrameTime)
+        var context = _CommitContext(
+            dom: dom,
+            scheduler: self,
+            currentFrameTime: currentFrameTime
+        )
         currentFrameTime = 0
 
-        // Phase 3a: DOM mutations
         for action in commitActions {
             action.run(&context)
         }
         commitActions.removeAll(keepingCapacity: true)
 
-        // Phase 3b: DOM placements (reversed order)
         for placement in placementActions.reversed() {
             placement.run(&context)
         }
         placementActions.removeAll(keepingCapacity: true)
 
-        // Phase 4: Next tick callbacks (onAppear, onDisappear)
+        // Phase 3: Process FLIP animations (commit, measure LAST, apply)
+        flip.commitScheduledAnimations(context: &context)
+
+        // Phase 5: Next tick callbacks (onAppear, onDisappear)
         if !onNextTickCallbacks.isEmpty {
             let callbacks = onNextTickCallbacks
             onNextTickCallbacks.removeAll(keepingCapacity: true)

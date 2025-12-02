@@ -85,7 +85,11 @@ final class CSSValueSource<Value: CSSAnimatable & Equatable> {
         }
 
         func invalidate(_ context: inout _RenderContext) {
-            _ = animatedValue.setValueAndReturnIfAnimationWasStarted(source.value, context: &context)
+            _ = animatedValue.setValueAndReturnIfAnimationWasStarted(
+                source.value,
+                transaction: context.transaction,
+                frameTime: context.currentFrameTime
+            )
             updateValue(&context)
         }
 
@@ -103,24 +107,7 @@ final class CSSValueSource<Value: CSSAnimatable & Equatable> {
         }
 
         private func updateValue(_ context: inout _RenderContext) {
-            if animatedValue.isAnimating {
-                let sampleInterval = 1.0 / 40.0
-                let maxDuration = 1.5
-                let frames = animatedValue.peekFutureValuesUnlessCompletedOrFinished(
-                    stride(from: context.currentFrameTime, through: context.currentFrameTime + maxDuration, by: sampleInterval)
-                )
-
-                value = .animated(
-                    SampledAnimationTrack(
-                        startTime: context.currentFrameTime,
-                        duration: sampleInterval * Double(frames.count - 1),
-                        sampledFrames: frames.map { $0.cssValue }
-                    )
-                )
-            } else {
-                value = .single(animatedValue.presentation.cssValue)
-            }
-
+            value = animatedValue.nextCSSAnimationValue(frameTime: context.currentFrameTime)
             isDirty = true
             target?.invalidate(&context)
         }
@@ -176,5 +163,27 @@ struct AnyCSSAnimatedValueInstance<CSSProperty: CSSPropertyValue>: CSSAnimatedVa
 
     func unmount(_ context: inout _CommitContext) {
         _unmount(&context)
+    }
+}
+
+extension AnimatedValue where Value: CSSAnimatable {
+    func nextCSSAnimationValue(
+        frameTime: Double,
+        sampleInterval: Double = 1.0 / 40.0,
+        maxDuration: Double = 1.5
+    ) -> CSSAnimatedValue<Value.CSSValue> {
+        if self.isAnimating {
+            let frames = peekFutureValuesUnlessCompletedOrFinished(
+                stride(from: frameTime, through: frameTime + maxDuration, by: sampleInterval)
+            )
+            return .animated(
+                SampledAnimationTrack(
+                    startTime: frameTime,
+                    duration: sampleInterval * Double(frames.count - 1),
+                    sampledFrames: frames.map { $0.cssValue }
+                )
+            )
+        }
+        return .single(presentation.cssValue)
     }
 }

@@ -1,9 +1,11 @@
 public struct _CommitContext: ~Copyable {
-    public let dom: any DOM.Interactor
-    public let currentFrameTime: Double
+    let dom: any DOM.Interactor
+    let scheduler: Scheduler
+    let currentFrameTime: Double
 
-    init(dom: any DOM.Interactor, currentFrameTime: Double) {
+    init(dom: any DOM.Interactor, scheduler: Scheduler, currentFrameTime: Double) {
         self.dom = dom
         self.currentFrameTime = currentFrameTime
+        self.scheduler = scheduler
     }
 }

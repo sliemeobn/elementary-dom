@@ -40,7 +40,7 @@ public final class _TextNode: _Reconcilable {
 
     public func collectChildren(_ ops: inout ContainerLayoutPass, _ context: inout _CommitContext) {
         assert(domNode != nil, "unitialized text node in layout pass")
-        domNode?.collectLayoutChanges(&ops)
+        domNode?.collectLayoutChanges(&ops, type: .text)
     }
 
     public func apply(_ op: _ReconcileOp, _ reconciler: inout _RenderContext) {

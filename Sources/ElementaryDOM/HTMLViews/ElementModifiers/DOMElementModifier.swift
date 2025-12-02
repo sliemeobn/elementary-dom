@@ -47,7 +47,7 @@ struct DOMElementModifiers {
         }
     }
 
-    mutating func takeModifiers() -> [any DOMElementModifier] {
+    mutating func take() -> [any DOMElementModifier] {
         let directives = Array(storage.values)
         storage.removeAll(keepingCapacity: true)
         return directives
