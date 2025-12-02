@@ -52,23 +52,6 @@ struct App {
 
         div {
             hr()
-            div(.style(["display": "flex", "flex-direction": "column"])) {
-                ForEach(counters, key: { String($0) }) { counter in
-                    div(.style(["display": "flex", "flex-direction": "column"])) {
-                        h3 { "Counter \(counter)" }
-                        Counter(count: counter)
-                        br()
-                        button { "Remove counter" }
-                            .onClick { _ in
-                                withAnimation {
-                                    counters.removeAll { $0 == counter }
-                                }
-                            }
-                        hr()
-                    }.transition(.fade)
-                }
-            }.animateContainerLayout()
-
             div {
                 button { "Add counter" }
                     .onClick { _ in
@@ -85,6 +68,22 @@ struct App {
                         }
                     }
             }
+            div(.style(["display": "flex", "flex-direction": "column"])) {
+                ForEach(counters, key: { String($0) }) { counter in
+                    div(.style(["display": "flex", "flex-direction": "column"])) {
+                        h3 { "Counter \(counter)" }
+                        Counter(count: counter)
+                        br()
+                        button { "Remove counter" }
+                            .onClick { _ in
+                                withAnimation(.linear(duration: 2)) {
+                                    counters.removeAll { $0 == counter }
+                                }
+                            }
+                        hr()
+                    }.transition(.fade)
+                }
+            }.animateContainerLayout()
         }
 
         div {

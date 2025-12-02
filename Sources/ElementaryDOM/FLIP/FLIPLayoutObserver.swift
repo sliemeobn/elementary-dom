@@ -1,5 +1,3 @@
-import Elementary
-
 final class FLIPLayoutObserver: DOMLayoutObserver {
     private var childNodes: [DOM.Node] = []
     private var containerNode: DOM.Node?
@@ -14,6 +12,11 @@ final class FLIPLayoutObserver: DOMLayoutObserver {
     }
 
     func willLayoutChildren(parent: DOM.Node, context: inout _RenderContext) {
+        guard !context.transaction.shouldSkipFLIP else {
+            logTrace("skipping FLIP for children of parent \(parent) because transaction should skip FLIP")
+            return
+        }
+
         context.scheduler.flip.scheduleAnimationOf(childNodes, inParent: parent, context: &context)
 
         if animateContainerSize {
@@ -42,5 +45,13 @@ final class FLIPLayoutObserver: DOMLayoutObserver {
 
     func unmount(_ context: inout _CommitContext) {
         // TODO: figure this out
+    }
+}
+
+private extension Transaction {
+    var shouldSkipFLIP: Bool {
+        // HACK: this is a bit brittle, but a transition removal is currently scheduled as an animation callback
+        // and this is a way to identify them... not sure if this will bite us one day
+        disablesAnimation && animation == nil
     }
 }

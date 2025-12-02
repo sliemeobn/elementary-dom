@@ -252,6 +252,10 @@ final class TestDOM: DOM.Interactor {
         }
     }
 
+    func getOffsetParent(_ node: DOM.Node) -> DOM.Node? {
+        nil
+    }
+
     func requestAnimationFrame(_ callback: @escaping (Double) -> Void) {
         rafCallbacks.append(callback)
     }
