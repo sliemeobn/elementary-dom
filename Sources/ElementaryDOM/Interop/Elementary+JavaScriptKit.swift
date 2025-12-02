@@ -270,11 +270,12 @@ final class JSKitDOMInteractor: DOM.Interactor {
         jsPerformance.now!().number! / 1000
     }
 
-    func getScrollOffset() -> (x: Float, y: Float) {
+    func getScrollOffset() -> (x: Double, y: Double) {
         let window = JSObject.global.window.object!
-        let scrollX = window.scrollX.number ?? 0
-        let scrollY = window.scrollY.number ?? 0
-        return (x: Float(scrollX), y: Float(scrollY))
+        return (
+            x: window.scrollX.number ?? 0,
+            y: window.scrollY.number ?? 0
+        )
     }
 }
 

@@ -1,6 +1,5 @@
 final class FLIPLayoutObserver: DOMLayoutObserver {
     private var childNodes: [DOM.Node] = []
-    private var containerNode: DOM.Node?
     private var animateContainerSize: Bool
 
     init(animateContainerSize: Bool) {
@@ -44,7 +43,10 @@ final class FLIPLayoutObserver: DOMLayoutObserver {
     }
 
     func unmount(_ context: inout _CommitContext) {
-        // TODO: figure this out
+        for node in childNodes {
+            context.scheduler.flip.markAsRemoved(node)
+        }
+        childNodes = []
     }
 }
 

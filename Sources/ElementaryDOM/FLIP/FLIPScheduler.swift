@@ -4,13 +4,17 @@ final class FLIPScheduler {
     // NOTE: extend this to support css properties as well - for now it is always the bounding rect stuff
     private var scheduledAnimations: [DOM.Node: ScheduledNode] = [:]
     private var runningAnimations: [DOM.Node: GeometryAnimation] = [:]
+    private var firstWindowScrollOffset: (x: Double, y: Double)? = nil
 
     init(dom: any DOM.Interactor) {
         self.dom = dom
     }
 
     func scheduleAnimationOf(_ nodes: [DOM.Node], inParent parentNode: DOM.Node, context: inout _RenderContext) {
-        logTrace("scheduling FLIP animations for \(nodes.count) nodes, animation: \(context.transaction.animation != nil)")
+        if firstWindowScrollOffset == nil {
+            storeWindowScrollOffset()
+        }
+
         let parentRect = dom.getBoundingClientRect(parentNode)
         for node in nodes {
             guard !scheduledAnimations.keys.contains(node) else {
@@ -27,6 +31,10 @@ final class FLIPScheduler {
     }
 
     func scheduleAnimationOf(_ node: DOM.Node, context: inout _RenderContext) {
+        if firstWindowScrollOffset == nil {
+            storeWindowScrollOffset()
+        }
+
         scheduledAnimations[node] = ScheduledNode(
             transaction: context.transaction,
             geometry: getNodeGeometry(node),
@@ -50,12 +58,24 @@ final class FLIPScheduler {
     }
 
     func commitScheduledAnimations(context: inout _CommitContext) {
+        let scroll = dom.getScrollOffset()
+        let firstWindowScroll = firstWindowScrollOffset ?? (x: Double(scroll.x), y: Double(scroll.y))
+        self.firstWindowScrollOffset = nil
 
         commitPreMeasurementChanges(context: &context)
 
-        measureLastAndCreateAnimations(context: &context)
+        let lastScroll = dom.getScrollOffset()
+        let lastWindowScroll = (x: Double(lastScroll.x), y: Double(lastScroll.y))
+        let windowScrollDelta = (x: lastWindowScroll.x - firstWindowScroll.x, y: lastWindowScroll.y - firstWindowScroll.y)
+
+        measureLastAndCreateAnimations(windowScrollDelta: windowScrollDelta, context: &context)
 
         progressAllAnimations(context: &context)
+    }
+
+    private func storeWindowScrollOffset() {
+        let scroll = dom.getScrollOffset()
+        self.firstWindowScrollOffset = (x: Double(scroll.x), y: Double(scroll.y))
     }
 
     private func commitPreMeasurementChanges(context: inout _CommitContext) {
@@ -70,38 +90,14 @@ final class FLIPScheduler {
             case .none:
                 continue
             case .moveAbsolute(let rect):
-                // Extract current style values before setting new ones
-                let stylePosition = context.dom.makeStyleAccessor(node, cssName: "position")
-                let styleLeft = context.dom.makeStyleAccessor(node, cssName: "left")
-                let styleTop = context.dom.makeStyleAccessor(node, cssName: "top")
-                let styleWidth = context.dom.makeStyleAccessor(node, cssName: "width")
-                let styleHeight = context.dom.makeStyleAccessor(node, cssName: "height")
-
-                // Extract previous style values for later reversal
-                let previousValues = PreviousStyleValues(
-                    position: stylePosition.get(),
-                    left: styleLeft.get(),
-                    top: styleTop.get(),
-                    width: styleWidth.get(),
-                    height: styleHeight.get()
-                )
+                let previousValues = context.dom.fixAbsolutePosition(node, toRect: rect)
                 // TODO: store previousValues for reversal when animation completes
                 _ = previousValues
-
-                logTrace(
-                    "setting position of node \(node) to absolute, left: \(rect.x)px, top: \(rect.y)px, width: \(rect.width)px, height: \(rect.height)px"
-                )
-
-                stylePosition.set("absolute")
-                styleLeft.set("\(rect.x)px")
-                styleTop.set("\(rect.y)px")
-                styleWidth.set("\(rect.width)px")
-                styleHeight.set("\(rect.height)px")
             }
         }
     }
 
-    private func measureLastAndCreateAnimations(context: inout _CommitContext) {
+    private func measureLastAndCreateAnimations(windowScrollDelta: (x: Double, y: Double), context: inout _CommitContext) {
         // measures all last states and calculates all new animations
 
         // parent rect cache
@@ -130,6 +126,7 @@ final class FLIPScheduler {
                     node: node,
                     first: animation.geometry,
                     last: lastGeometry,
+                    windowScrollDelta: windowScrollDelta,
                     transaction: animation.transaction,
                     frameTime: context.currentFrameTime
                 )
@@ -138,7 +135,7 @@ final class FLIPScheduler {
         scheduledAnimations.removeAll()
     }
 
-    func progressAllAnimations(context: inout _CommitContext) {
+    private func progressAllAnimations(context: inout _CommitContext) {
         // applies all changes of dirty animations and removes completed ones
         // TODO: optimize
         var removedNodes: [DOM.Node] = []
@@ -186,11 +183,24 @@ private extension FLIPScheduler {
         var width: Double
         var height: Double
 
-        var scopedCoordinates: (x: Double, y: Double) {
-            if let parentRect = parentRect {
-                return (x: boundingClientRect.x - parentRect.x, y: boundingClientRect.y - parentRect.y)
+        func difference(
+            from other: NodeGeometry,
+            scrollDelta: (x: Double, y: Double)
+        ) -> (x: Double, y: Double, width: Double, height: Double) {
+            if let parentRect = parentRect, let otherParentRect = other.parentRect {
+                return (
+                    x: self.boundingClientRect.x - other.boundingClientRect.x - parentRect.x + otherParentRect.x,
+                    y: self.boundingClientRect.y - other.boundingClientRect.y - parentRect.y + otherParentRect.y,
+                    width: width - other.width,
+                    height: height - other.height
+                )
             } else {
-                return (x: boundingClientRect.x, y: boundingClientRect.y)
+                return (
+                    x: self.boundingClientRect.x - other.boundingClientRect.x - scrollDelta.x,
+                    y: self.boundingClientRect.y - other.boundingClientRect.y - scrollDelta.y,
+                    width: width - other.width,
+                    height: height - other.height
+                )
             }
         }
         // NOTE: extend with transform/rotate or other stuff
@@ -205,13 +215,15 @@ private extension FLIPScheduler {
             translation == nil && width == nil && height == nil
         }
 
-        init(node: DOM.Node, first: NodeGeometry, last: NodeGeometry, transaction: Transaction, frameTime: Double) {
-            let firstCoordinates = first.scopedCoordinates
-            let lastCoordinates = last.scopedCoordinates
-            let dx = firstCoordinates.x - lastCoordinates.x
-            let dy = firstCoordinates.y - lastCoordinates.y
-            let dw = last.width - first.width
-            let dh = last.height - first.height
+        init(
+            node: DOM.Node,
+            first: NodeGeometry,
+            last: NodeGeometry,
+            windowScrollDelta: (x: Double, y: Double),
+            transaction: Transaction,
+            frameTime: Double
+        ) {
+            let (dx, dy, dw, dh) = first.difference(from: last, scrollDelta: windowScrollDelta)
 
             // TODO: implement scale animation as option
 
@@ -280,18 +292,6 @@ fileprivate extension FLIPScheduler {
     func getNodeGeometry(_ node: DOM.Node, scopedTo parentRect: DOM.Rect? = nil) -> NodeGeometry {
         let rect = dom.getBoundingClientRect(node)
 
-        // TODO: figure out how to do this in embedded
-        // let computedStyle = dom.makeComputedStyleAccessor(node)
-
-        // // Parse width and height from computed styles (e.g., "100px" -> 100.0)
-        // let widthString = computedStyle.get("width")
-        // let heightString = computedStyle.get("height")
-
-        // logTrace("width: \(widthString), height: \(heightString)")
-
-        // let width = parseCSSLength(widthString) ?? rect.width
-        // let height = parseCSSLength(heightString) ?? rect.height
-
         let width = rect.width
         let height = rect.height
 
@@ -301,18 +301,6 @@ fileprivate extension FLIPScheduler {
             width: width,
             height: height
         )
-    }
-
-    func parseCSSLength(_ value: String) -> Double? {
-        nil
-
-        // guard !value.isEmpty, value != "auto" else { return nil }
-        // // Remove "px" suffix and parse as Double
-        // if value.hasSuffix("px") {
-        //     let numberString = String(value.dropLast(2))
-        //     return Double(numberString)
-        // }
-        // return nil
     }
 }
 
@@ -342,5 +330,36 @@ extension DOM.Interactor {
         }
 
         return nodeRect
+    }
+}
+
+private extension DOM.Interactor {
+    func fixAbsolutePosition(_ node: DOM.Node, toRect rect: DOM.Rect) -> FLIPScheduler.PreviousStyleValues {
+        let stylePosition = makeStyleAccessor(node, cssName: "position")
+        let styleLeft = makeStyleAccessor(node, cssName: "left")
+        let styleTop = makeStyleAccessor(node, cssName: "top")
+        let styleWidth = makeStyleAccessor(node, cssName: "width")
+        let styleHeight = makeStyleAccessor(node, cssName: "height")
+
+        // Extract previous style values for later reversal
+        let previousValues = FLIPScheduler.PreviousStyleValues(
+            position: stylePosition.get(),
+            left: styleLeft.get(),
+            top: styleTop.get(),
+            width: styleWidth.get(),
+            height: styleHeight.get()
+        )
+
+        logTrace(
+            "setting position of node \(node) to absolute, left: \(rect.x)px, top: \(rect.y)px, width: \(rect.width)px, height: \(rect.height)px"
+        )
+
+        stylePosition.set("absolute")
+        styleLeft.set("\(rect.x)px")
+        styleTop.set("\(rect.y)px")
+        styleWidth.set("\(rect.width)px")
+        styleHeight.set("\(rect.height)px")
+
+        return previousValues
     }
 }

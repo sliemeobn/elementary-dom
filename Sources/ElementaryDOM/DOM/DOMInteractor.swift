@@ -30,7 +30,7 @@ public enum DOM {
         func getOffsetParent(_ node: Node) -> Node?
 
         // Scroll offset API for FLIP animations
-        func getScrollOffset() -> (x: Float, y: Float)
+        func getScrollOffset() -> (x: Double, y: Double)
 
         // Low-level DOM-like event listener APIs
         func addEventListener(_ node: Node, event: String, sink: EventSink)

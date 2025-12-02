@@ -68,7 +68,7 @@ struct App {
                         }
                     }
             }
-            div(.style(["display": "flex", "flex-direction": "column"])) {
+            div(.style(["display": "flex", "flex-direction": "column", "border": "1px solid red"])) {
                 ForEach(counters, key: { String($0) }) { counter in
                     div(.style(["display": "flex", "flex-direction": "column"])) {
                         h3 { "Counter \(counter)" }
