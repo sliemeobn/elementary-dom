@@ -27,7 +27,6 @@ public struct ContainerLayoutPass: ~Copyable {
         enum Status {
             case unchanged
             case added
-            case leaving  // TODO: something can be leaving and moved....
             case removed
             case moved
         }

@@ -1,10 +1,9 @@
 import Elementary
 
-struct AnimateChildrenView<Wrapped: View>: View {
+struct AnimateContainerLayoutView<Wrapped: View>: View {
     typealias Tag = Wrapped.Tag
     typealias _MountedNode = _StatefulNode<FLIPLayoutObserver, Wrapped._MountedNode>
 
-    var animation: Animation?
     var animateContainerSize: Bool = true
     var wrapped: Wrapped
 
@@ -19,7 +18,7 @@ struct AnimateChildrenView<Wrapped: View>: View {
         )
 
         var context = copy context
-        context.layoutObservers.addObserver(observer)
+        context.layoutObservers.add(observer)
 
         return _MountedNode(
             state: observer,
@@ -38,11 +37,10 @@ struct AnimateChildrenView<Wrapped: View>: View {
 }
 
 public extension View {
-    func animateChildren(
-        _ animation: Animation? = nil,
+    func animateContainerLayout(
         animateContainerSize: Bool = true
     ) -> some View<Self.Tag> {
-        AnimateChildrenView(
+        AnimateContainerLayoutView(
             animateContainerSize: animateContainerSize,
             wrapped: self
         )

@@ -4,12 +4,12 @@ public final class _ElementNode: _Reconcilable {
 
     var domNode: ManagedDOMReference?
     var mountedModifieres: [AnyUnmountable]?
-    var layoutObservers: [any DOMLayoutObserver]?
+    var layoutObservers: [any DOMLayoutObserver] = []
 
     var childrenLayoutStatus: ChildrenLayoutStatus = .init()
 
     struct ChildrenLayoutStatus {
-        var isDirty: Bool = false
+        var isDirty = false
         var count: Int = 0
     }
 
@@ -78,21 +78,30 @@ public final class _ElementNode: _Reconcilable {
 
     func reportChangedChildren(_ change: ElementNodeChildrenChange, context: inout _RenderContext) {
         // TODO: count needed storage for children
+        // TODO: optimize for changes that do not require children re-run (leaving and re-entering nodes)
 
-        let wasClean = !childrenLayoutStatus.isDirty
-        if wasClean {
+        if !childrenLayoutStatus.isDirty {
             childrenLayoutStatus.isDirty = true
             context.scheduler.addPlacementAction(CommitAction(run: performLayout(_:)))
+
+            if let ref = domNode?.reference {
+                for observer in layoutObservers {
+                    observer.willLayoutChildren(parent: ref, context: &context)
+                }
+            }
         }
 
-        if wasClean,
-            let ref = domNode?.reference,
-            let observers = layoutObservers,
-            !observers.isEmpty
-        {
-            for observer in observers {
-                observer.willLayoutChildren(parent: ref, context: &context)
+        switch change {
+        case let .elementLeaving(node):
+            for observer in layoutObservers {
+                observer.setLeaveStatus(node, isLeaving: true, context: &context)
             }
+        case let .elementReentered(node):
+            for observer in layoutObservers {
+                observer.setLeaveStatus(node, isLeaving: false, context: &context)
+            }
+        default:
+            break
         }
     }
 
@@ -108,12 +117,26 @@ public final class _ElementNode: _Reconcilable {
             domNode?.status = .removed
             parentNode?.reportChangedChildren(.elementRemoved, context: &reconciler)
         case .cancelRemoval:
-            domNode?.status = .moved
-            parentNode?.reportChangedChildren(.elementAdded, context: &reconciler)
+            if domNode?.status == .removed {
+                domNode?.status = .moved
+                parentNode?.reportChangedChildren(.elementAdded, context: &reconciler)
+            } else {
+                guard let node = domNode?.reference else {
+                    assertionFailure("unitialized element in cancelRemoval")
+                    return
+                }
+                parentNode?.reportChangedChildren(.elementReentered(node), context: &reconciler)
+            }
         case .markAsMoved:
             assert(domNode != nil, "unitialized element in markAsMoved")
             domNode?.status = .moved
-            parentNode?.reportChangedChildren(.elementChanged, context: &reconciler)
+            parentNode?.reportChangedChildren(.elementMoved, context: &reconciler)
+        case .markAsLeaving:
+            guard let node = domNode?.reference else {
+                assertionFailure("unitialized element in markAsLeaving")
+                return
+            }
+            parentNode?.reportChangedChildren(.elementLeaving(node), context: &reconciler)
         }
     }
 
@@ -126,12 +149,10 @@ public final class _ElementNode: _Reconcilable {
         }
         self.mountedModifieres = nil
 
-        if let observers = layoutObservers {
-            for observer in observers {
-                observer.unmount(&context)
-            }
+        for observer in layoutObservers {
+            observer.unmount(&context)
         }
-        layoutObservers = nil
+        self.layoutObservers = []
 
         self.domNode = nil
         self.parentNode = nil
@@ -171,9 +192,6 @@ public final class _ElementNode: _Reconcilable {
                     sibling = entry.reference
                 case .removed:
                     context.dom.removeChild(entry.reference, from: ref)
-                case .leaving:
-                    sibling = entry.reference
-                    break
                 case .unchanged:
                     sibling = entry.reference
                     break
@@ -181,19 +199,27 @@ public final class _ElementNode: _Reconcilable {
             }
         }
 
-        if let observers = layoutObservers, !observers.isEmpty {
-            for observer in observers {
-                observer.didLayoutChildren(parent: ref, entries: ops.entries, context: &context)
-            }
+        for observer in layoutObservers {
+            observer.didLayoutChildren(parent: ref, entries: ops.entries, context: &context)
         }
     }
 }
 
 enum ElementNodeChildrenChange {
     case elementAdded
-    case elementChanged
-    // TODO: leaving?
+    case elementMoved
     case elementRemoved
+    case elementLeaving(DOM.Node)
+    case elementReentered(DOM.Node)
+
+    var requiresChildrenUpdate: Bool {
+        switch self {
+        case .elementAdded, .elementMoved, .elementRemoved:
+            true
+        case .elementLeaving, .elementReentered:
+            false
+        }
+    }
 }
 
 struct ManagedDOMReference: ~Copyable {

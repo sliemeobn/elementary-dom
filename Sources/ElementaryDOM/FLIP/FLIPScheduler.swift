@@ -10,10 +10,14 @@ final class FLIPScheduler {
     }
 
     func scheduleAnimationOf(_ nodes: [DOM.Node], inParent parentNode: DOM.Node, context: inout _RenderContext) {
+        logTrace("scheduling FLIP animations for \(nodes.count) nodes, animation: \(context.transaction.animation != nil)")
         let parentRect = dom.getBoundingClientRect(parentNode)
         for node in nodes {
-            // TODO: we should probably optimize for repeated call of same not to avoid re-calculating the scoped rect
-            // currently: last write wins
+            guard !scheduledAnimations.keys.contains(node) else {
+                logTrace("node \(node) already scheduled for animation")
+                continue
+            }
+            // TODO: we should probably merge stuff or do something better than just ignoring repeated calls
             scheduledAnimations[node] = ScheduledNode(
                 transaction: context.transaction,
                 geometry: getNodeGeometry(node, scopedTo: parentRect),
@@ -32,22 +36,75 @@ final class FLIPScheduler {
 
     func markAsRemoved(_ node: DOM.Node) {
         scheduledAnimations.removeValue(forKey: node)
-        runningAnimations.removeValue(forKey: node)
+        let running = runningAnimations.removeValue(forKey: node)
+        running?.cancelAll()
     }
 
-    func markAsLeaving(_ node: DOM.Node) {
-        // TODO: set absolut
+    func markAsLeaving(_ node: DOM.Node, isReentering: Bool = false) {
+        assert(scheduledAnimations[node] != nil, "node not scheduled for animation")
+
+        if dom.needsAbsolutePositioning(node) {
+            let rect = dom.getAbsolutePositionCoordinates(node)
+            scheduledAnimations[node]?.layoutAction = .moveAbsolute(rect: rect)
+        }
     }
 
     func commitScheduledAnimations(context: inout _CommitContext) {
-        logTrace("committing scheduled FLIP animations")
 
-        // undo all running animations that are effected
-        for node in scheduledAnimations.keys {
+        commitPreMeasurementChanges(context: &context)
+
+        measureLastAndCreateAnimations(context: &context)
+
+        progressAllAnimations(context: &context)
+    }
+
+    private func commitPreMeasurementChanges(context: inout _CommitContext) {
+
+        for (node, animation) in scheduledAnimations {
             // TODO: find a good way to preserve velocities of redirected animations
+            // TODO: preserve previous position if it was absolute
+            // undo all running animations that are effected
             runningAnimations[node]?.cancelAll()
-        }
 
+            switch animation.layoutAction {
+            case .none:
+                continue
+            case .moveAbsolute(let rect):
+                // Extract current style values before setting new ones
+                let stylePosition = context.dom.makeStyleAccessor(node, cssName: "position")
+                let styleLeft = context.dom.makeStyleAccessor(node, cssName: "left")
+                let styleTop = context.dom.makeStyleAccessor(node, cssName: "top")
+                let styleWidth = context.dom.makeStyleAccessor(node, cssName: "width")
+                let styleHeight = context.dom.makeStyleAccessor(node, cssName: "height")
+
+                // Extract previous style values for later reversal
+                let previousValues = PreviousStyleValues(
+                    position: stylePosition.get(),
+                    left: styleLeft.get(),
+                    top: styleTop.get(),
+                    width: styleWidth.get(),
+                    height: styleHeight.get()
+                )
+                // TODO: store previousValues for reversal when animation completes
+                _ = previousValues
+
+                logTrace(
+                    "setting position of node \(node) to absolute, left: \(rect.x)px, top: \(rect.y)px, width: \(rect.width)px, height: \(rect.height)px"
+                )
+
+                stylePosition.set("absolute")
+                styleLeft.set("\(rect.x)px")
+                styleTop.set("\(rect.y)px")
+                styleWidth.set("\(rect.width)px")
+                styleHeight.set("\(rect.height)px")
+            }
+        }
+    }
+
+    private func measureLastAndCreateAnimations(context: inout _CommitContext) {
+        // measures all last states and calculates all new animations
+
+        // parent rect cache
         let parentRects: [DOM.Node: DOM.Rect] = Dictionary(
             uniqueKeysWithValues: Set(scheduledAnimations.values.compactMap { $0.containerNode })
                 .compactMap { node -> (DOM.Node, DOM.Rect)? in
@@ -57,6 +114,9 @@ final class FLIPScheduler {
 
         // measure all LAST states
         for (node, animation) in scheduledAnimations {
+            // we keep these for cancelling running animations, but there is nothing new to schedule
+            guard animation.transaction.animation != nil else { continue }
+
             var lastGeometry: NodeGeometry
 
             if let parent = animation.containerNode, let parentRect = parentRects[parent] {
@@ -76,8 +136,10 @@ final class FLIPScheduler {
         }
 
         scheduledAnimations.removeAll()
+    }
 
-        // apply all changes
+    func progressAllAnimations(context: inout _CommitContext) {
+        // applies all changes of dirty animations and removes completed ones
         // TODO: optimize
         var removedNodes: [DOM.Node] = []
         for (node, animation) in runningAnimations {
@@ -96,10 +158,25 @@ final class FLIPScheduler {
 }
 
 private extension FLIPScheduler {
+
+    enum NodeLayoutAction {
+        case none
+        case moveAbsolute(rect: DOM.Rect)
+    }
+
+    struct PreviousStyleValues {
+        var position: String
+        var left: String
+        var top: String
+        var width: String
+        var height: String
+    }
+
     struct ScheduledNode {
-        let transaction: Transaction
-        let geometry: NodeGeometry
-        let containerNode: DOM.Node?
+        var transaction: Transaction
+        var geometry: NodeGeometry
+        var containerNode: DOM.Node?
+        var layoutAction: NodeLayoutAction = .none
     }
 
     struct NodeGeometry {
@@ -116,7 +193,7 @@ private extension FLIPScheduler {
                 return (x: boundingClientRect.x, y: boundingClientRect.y)
             }
         }
-        // NOTE: extend with transform of other stuff
+        // NOTE: extend with transform/rotate or other stuff
     }
 
     final class GeometryAnimation {
@@ -136,7 +213,7 @@ private extension FLIPScheduler {
             let dw = last.width - first.width
             let dh = last.height - first.height
 
-            // TODO: implement scale animation
+            // TODO: implement scale animation as option
 
             if shouldAnimateTranslation(dx, dy) {
                 self.translation = FLIPAnimation<CSSTransform.Translation>(
@@ -170,6 +247,7 @@ private extension FLIPScheduler {
         }
 
         func cancelAll() {
+            logTrace("cancelling all animations for node")
             self.translation?.cancel()
             self.width?.cancel()
             self.height?.cancel()
@@ -238,69 +316,31 @@ fileprivate extension FLIPScheduler {
     }
 }
 
-final class FLIPAnimation<Value: CSSAnimatable> {
-    private var node: DOM.Node
-    private var animatedValue: AnimatedValue<Value>
-    private var domAnimation: DOM.Animation?
-    private var isDirty: Bool
-
-    var isCompleted: Bool {
-        !animatedValue.isAnimating
-    }
-
-    init(node: DOM.Node, first: Value, last: Value, transaction: Transaction, frameTime: Double) {
-        self.node = node
-        self.animatedValue = AnimatedValue(value: first)
-
-        _ = self.animatedValue.setValueAndReturnIfAnimationWasStarted(last, transaction: transaction, frameTime: frameTime)
-        isDirty = true
-    }
-
-    func cancel() {
-        domAnimation?.cancel()
-        domAnimation = nil
-        animatedValue.cancelAnimation()
-    }
-
-    func commit(context: inout _CommitContext) {
-        if isDirty {
-            logTrace("committing dirty animation \(Value.CSSValue.styleKey)")
-            isDirty = false
-            let value = animatedValue.nextCSSAnimationValue(frameTime: context.currentFrameTime)
-
-            switch value {
-            case .single(_):
-                logTrace("cancelling animation \(Value.CSSValue.styleKey)")
-                domAnimation?.cancel()
-                domAnimation = nil
-            case .animated(let track):
-                let effect = DOM.Animation.KeyframeEffect(.animated(track), isFirst: false)
-                if let domAnimation = domAnimation {
-                    domAnimation.update(effect)
-                } else {
-                    // TODO: find a better way to schedule a callback here
-                    domAnimation = context.dom.animateElement(node, effect) { [scheduler = context.scheduler] in
-                        scheduler.registerAnimation(
-                            AnyAnimatable { context in
-                                logTrace("CSS animation of \(Value.CSSValue.styleKey) completed, marking dirty")
-                                self.animatedValue.progressToTime(context.currentFrameTime)
-                                self.isDirty = true
-                                // TODO: fix this nonsense
-                                context.scheduler.addCommitAction(CommitAction { _ in })
-                                return .completed
-                            }
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
 private func shouldAnimateSizeDelta(_ ds: Double) -> Bool {
     ds > 1 || ds < -1
 }
 
 private func shouldAnimateTranslation(_ dx: Double, _ dy: Double) -> Bool {
     dx > 1 || dx < -1 || dy > 1 || dy < -1
+}
+
+extension DOM.Interactor {
+    func needsAbsolutePositioning(_ node: DOM.Node) -> Bool {
+        let computedStyle = makeComputedStyleAccessor(node)
+        let position = computedStyle.get("position")
+        return position != "absolute" && position != "fixed"
+    }
+
+    func getAbsolutePositionCoordinates(_ node: DOM.Node) -> DOM.Rect {
+        let nodeRect = getBoundingClientRect(node)
+
+        if let positionedAncestor = getOffsetParent(node) {
+            logTrace("positioned ancestor: \(positionedAncestor)")
+            let ancestorRect = getBoundingClientRect(positionedAncestor)
+            logTrace("ancestor rect: \(ancestorRect)")
+            return DOM.Rect(x: nodeRect.x - ancestorRect.x, y: nodeRect.y - ancestorRect.y, width: nodeRect.width, height: nodeRect.height)
+        }
+
+        return nodeRect
+    }
 }

@@ -230,6 +230,13 @@ final class JSKitDOMInteractor: DOM.Interactor {
         )
     }
 
+    func getOffsetParent(_ node: DOM.Node) -> DOM.Node? {
+        if let offsetParent = node.jsObject.offsetParent.object {
+            return DOM.Node(offsetParent)
+        }
+        return nil
+    }
+
     func requestAnimationFrame(_ callback: @escaping (Double) -> Void) {
         // TODO: optimize this
         jsRequestAnimationFrame(

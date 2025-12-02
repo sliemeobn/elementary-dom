@@ -84,6 +84,8 @@ public final class _TransitionNode<T: Transition, V: View>: _Reconcilable {
                 return
             }
 
+            node?.apply(.markAsLeaving, &reconciler)
+
             // the patch does not go past the placeholder, so this only animates the transition
             T.Body._patchNode(
                 value.transition.body(content: placeholderView, phase: .didDisappear),
@@ -104,12 +106,15 @@ public final class _TransitionNode<T: Transition, V: View>: _Reconcilable {
             }
         case .cancelRemoval:
             // TODO: check this, stuff is for sure missing for reversible transitions
+            node?.apply(.cancelRemoval, &reconciler)
             T.Body._patchNode(
                 value.transition.body(content: placeholderView, phase: .identity),
                 node: node!,
                 reconciler: &reconciler
             )
         case .markAsMoved:
+            node?.apply(op, &reconciler)
+        case .markAsLeaving:
             node?.apply(op, &reconciler)
         }
     }

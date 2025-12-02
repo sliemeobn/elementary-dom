@@ -213,10 +213,13 @@ final class Scheduler {
     }
 
     private func progressAnimation(_ animation: AnyAnimatable) -> AnimationProgressResult {
+        var transaction = Transaction()
+        transaction.disablesAnimation = true
+
         var context = _RenderContext(
             scheduler: self,
             currentTime: currentFrameTime,
-            transaction: nil
+            transaction: transaction
         )
 
         let result = animation.progressAnimation(&context)

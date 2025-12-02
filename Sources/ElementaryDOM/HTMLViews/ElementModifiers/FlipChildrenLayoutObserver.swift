@@ -21,6 +21,11 @@ final class FLIPLayoutObserver: DOMLayoutObserver {
         }
     }
 
+    func setLeaveStatus(_ node: DOM.Node, isLeaving: Bool, context: inout _RenderContext) {
+        logTrace("setting leave status for node \(node) to \(isLeaving)")
+        context.scheduler.flip.markAsLeaving(node, isReentering: !isLeaving)
+    }
+
     func didLayoutChildren(parent: DOM.Node, entries: [ContainerLayoutPass.Entry], context: inout _CommitContext) {
         childNodes.removeAll(keepingCapacity: true)
         childNodes.reserveCapacity(entries.count)
@@ -29,9 +34,6 @@ final class FLIPLayoutObserver: DOMLayoutObserver {
             switch entry.kind {
             case .added, .unchanged, .moved:
                 childNodes.append(entry.reference)
-            case .leaving:
-                childNodes.append(entry.reference)
-                context.scheduler.flip.markAsLeaving(entry.reference)
             case .removed:
                 context.scheduler.flip.markAsRemoved(entry.reference)
             }

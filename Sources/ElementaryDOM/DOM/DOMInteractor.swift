@@ -27,6 +27,7 @@ public enum DOM {
 
         // Measurement API for FLIP animations
         func getBoundingClientRect(_ node: Node) -> Rect
+        func getOffsetParent(_ node: Node) -> Node?
 
         // Scroll offset API for FLIP animations
         func getScrollOffset() -> (x: Float, y: Float)

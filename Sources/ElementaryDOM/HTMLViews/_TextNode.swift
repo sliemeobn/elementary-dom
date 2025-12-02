@@ -48,11 +48,15 @@ public final class _TextNode: _Reconcilable {
         case .startRemoval:
             domNode?.status = .removed
             self.parentElement?.reportChangedChildren(.elementRemoved, context: &reconciler)
-        case .cancelRemoval:
-            fatalError("not implemented")
         case .markAsMoved:
             domNode?.status = .moved
-            self.parentElement?.reportChangedChildren(.elementChanged, context: &reconciler)
+            self.parentElement?.reportChangedChildren(.elementMoved, context: &reconciler)
+        case .cancelRemoval:
+            // a text node can not leave and re-enter
+            break
+        case .markAsLeaving:
+            // no-op
+            break
         }
     }
 

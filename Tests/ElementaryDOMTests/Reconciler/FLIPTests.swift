@@ -15,7 +15,7 @@ struct FLIPTests {
                     p { item }
                 }
             }
-            .animateChildren()
+            .animateContainerLayout()
         }
         dom.runNextFrame()
         dom.clearOps()
@@ -41,7 +41,7 @@ struct FLIPTests {
                     p { item }
                 }
             }
-            .animateChildren()
+            .animateContainerLayout()
         }
         dom.runNextFrame()
         dom.clearOps()
@@ -51,10 +51,12 @@ struct FLIPTests {
         dom.runNextFrame()
 
         // DOM should still be updated but no FLIP
-        #expect(dom.ops.contains { op in
-            if case .addChild = op { return true }
-            return false
-        })
+        #expect(
+            dom.ops.contains { op in
+                if case .addChild = op { return true }
+                return false
+            }
+        )
     }
 
     @Test
@@ -68,7 +70,7 @@ struct FLIPTests {
                     li { item }
                 }
             }
-            .animateChildren()
+            .animateContainerLayout()
         }
         dom.runNextFrame()
         dom.clearOps()
@@ -94,7 +96,7 @@ struct FLIPTests {
                     span { item }
                 }
             }
-            .animateChildren()
+            .animateContainerLayout()
         }
         dom.runNextFrame()
 
@@ -130,7 +132,7 @@ struct FLIPTests {
                             p { item }
                         }
                     }
-                    .animateChildren()
+                    .animateContainerLayout()
                 }
             }
         }
@@ -162,7 +164,7 @@ struct FLIPTests {
                     li { item }
                 }
             }
-            .animateChildren()
+            .animateContainerLayout()
         }
         dom.runNextFrame()
         dom.clearOps()

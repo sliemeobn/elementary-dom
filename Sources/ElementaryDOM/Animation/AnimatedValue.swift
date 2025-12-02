@@ -230,9 +230,9 @@ internal extension AnimatedValue {
 
         let wasAnimating = isAnimating
 
-        if !transaction.disablesAnimation,
-            let animation = transaction.animation
-        {
+        // TODO: really think about disablesAnimation flag and what it means - we need this at least for FLIP for now
+        //!transaction.disablesAnimation,
+        if let animation = transaction.animation {
             self.animate(
                 to: value,
                 startTime: frameTime,

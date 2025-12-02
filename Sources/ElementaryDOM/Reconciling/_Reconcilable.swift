@@ -12,6 +12,7 @@ public enum _ReconcileOp {
     case startRemoval
     case cancelRemoval
     case markAsMoved
+    case markAsLeaving
 }
 
 struct AnyReconcilable {

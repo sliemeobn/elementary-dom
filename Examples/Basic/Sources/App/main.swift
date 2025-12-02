@@ -1,4 +1,4 @@
 import ElementaryDOM
 import JavaScriptKit
 
-App().mount(in: .body)
+App().mount(in: .cssSelector("#app"))
