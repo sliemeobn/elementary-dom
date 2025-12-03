@@ -40,7 +40,7 @@ public final class _TextNode: _Reconcilable {
 
     public func collectChildren(_ ops: inout ContainerLayoutPass, _ context: inout _CommitContext) {
         assert(domNode != nil, "unitialized text node in layout pass")
-        domNode?.collectLayoutChanges(&ops)
+        domNode?.collectLayoutChanges(&ops, type: .text)
     }
 
     public func apply(_ op: _ReconcileOp, _ reconciler: inout _RenderContext) {
@@ -48,11 +48,15 @@ public final class _TextNode: _Reconcilable {
         case .startRemoval:
             domNode?.status = .removed
             self.parentElement?.reportChangedChildren(.elementRemoved, context: &reconciler)
-        case .cancelRemoval:
-            fatalError("not implemented")
         case .markAsMoved:
             domNode?.status = .moved
-            self.parentElement?.reportChangedChildren(.elementChanged, context: &reconciler)
+            self.parentElement?.reportChangedChildren(.elementMoved, context: &reconciler)
+        case .cancelRemoval:
+            // a text node can not leave and re-enter
+            break
+        case .markAsLeaving:
+            // no-op
+            break
         }
     }
 

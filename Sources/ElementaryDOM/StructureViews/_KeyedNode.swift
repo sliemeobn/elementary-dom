@@ -72,7 +72,7 @@ public final class _KeyedNode {
                         moversCache[offset] = consume node
                     } else {
                         node.apply(.startRemoval, &context)
-                        self.viewContext.parentElement?.reportChangedChildren(.elementChanged, context: &context)
+                        self.viewContext.parentElement?.reportChangedChildren(.elementMoved, context: &context)
                         leavingChildren.append(key, atIndex: offset, value: node)
                     }
                 case let .insert(offset, element: key, associatedWith: movedFrom):

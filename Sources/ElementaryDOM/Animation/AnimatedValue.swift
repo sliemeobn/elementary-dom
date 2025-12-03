@@ -225,19 +225,19 @@ private func calculateAnimationAtTime(
 }
 
 internal extension AnimatedValue {
-    mutating func setValueAndReturnIfAnimationWasStarted(_ value: Value, context: inout _RenderContext) -> Bool {
+    mutating func setValueAndReturnIfAnimationWasStarted(_ value: Value, transaction: borrowing Transaction, frameTime: Double) -> Bool {
         guard value != currentTarget else { return false }
 
         let wasAnimating = isAnimating
 
-        if !context.transaction.disablesAnimation,
-            let animation = context.transaction.animation
-        {
+        // TODO: really think about disablesAnimation flag and what it means - we need this at least for FLIP for now
+        //!transaction.disablesAnimation,
+        if let animation = transaction.animation {
             self.animate(
                 to: value,
-                startTime: context.currentFrameTime,
+                startTime: frameTime,
                 animation: animation,
-                tracker: context.transaction._animationTracker
+                tracker: transaction._animationTracker
             )
         } else {
             self.setValue(value)

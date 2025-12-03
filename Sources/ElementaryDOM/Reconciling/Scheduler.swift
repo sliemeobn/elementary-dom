@@ -18,6 +18,12 @@ struct CommitAction {
 }
 
 final class Scheduler {
+    // TODO: review the scheduling / timing of all this
+    // it seems a bit many "versions" of callback scheduling
+    // there are a few "one-shot" animation callbacks - maybe not ideal
+    // why not commit two transactions in one raf? no need to wait (better for layout)
+    // thinking about things like geometry reader and the like: we need to commit and re-read before paint ideally
+
     private var dom: any DOM.Interactor
 
     // Phase 1: View function updates (reconciliation)
@@ -36,6 +42,9 @@ final class Scheduler {
     // Continuous: Animations
     private var runningAnimations: [AnyAnimatable] = []
 
+    // TODO: ideally this could be a completely decoupled extensions-style thing, but for now it's just here
+    let flip: FLIPScheduler
+
     private var isAnimationFramePending: Bool = false
     private var currentTransaction: Transaction?
     private var currentFrameTime: Double = 0
@@ -47,6 +56,7 @@ final class Scheduler {
 
     init(dom: any DOM.Interactor) {
         self.dom = dom
+        self.flip = FLIPScheduler(dom: dom)  // TODO: make this more pluggable
     }
 
     func scheduleFunction(_ function: AnyFunctionNode) {
@@ -154,22 +164,25 @@ final class Scheduler {
     }
 
     private func flushCommitPlan() {
-        var context = _CommitContext(dom: dom, currentFrameTime: currentFrameTime)
+        var context = _CommitContext(
+            dom: dom,
+            scheduler: self,
+            currentFrameTime: currentFrameTime
+        )
         currentFrameTime = 0
 
-        // Phase 3a: DOM mutations
         for action in commitActions {
             action.run(&context)
         }
         commitActions.removeAll(keepingCapacity: true)
 
-        // Phase 3b: DOM placements (reversed order)
         for placement in placementActions.reversed() {
             placement.run(&context)
         }
         placementActions.removeAll(keepingCapacity: true)
 
-        // Phase 4: Next tick callbacks (onAppear, onDisappear)
+        flip.commitScheduledAnimations(context: &context)
+
         if !onNextTickCallbacks.isEmpty {
             let callbacks = onNextTickCallbacks
             onNextTickCallbacks.removeAll(keepingCapacity: true)
@@ -203,10 +216,13 @@ final class Scheduler {
     }
 
     private func progressAnimation(_ animation: AnyAnimatable) -> AnimationProgressResult {
+        var transaction = Transaction()
+        transaction.disablesAnimation = true
+
         var context = _RenderContext(
             scheduler: self,
             currentTime: currentFrameTime,
-            transaction: nil
+            transaction: transaction
         )
 
         let result = animation.progressAnimation(&context)

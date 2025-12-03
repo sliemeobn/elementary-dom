@@ -59,7 +59,8 @@ where Value: __FunctionView, ChildNode: _Reconcilable, ChildNode == Value.Body._
         if needsRerender {
             let didStartAnimation = animatedValue.setValueAndReturnIfAnimationWasStarted(
                 Value.__getAnimatableData(from: self.value!),
-                context: &context
+                transaction: context.transaction,
+                frameTime: context.currentFrameTime
             )
 
             if didStartAnimation == true {

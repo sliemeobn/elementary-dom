@@ -12,6 +12,10 @@ public extension View {
         onEvent(DOMEventHandlers.Click.self, handler: handler)
     }
 
+    consuming func onClick(_ handler: @escaping () -> Void) -> some View {
+        onClick { _ in handler() }
+    }
+
     consuming func onKeyDown(_ handler: @escaping (KeyboardEvent) -> Void) -> some View {
         onEvent(DOMEventHandlers.KeyDown.self, handler: handler)
     }

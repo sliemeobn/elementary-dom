@@ -10,6 +10,7 @@ public enum DOM {
 
         func makePropertyAccessor(_ node: Node, name: String) -> PropertyAccessor
         func makeStyleAccessor(_ node: Node, cssName: String) -> StyleAccessor
+        func makeComputedStyleAccessor(_ node: Node) -> ComputedStyleAccessor
 
         // Fine-grained style property operations
         func setStyleProperty(_ node: Node, name: String, value: String)
@@ -23,6 +24,13 @@ public enum DOM {
         func removeAttribute(_ node: Node, name: String)
 
         func animateElement(_ element: Node, _ effect: Animation.KeyframeEffect, onFinish: @escaping () -> Void) -> Animation
+
+        // Measurement API for FLIP animations
+        func getBoundingClientRect(_ node: Node) -> Rect
+        func getOffsetParent(_ node: Node) -> Node?
+
+        // Scroll offset API for FLIP animations
+        func getScrollOffset() -> (x: Double, y: Double)
 
         // Low-level DOM-like event listener APIs
         func addEventListener(_ node: Node, event: String, sink: EventSink)

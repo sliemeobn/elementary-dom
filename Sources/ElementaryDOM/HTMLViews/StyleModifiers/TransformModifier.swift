@@ -41,8 +41,8 @@ final class TransformModifier: DOMElementModifier {
 
 extension CSSTransform.AnyFunction {
     enum ValueSource {
-        case rotation(CSSValueSource<CSSRotation>)
-        case translation(CSSValueSource<CSSTranslation>)
+        case rotation(CSSValueSource<CSSTransform.Rotation>)
+        case translation(CSSValueSource<CSSTransform.Translation>)
 
         func makeInstance() -> AnyCSSAnimatedValueInstance<CSSTransform> {
             switch self {

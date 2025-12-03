@@ -6,6 +6,7 @@ public final class _TransitionNode<T: Transition, V: View>: _Reconcilable {
     private var placeholderNode: _PlaceholderNode?
     // a transition can theoretically duplicate the content node, but it will be rare
     private var additionalPlaceholderNodes: [_PlaceholderNode] = []
+    private var currentRemovalAnimationTime: Double?
 
     init(view: consuming _TransitionView<T, V>, context: borrowing _ViewContext, reconciler: inout _RenderContext) {
         self.value = view
@@ -84,6 +85,8 @@ public final class _TransitionNode<T: Transition, V: View>: _Reconcilable {
                 return
             }
 
+            node?.apply(.markAsLeaving, &reconciler)
+
             // the patch does not go past the placeholder, so this only animates the transition
             T.Body._patchNode(
                 value.transition.body(content: placeholderView, phase: .didDisappear),
@@ -91,7 +94,11 @@ public final class _TransitionNode<T: Transition, V: View>: _Reconcilable {
                 reconciler: &reconciler
             )
 
-            reconciler.transaction.addAnimationCompletion(criteria: .removed) { [scheduler = reconciler.scheduler] in
+            currentRemovalAnimationTime = reconciler.currentFrameTime
+
+            reconciler.transaction.addAnimationCompletion(criteria: .removed) {
+                [scheduler = reconciler.scheduler, frameTime = currentRemovalAnimationTime] in
+                guard let currentTime = self.currentRemovalAnimationTime, currentTime == frameTime else { return }
                 // TODO: think if this is the right scheduling, we remove the node in the frame after we flush the final values
                 // probably correct, actually...
                 scheduler.registerAnimation(
@@ -103,13 +110,17 @@ public final class _TransitionNode<T: Transition, V: View>: _Reconcilable {
                 )
             }
         case .cancelRemoval:
+            currentRemovalAnimationTime = nil
             // TODO: check this, stuff is for sure missing for reversible transitions
+            node?.apply(.cancelRemoval, &reconciler)
             T.Body._patchNode(
                 value.transition.body(content: placeholderView, phase: .identity),
                 node: node!,
                 reconciler: &reconciler
             )
         case .markAsMoved:
+            node?.apply(op, &reconciler)
+        case .markAsLeaving:
             node?.apply(op, &reconciler)
         }
     }

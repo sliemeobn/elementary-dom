@@ -114,6 +114,18 @@ final class JSKitDOMInteractor: DOM.Interactor {
         )
     }
 
+    func makeComputedStyleAccessor(_ node: DOM.Node) -> DOM.ComputedStyleAccessor {
+        let jsWindow = JSObject.global.window.object!
+        let computedStyle = jsWindow.getComputedStyle!(node.jsObject.jsValue).object!
+
+        return .init(
+            get: { cssName in
+                let propertyName = JSString(cssName)
+                return computedStyle.getPropertyValue!(propertyName.jsValue).string ?? ""
+            }
+        )
+    }
+
     func setStyleProperty(_ node: DOM.Node, name: String, value: String) {
         let style = node.jsObject.style
         _ = style.setProperty(JSString(name).jsValue, JSString(value).jsValue)
@@ -208,6 +220,23 @@ final class JSKitDOMInteractor: DOM.Interactor {
         _ = parent.jsObject.removeChild!(child.jsObject.jsValue)
     }
 
+    func getBoundingClientRect(_ node: DOM.Node) -> DOM.Rect {
+        let rect = node.jsObject.getBoundingClientRect!()
+        return DOM.Rect(
+            x: rect.x.number ?? 0,
+            y: rect.y.number ?? 0,
+            width: rect.width.number ?? 0,
+            height: rect.height.number ?? 0
+        )
+    }
+
+    func getOffsetParent(_ node: DOM.Node) -> DOM.Node? {
+        if let offsetParent = node.jsObject.offsetParent.object {
+            return DOM.Node(offsetParent)
+        }
+        return nil
+    }
+
     func requestAnimationFrame(_ callback: @escaping (Double) -> Void) {
         // TODO: optimize this
         jsRequestAnimationFrame(
@@ -239,6 +268,14 @@ final class JSKitDOMInteractor: DOM.Interactor {
 
     func getCurrentTime() -> Double {
         jsPerformance.now!().number! / 1000
+    }
+
+    func getScrollOffset() -> (x: Double, y: Double) {
+        let window = JSObject.global.window.object!
+        return (
+            x: window.scrollX.number ?? 0,
+            y: window.scrollY.number ?? 0
+        )
     }
 }
 

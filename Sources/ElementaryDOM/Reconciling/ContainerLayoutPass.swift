@@ -19,15 +19,20 @@ public struct ContainerLayoutPass: ~Copyable {
     }
 
     struct Entry {
+        enum NodeType {
+            case element
+            case text
+        }
+
         enum Status {
             case unchanged
             case added
-            case leaving  // TODO: something can be leaving and moved....
             case removed
             case moved
         }
 
         let kind: Status
         let reference: DOM.Node
+        let type: NodeType
     }
 }
