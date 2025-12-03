@@ -7,7 +7,7 @@ Create client-side web apps in Swift that weigh less than 200 kB.
 ## 🚧 Work In Progress 🚧
 Based on the [swift.org WebAssembly SDKs](https://forums.swift.org/t/swift-sdks-for-webassembly-now-available-on-swift-org/80405), [JavaScriptKit](https://github.com/swiftwasm/JavaScriptKit), and [Elementary](https://github.com/sliemeobn/elementary).
 
-For embedded builds, a recent main or 6.2 snapshot with matching *Swift SDKs for WebAssembly* from [swift.org](https://www.swift.org/install) is required.
+For embedded builds, Swift 6.2 or later with matching *Swift SDKs for WebAssembly* from [swift.org](https://www.swift.org/install) is required.
 
 > [!IMPORTANT]
 > ElementaryDOM is a passion project under active development.\
@@ -33,12 +33,15 @@ For embedded builds, a recent main or 6.2 snapshot with matching *Swift SDKs for
 - ~~transitions and animations (ideally CSS-based, probably svelte-like custom easing functions applied through WAAPI)~~
 - ~~better control over animations~~
 - ~~somehow migrate over to "var body" instead of "var content" (what was I thinking....)~~
-- automatic FLIP animations for certain layout changes (child-layout after changes, maybe size of containers)
+- ~~automatic FLIP animations for certain layout changes (child-layout after changes, maybe size of containers)~~
+- fix those Foundation imports, review thread-local + mutex usage
+- more built-in animatable CSS modifiers (colors, borders, borders?, blur)
 - basic phaseAnimator implementations
-- think about auto-flip animation for custom CSS values
+- implement auto-flip animation for custom CSS values (on value triggers)
+- maybe add "animateContainerLayout" modifier with value trigger (eg: to animate changes without child-changes)
 - support for combined and reversible transitions
 - mutli-select bindings (options, radio-buttons, tagged check boxes, ...)
-- proper unit testing (once APIs firm up a bit more, partially started)
+- more unit testing (FLIP handing, animations, reactivity, ...)
 - implement @ViewEquatableIgnored
 - split out JavaScriptKit stuff in separate module to contain spread, maybe one day we can switch to faster interop somehow
 - add basic docs, a good intro readme, and push a 0.1 out the door! (probably best to wait for Swift 6.2 to drop)
