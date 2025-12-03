@@ -32,9 +32,9 @@ public final class _KeyedNode {
 
     func patch<Node: _Reconcilable>(
         key: _ViewKey,
-        context: inout _RenderContext,
+        context: inout _TransactionContext,
         as: Node.Type = Node.self,
-        makeOrPatchNode: (inout Node?, borrowing _ViewContext, inout _RenderContext) -> Void
+        makeOrPatchNode: (inout Node?, borrowing _ViewContext, inout _TransactionContext) -> Void
     ) {
         patch(
             CollectionOfOne(key),
@@ -45,9 +45,9 @@ public final class _KeyedNode {
 
     func patch<Node: _Reconcilable>(
         _ newKeys: some BidirectionalCollection<_ViewKey>,
-        context: inout _RenderContext,
+        context: inout _TransactionContext,
         as: Node.Type = Node.self,
-        makeOrPatchNode: (Int, inout Node?, borrowing _ViewContext, inout _RenderContext) -> Void
+        makeOrPatchNode: (Int, inout Node?, borrowing _ViewContext, inout _TransactionContext) -> Void
     ) {
         // TODO: add fast-pass for empty key list
         let diff = newKeys.difference(from: keys).inferringMoves()
@@ -100,9 +100,9 @@ public final class _KeyedNode {
 }
 
 extension _KeyedNode: _Reconcilable {
-    public func apply(_ op: _ReconcileOp, _ reconciler: inout _RenderContext) {
+    public func apply(_ op: _ReconcileOp, _ tx: inout _TransactionContext) {
         for index in children.indices {
-            children[index]?.apply(op, &reconciler)
+            children[index]?.apply(op, &tx)
         }
     }
 

@@ -27,13 +27,13 @@ extension ForEach: _Mountable, View where Content: _KeyReadableView, Data: Colle
     public static func _makeNode(
         _ view: consuming Self,
         context: borrowing _ViewContext,
-        reconciler: inout _RenderContext
+        tx: inout _TransactionContext
     ) -> _MountedNode {
         _MountedNode(
             view._data
                 .map { value in
                     let view = view._contentBuilder(value)
-                    return (key: view._key, node: Content.Value._makeNode(view._value, context: context, reconciler: &reconciler))
+                    return (key: view._key, node: Content.Value._makeNode(view._value, context: context, tx: &tx))
                 },
             context: context
         )
@@ -42,18 +42,18 @@ extension ForEach: _Mountable, View where Content: _KeyReadableView, Data: Colle
     public static func _patchNode(
         _ view: consuming Self,
         node: _MountedNode,
-        reconciler: inout _RenderContext
+        tx: inout _TransactionContext
     ) {
         let views = view._data.map { value in view._contentBuilder(value) }
         node.patch(
             views.map { $0._key },
-            context: &reconciler,
+            context: &tx,
             as: Content.Value._MountedNode.self,
-        ) { index, node, context, r in
+        ) { index, node, context, tx in
             if node == nil {
-                node = Content.Value._makeNode(views[index]._value, context: context, reconciler: &r)
+                node = Content.Value._makeNode(views[index]._value, context: context, tx: &tx)
             } else {
-                Content.Value._patchNode(views[index]._value, node: node!, reconciler: &r)
+                Content.Value._patchNode(views[index]._value, node: node!, tx: &tx)
             }
         }
     }

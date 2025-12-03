@@ -1,7 +1,7 @@
 // TOOD: finally find a good name for this
-public struct _RenderContext: ~Copyable {
+public struct _TransactionContext: ~Copyable {
     let scheduler: Scheduler
-    var currentFrameTime: Double
+    let currentFrameTime: Double
     var transaction: Transaction
 
     private(set) var pendingFunctions: PendingFunctionQueue

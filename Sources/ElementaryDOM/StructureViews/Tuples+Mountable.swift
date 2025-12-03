@@ -7,21 +7,21 @@ extension _HTMLTuple2: _Mountable where V0: _Mountable, V1: _Mountable {
     public static func _makeNode(
         _ view: consuming Self,
         context: borrowing _ViewContext,
-        reconciler: inout _RenderContext
+        tx: inout _TransactionContext
     ) -> _MountedNode {
         _MountedNode(
-            V0._makeNode(view.v0, context: context, reconciler: &reconciler),
-            V1._makeNode(view.v1, context: context, reconciler: &reconciler)
+            V0._makeNode(view.v0, context: context, tx: &tx),
+            V1._makeNode(view.v1, context: context, tx: &tx)
         )
     }
 
     public static func _patchNode(
         _ view: consuming Self,
         node: _MountedNode,
-        reconciler: inout _RenderContext
+        tx: inout _TransactionContext
     ) {
-        V0._patchNode(view.v0, node: node.value.0, reconciler: &reconciler)
-        V1._patchNode(view.v1, node: node.value.1, reconciler: &reconciler)
+        V0._patchNode(view.v0, node: node.value.0, tx: &tx)
+        V1._patchNode(view.v1, node: node.value.1, tx: &tx)
     }
 }
 
@@ -32,23 +32,23 @@ extension _HTMLTuple3: _Mountable where V0: _Mountable, V1: _Mountable, V2: _Mou
     public static func _makeNode(
         _ view: consuming Self,
         context: borrowing _ViewContext,
-        reconciler: inout _RenderContext
+        tx: inout _TransactionContext
     ) -> _MountedNode {
         _MountedNode(
-            V0._makeNode(view.v0, context: context, reconciler: &reconciler),
-            V1._makeNode(view.v1, context: context, reconciler: &reconciler),
-            V2._makeNode(view.v2, context: context, reconciler: &reconciler)
+            V0._makeNode(view.v0, context: context, tx: &tx),
+            V1._makeNode(view.v1, context: context, tx: &tx),
+            V2._makeNode(view.v2, context: context, tx: &tx)
         )
     }
 
     public static func _patchNode(
         _ view: consuming Self,
         node: _MountedNode,
-        reconciler: inout _RenderContext
+        tx: inout _TransactionContext
     ) {
-        V0._patchNode(view.v0, node: node.value.0, reconciler: &reconciler)
-        V1._patchNode(view.v1, node: node.value.1, reconciler: &reconciler)
-        V2._patchNode(view.v2, node: node.value.2, reconciler: &reconciler)
+        V0._patchNode(view.v0, node: node.value.0, tx: &tx)
+        V1._patchNode(view.v1, node: node.value.1, tx: &tx)
+        V2._patchNode(view.v2, node: node.value.2, tx: &tx)
     }
 }
 
@@ -59,25 +59,25 @@ extension _HTMLTuple4: _Mountable where V0: _Mountable, V1: _Mountable, V2: _Mou
     public static func _makeNode(
         _ view: consuming Self,
         context: borrowing _ViewContext,
-        reconciler: inout _RenderContext
+        tx: inout _TransactionContext
     ) -> _MountedNode {
         _MountedNode(
-            V0._makeNode(view.v0, context: context, reconciler: &reconciler),
-            V1._makeNode(view.v1, context: context, reconciler: &reconciler),
-            V2._makeNode(view.v2, context: context, reconciler: &reconciler),
-            V3._makeNode(view.v3, context: context, reconciler: &reconciler)
+            V0._makeNode(view.v0, context: context, tx: &tx),
+            V1._makeNode(view.v1, context: context, tx: &tx),
+            V2._makeNode(view.v2, context: context, tx: &tx),
+            V3._makeNode(view.v3, context: context, tx: &tx)
         )
     }
 
     public static func _patchNode(
         _ view: consuming Self,
         node: _MountedNode,
-        reconciler: inout _RenderContext
+        tx: inout _TransactionContext
     ) {
-        V0._patchNode(view.v0, node: node.value.0, reconciler: &reconciler)
-        V1._patchNode(view.v1, node: node.value.1, reconciler: &reconciler)
-        V2._patchNode(view.v2, node: node.value.2, reconciler: &reconciler)
-        V3._patchNode(view.v3, node: node.value.3, reconciler: &reconciler)
+        V0._patchNode(view.v0, node: node.value.0, tx: &tx)
+        V1._patchNode(view.v1, node: node.value.1, tx: &tx)
+        V2._patchNode(view.v2, node: node.value.2, tx: &tx)
+        V3._patchNode(view.v3, node: node.value.3, tx: &tx)
     }
 }
 
@@ -88,27 +88,27 @@ extension _HTMLTuple5: _Mountable where V0: _Mountable, V1: _Mountable, V2: _Mou
     public static func _makeNode(
         _ view: consuming Self,
         context: borrowing _ViewContext,
-        reconciler: inout _RenderContext
+        tx: inout _TransactionContext
     ) -> _MountedNode {
         _MountedNode(
-            V0._makeNode(view.v0, context: context, reconciler: &reconciler),
-            V1._makeNode(view.v1, context: context, reconciler: &reconciler),
-            V2._makeNode(view.v2, context: context, reconciler: &reconciler),
-            V3._makeNode(view.v3, context: context, reconciler: &reconciler),
-            V4._makeNode(view.v4, context: context, reconciler: &reconciler)
+            V0._makeNode(view.v0, context: context, tx: &tx),
+            V1._makeNode(view.v1, context: context, tx: &tx),
+            V2._makeNode(view.v2, context: context, tx: &tx),
+            V3._makeNode(view.v3, context: context, tx: &tx),
+            V4._makeNode(view.v4, context: context, tx: &tx)
         )
     }
 
     public static func _patchNode(
         _ view: consuming Self,
         node: _MountedNode,
-        reconciler: inout _RenderContext
+        tx: inout _TransactionContext
     ) {
-        V0._patchNode(view.v0, node: node.value.0, reconciler: &reconciler)
-        V1._patchNode(view.v1, node: node.value.1, reconciler: &reconciler)
-        V2._patchNode(view.v2, node: node.value.2, reconciler: &reconciler)
-        V3._patchNode(view.v3, node: node.value.3, reconciler: &reconciler)
-        V4._patchNode(view.v4, node: node.value.4, reconciler: &reconciler)
+        V0._patchNode(view.v0, node: node.value.0, tx: &tx)
+        V1._patchNode(view.v1, node: node.value.1, tx: &tx)
+        V2._patchNode(view.v2, node: node.value.2, tx: &tx)
+        V3._patchNode(view.v3, node: node.value.3, tx: &tx)
+        V4._patchNode(view.v4, node: node.value.4, tx: &tx)
     }
 }
 
@@ -121,29 +121,29 @@ extension _HTMLTuple6: _Mountable where V0: _Mountable, V1: _Mountable, V2: _Mou
     public static func _makeNode(
         _ view: consuming Self,
         context: borrowing _ViewContext,
-        reconciler: inout _RenderContext
+        tx: inout _TransactionContext
     ) -> _MountedNode {
         _MountedNode(
-            V0._makeNode(view.v0, context: context, reconciler: &reconciler),
-            V1._makeNode(view.v1, context: context, reconciler: &reconciler),
-            V2._makeNode(view.v2, context: context, reconciler: &reconciler),
-            V3._makeNode(view.v3, context: context, reconciler: &reconciler),
-            V4._makeNode(view.v4, context: context, reconciler: &reconciler),
-            V5._makeNode(view.v5, context: context, reconciler: &reconciler)
+            V0._makeNode(view.v0, context: context, tx: &tx),
+            V1._makeNode(view.v1, context: context, tx: &tx),
+            V2._makeNode(view.v2, context: context, tx: &tx),
+            V3._makeNode(view.v3, context: context, tx: &tx),
+            V4._makeNode(view.v4, context: context, tx: &tx),
+            V5._makeNode(view.v5, context: context, tx: &tx)
         )
     }
 
     public static func _patchNode(
         _ view: consuming Self,
         node: _MountedNode,
-        reconciler: inout _RenderContext
+        tx: inout _TransactionContext
     ) {
-        V0._patchNode(view.v0, node: node.value.0, reconciler: &reconciler)
-        V1._patchNode(view.v1, node: node.value.1, reconciler: &reconciler)
-        V2._patchNode(view.v2, node: node.value.2, reconciler: &reconciler)
-        V3._patchNode(view.v3, node: node.value.3, reconciler: &reconciler)
-        V4._patchNode(view.v4, node: node.value.4, reconciler: &reconciler)
-        V5._patchNode(view.v5, node: node.value.5, reconciler: &reconciler)
+        V0._patchNode(view.v0, node: node.value.0, tx: &tx)
+        V1._patchNode(view.v1, node: node.value.1, tx: &tx)
+        V2._patchNode(view.v2, node: node.value.2, tx: &tx)
+        V3._patchNode(view.v3, node: node.value.3, tx: &tx)
+        V4._patchNode(view.v4, node: node.value.4, tx: &tx)
+        V5._patchNode(view.v5, node: node.value.5, tx: &tx)
     }
 }
 
@@ -156,13 +156,13 @@ extension _HTMLTuple: _Mountable where repeat each Child: _Mountable {
     public static func _makeNode(
         _ view: consuming Self,
         context: borrowing _ViewContext,
-        reconciler: inout _RenderContext
+        tx: inout _TransactionContext
     ) -> _MountedNode {
         _MountedNode(
             repeat makeNode(
                 each view.value,
                 context: context,
-                reconciler: &reconciler
+                tx: &tx
             )
         )
     }
@@ -170,12 +170,12 @@ extension _HTMLTuple: _Mountable where repeat each Child: _Mountable {
     public static func _patchNode(
         _ view: consuming Self,
         node: _MountedNode,
-        reconciler: inout _RenderContext
+        tx: inout _TransactionContext
     ) {
         // I don't think there is a way to spell this currently without warnings
         for (view, node) in repeat (each view.value, each node.value) {
             //__noop_goshDarnValuePacksAreAnnoyingAF(&view)  // this is to suppress a warning
-            patchNode(view, node: node, reconciler: &reconciler)
+            patchNode(view, node: node, tx: &tx)
         }
 
         // NOTE: this doesn't work because I don't think we can pass a value pack as inout
@@ -183,9 +183,8 @@ extension _HTMLTuple: _Mountable where repeat each Child: _Mountable {
         //     each view.value,
         //     context: context,
         //     node: each &node.value,
-        //     reconciler: &reconciler
+        //     tx: &tx
         // )
-
     }
 }
 
@@ -197,31 +196,16 @@ private func __noop_goshDarnValuePacksAreAnnoyingAF(_ v: inout some _Mountable) 
 private func makeNode<V: _Mountable>(
     _ view: consuming V,
     context: borrowing _ViewContext,
-    reconciler: inout _RenderContext
+    tx: inout _TransactionContext
 ) -> V._MountedNode {
-    V._makeNode(view, context: context, reconciler: &reconciler)
+    V._makeNode(view, context: context, tx: &tx)
 }
 
 private func patchNode<V: _Mountable>(
     _ view: consuming V,
     node: V._MountedNode,
-    reconciler: inout _RenderContext
+    tx: inout _TransactionContext
 ) {
-    V._patchNode(view, node: node, reconciler: &reconciler)
+    V._patchNode(view, node: node, tx: &tx)
 }
 #endif
-
-// func patch<each V: _Mountable>(
-//     _ views: (repeat each V),
-//     _ nodes: (repeat (each V).Node),
-//     context: consuming _ViewRenderingContext,
-//     reconciler: inout _ReconcilerBatch
-// ) {
-//     for var (view, node) in repeat (each views, each nodes) {
-//         patch(view, context: context, node: node, reconciler: &reconciler)
-//     }
-// }
-
-// func patch<V: _Mountable>(_ v: V, context: consuming _ViewRenderingContext, node: inout V.Node, reconciler: inout _ReconcilerBatch) {
-//     V._patchNode(v, context: context, node: node, reconciler: &reconciler)
-// }

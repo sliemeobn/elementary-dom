@@ -26,8 +26,8 @@ extension _StatefulNode: _Reconcilable {
         child.collectChildren(&ops, &context)
     }
 
-    public func apply(_ op: _ReconcileOp, _ reconciler: inout _RenderContext) {
-        child.apply(op, &reconciler)
+    public func apply(_ op: _ReconcileOp, _ tx: inout _TransactionContext) {
+        child.apply(op, &tx)
     }
 
     public func unmount(_ context: inout _CommitContext) {

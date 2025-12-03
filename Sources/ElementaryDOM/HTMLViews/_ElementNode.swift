@@ -18,8 +18,8 @@ public final class _ElementNode: _Reconcilable {
     init(
         tag: String,
         viewContext: borrowing _ViewContext,
-        context: inout _RenderContext,
-        makeChild: (borrowing _ViewContext, inout _RenderContext) -> AnyReconcilable
+        context: inout _TransactionContext,
+        makeChild: (borrowing _ViewContext, inout _TransactionContext) -> AnyReconcilable
     ) {
         precondition(viewContext.parentElement != nil, "parent element must be set")
         self.parentNode = viewContext.parentElement
@@ -51,8 +51,8 @@ public final class _ElementNode: _Reconcilable {
     init(
         root: DOM.Node,
         viewContext: consuming _ViewContext,
-        context: inout _RenderContext,
-        makeChild: (borrowing _ViewContext, inout _RenderContext) -> AnyReconcilable
+        context: inout _TransactionContext,
+        makeChild: (borrowing _ViewContext, inout _TransactionContext) -> AnyReconcilable
     ) {
         self.domNode = .init(reference: root, status: .unchanged)
         self.identifier = "\("_root_"):\(ObjectIdentifier(self))"
@@ -69,14 +69,14 @@ public final class _ElementNode: _Reconcilable {
     }
 
     func updateChild<Node: _Reconcilable>(
-        _ context: inout _RenderContext,
+        _ context: inout _TransactionContext,
         as: Node.Type = Node.self,
-        block: (_ node: Node, _ context: inout _RenderContext) -> Void
+        block: (_ node: Node, _ context: inout _TransactionContext) -> Void
     ) {
         block(self.child.unwrap(), &context)
     }
 
-    func reportChangedChildren(_ change: ElementNodeChildrenChange, context: inout _RenderContext) {
+    func reportChangedChildren(_ change: ElementNodeChildrenChange, context: inout _TransactionContext) {
         // TODO: count needed storage for children
         // TODO: optimize for changes that do not require children re-run (leaving and re-entering nodes)
 
@@ -110,33 +110,33 @@ public final class _ElementNode: _Reconcilable {
         self.domNode?.collectLayoutChanges(&ops, type: .element)
     }
 
-    public func apply(_ op: _ReconcileOp, _ reconciler: inout _RenderContext) {
+    public func apply(_ op: _ReconcileOp, _ tx: inout _TransactionContext) {
         switch op {
         case .startRemoval:
             assert(domNode != nil, "unitialized element in startRemoval")
             domNode?.status = .removed
-            parentNode?.reportChangedChildren(.elementRemoved, context: &reconciler)
+            parentNode?.reportChangedChildren(.elementRemoved, context: &tx)
         case .cancelRemoval:
             if domNode?.status == .removed {
                 domNode?.status = .moved
-                parentNode?.reportChangedChildren(.elementAdded, context: &reconciler)
+                parentNode?.reportChangedChildren(.elementAdded, context: &tx)
             } else {
                 guard let node = domNode?.reference else {
                     assertionFailure("unitialized element in cancelRemoval")
                     return
                 }
-                parentNode?.reportChangedChildren(.elementReentered(node), context: &reconciler)
+                parentNode?.reportChangedChildren(.elementReentered(node), context: &tx)
             }
         case .markAsMoved:
             assert(domNode != nil, "unitialized element in markAsMoved")
             domNode?.status = .moved
-            parentNode?.reportChangedChildren(.elementMoved, context: &reconciler)
+            parentNode?.reportChangedChildren(.elementMoved, context: &tx)
         case .markAsLeaving:
             guard let node = domNode?.reference else {
                 assertionFailure("unitialized element in markAsLeaving")
                 return
             }
-            parentNode?.reportChangedChildren(.elementLeaving(node), context: &reconciler)
+            parentNode?.reportChangedChildren(.elementLeaving(node), context: &tx)
         }
     }
 

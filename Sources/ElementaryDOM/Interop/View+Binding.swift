@@ -24,9 +24,9 @@ struct DOMEffectView<Effect: DOMElementModifier, Wrapped: View>: View {
     static func _makeNode(
         _ view: consuming Self,
         context: borrowing _ViewContext,
-        reconciler: inout _RenderContext
+        tx: inout _TransactionContext
     ) -> _MountedNode {
-        let effect = Effect(value: view.value, upstream: context.modifiers, &reconciler)
+        let effect = Effect(value: view.value, upstream: context.modifiers, &tx)
 
         #if hasFeature(Embedded)
         if __omg_this_was_annoying_I_am_false {
@@ -43,15 +43,15 @@ struct DOMEffectView<Effect: DOMElementModifier, Wrapped: View>: View {
         var context = copy context
         context.modifiers[Effect.key] = effect
 
-        return .init(state: effect, child: Wrapped._makeNode(view.wrapped, context: context, reconciler: &reconciler))
+        return .init(state: effect, child: Wrapped._makeNode(view.wrapped, context: context, tx: &tx))
     }
 
     static func _patchNode(
         _ view: consuming Self,
         node: _MountedNode,
-        reconciler: inout _RenderContext
+        tx: inout _TransactionContext
     ) {
-        node.state.updateValue(view.value, &reconciler)
-        Wrapped._patchNode(view.wrapped, node: node.child, reconciler: &reconciler)
+        node.state.updateValue(view.value, &tx)
+        Wrapped._patchNode(view.wrapped, node: node.child, tx: &tx)
     }
 }

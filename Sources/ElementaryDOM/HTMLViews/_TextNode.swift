@@ -4,7 +4,7 @@ public final class _TextNode: _Reconcilable {
     var isDirty: Bool = false
     var parentElement: _ElementNode?
 
-    init(_ newValue: String, viewContext: borrowing _ViewContext, context: inout _RenderContext) {
+    init(_ newValue: String, viewContext: borrowing _ViewContext, context: inout _TransactionContext) {
         self.value = newValue
         self.domNode = nil
         self.parentElement = viewContext.parentElement
@@ -20,7 +20,7 @@ public final class _TextNode: _Reconcilable {
         )
     }
 
-    func patch(_ newValue: String, context: inout _RenderContext) {
+    func patch(_ newValue: String, context: inout _TransactionContext) {
         let needsUpdate = !isDirty && !value.utf8Equals(newValue)
         self.value = newValue
 
@@ -43,14 +43,14 @@ public final class _TextNode: _Reconcilable {
         domNode?.collectLayoutChanges(&ops, type: .text)
     }
 
-    public func apply(_ op: _ReconcileOp, _ reconciler: inout _RenderContext) {
+    public func apply(_ op: _ReconcileOp, _ tx: inout _TransactionContext) {
         switch op {
         case .startRemoval:
             domNode?.status = .removed
-            self.parentElement?.reportChangedChildren(.elementRemoved, context: &reconciler)
+            self.parentElement?.reportChangedChildren(.elementRemoved, context: &tx)
         case .markAsMoved:
             domNode?.status = .moved
-            self.parentElement?.reportChangedChildren(.elementMoved, context: &reconciler)
+            self.parentElement?.reportChangedChildren(.elementMoved, context: &tx)
         case .cancelRemoval:
             // a text node can not leave and re-enter
             break

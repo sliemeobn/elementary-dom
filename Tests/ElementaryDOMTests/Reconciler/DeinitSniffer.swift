@@ -3,8 +3,8 @@ import ElementaryDOM
 struct DeinitSnifferView: View {
     static func _makeNode(
         _ view: consuming DeinitSnifferView,
-        context: consuming ElementaryDOM._ViewContext,
-        reconciler: inout ElementaryDOM._RenderContext
+        context: consuming _ViewContext,
+        tx: inout _TransactionContext
     ) -> _MountedNode {
         _MountedNode(callback: view.callback)
     }
@@ -12,17 +12,17 @@ struct DeinitSnifferView: View {
     static func _patchNode(
         _ view: consuming DeinitSnifferView,
         node: _MountedNode,
-        reconciler: inout ElementaryDOM._RenderContext
+        tx: inout _TransactionContext
     ) {
         node.callback = view.callback
     }
 
     class _MountedNode: _Reconcilable {
-        func apply(_ op: ElementaryDOM._ReconcileOp, _ reconciler: inout ElementaryDOM._RenderContext) {}
+        func apply(_ op: _ReconcileOp, _ tx: inout _TransactionContext) {}
 
-        func collectChildren(_ ops: inout ElementaryDOM.ContainerLayoutPass, _ context: inout ElementaryDOM._CommitContext) {}
+        func collectChildren(_ ops: inout ContainerLayoutPass, _ context: inout _CommitContext) {}
 
-        func unmount(_ context: inout ElementaryDOM._CommitContext) {
+        func unmount(_ context: inout _CommitContext) {
             print("sniffer unmount")
         }
 

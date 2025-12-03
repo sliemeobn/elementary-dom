@@ -11,12 +11,12 @@ final class EventModifier<Config: DOMEventHandlerConfig>: DOMElementModifier {
 
     private var value: Value
 
-    init(value: consuming @escaping Value, upstream: borrowing DOMElementModifiers, _ context: inout _RenderContext) {
+    init(value: consuming @escaping Value, upstream: borrowing DOMElementModifiers, _ context: inout _TransactionContext) {
         self.value = value
         self.upstream = upstream[EventModifier.key]
     }
 
-    func updateValue(_ value: consuming @escaping Value, _ context: inout _RenderContext) {
+    func updateValue(_ value: consuming @escaping Value, _ context: inout _TransactionContext) {
         self.value = value
     }
 

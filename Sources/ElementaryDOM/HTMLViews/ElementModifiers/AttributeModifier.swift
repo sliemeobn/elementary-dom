@@ -14,7 +14,7 @@ public final class _AttributeModifier: DOMElementModifier, Invalidateable {
         return combined
     }
 
-    init(value: consuming Value, upstream: borrowing DOMElementModifiers, _ context: inout _RenderContext) {
+    init(value: consuming Value, upstream: borrowing DOMElementModifiers, _ context: inout _TransactionContext) {
         self.lastValue = value
         self.upstream = upstream[_AttributeModifier.key]
         self.upstream?.tracker.addDependency(self)
@@ -27,7 +27,7 @@ public final class _AttributeModifier: DOMElementModifier, Invalidateable {
         #endif
     }
 
-    func updateValue(_ value: consuming Value, _ context: inout _RenderContext) {
+    func updateValue(_ value: consuming Value, _ context: inout _TransactionContext) {
         if value != lastValue {
             lastValue = value
             tracker.invalidateAll(&context)
@@ -39,7 +39,7 @@ public final class _AttributeModifier: DOMElementModifier, Invalidateable {
         return AnyUnmountable(MountedInstance(node, self, &context))
     }
 
-    func invalidate(_ context: inout _RenderContext) {
+    func invalidate(_ context: inout _TransactionContext) {
         self.tracker.invalidateAll(&context)
     }
 }
@@ -59,7 +59,7 @@ extension _AttributeModifier {
             updateDOMNode(&context)
         }
 
-        func invalidate(_ context: inout _RenderContext) {
+        func invalidate(_ context: inout _TransactionContext) {
             guard !isDirty else { return }
             logTrace("invalidating attribute modifier")
             isDirty = true

@@ -14,23 +14,23 @@ struct _TransactionModifierView<Wrapped: View, Value: Equatable>: View {
     public static func _makeNode(
         _ view: consuming Self,
         context: borrowing _ViewContext,
-        reconciler: inout _RenderContext
+        tx: inout _TransactionContext
     ) -> _MountedNode {
-        let node = Wrapped._makeNode(view.view, context: context, reconciler: &reconciler)
+        let node = Wrapped._makeNode(view.view, context: context, tx: &tx)
         return .init(state: .init(value: view.value), child: node)
     }
 
     public static func _patchNode(
         _ view: consuming Self,
         node: _MountedNode,
-        reconciler: inout _RenderContext
+        tx: inout _TransactionContext
     ) {
         if node.state.value != view.value {
             node.state.value = view.value
-            view.transactionModifier(&reconciler.transaction)
+            view.transactionModifier(&tx.transaction)
         }
 
-        Wrapped._patchNode(view.view, node: node.child, reconciler: &reconciler)
+        Wrapped._patchNode(view.view, node: node.child, tx: &tx)
     }
 }
 

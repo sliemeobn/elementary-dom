@@ -12,12 +12,6 @@ struct ViewMacroTests {
         MyView.__restoreState(storage, in: &view2)
         #expect(view2.number == 2)
     }
-
-    // @Test
-    // func statelessView() {
-    //     let view = StatelessView()
-    //     StatelessView._makeNode(view, context: .empty, reconciler: _ReconcilerBatch)
-    // }
 }
 
 @View

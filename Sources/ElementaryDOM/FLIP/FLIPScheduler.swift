@@ -11,7 +11,7 @@ final class FLIPScheduler {
         self.dom = dom
     }
 
-    func scheduleAnimationOf(_ nodes: [DOM.Node], inParent parentNode: DOM.Node, context: inout _RenderContext) {
+    func scheduleAnimationOf(_ nodes: [DOM.Node], inParent parentNode: DOM.Node, context: inout _TransactionContext) {
         if firstWindowScrollOffset == nil {
             storeWindowScrollOffset()
         }
@@ -31,7 +31,7 @@ final class FLIPScheduler {
         }
     }
 
-    func scheduleAnimationOf(_ node: DOM.Node, context: inout _RenderContext) {
+    func scheduleAnimationOf(_ node: DOM.Node, context: inout _TransactionContext) {
         if firstWindowScrollOffset == nil {
             storeWindowScrollOffset()
         }

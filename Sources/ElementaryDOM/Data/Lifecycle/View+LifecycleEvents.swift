@@ -62,10 +62,10 @@ struct _LifecycleEventView<Wrapped: View>: View {
     static func _makeNode(
         _ view: consuming Self,
         context: borrowing _ViewContext,
-        reconciler: inout _RenderContext
+        tx: inout _TransactionContext
     ) -> _MountedNode {
-        let state = LifecycleState(hook: view.listener, scheduler: reconciler.scheduler)
-        let child = Wrapped._makeNode(view.wrapped, context: context, reconciler: &reconciler)
+        let state = LifecycleState(hook: view.listener, scheduler: tx.scheduler)
+        let child = Wrapped._makeNode(view.wrapped, context: context, tx: &tx)
 
         let node = _StatefulNode(state: state, child: child)
         return node
@@ -74,7 +74,7 @@ struct _LifecycleEventView<Wrapped: View>: View {
     static func _patchNode(
         _ view: consuming Self,
         node: _MountedNode,
-        reconciler: inout _RenderContext
+        tx: inout _TransactionContext
     ) {
         switch view.listener {
         case .onUnmount(let callback):
@@ -84,6 +84,6 @@ struct _LifecycleEventView<Wrapped: View>: View {
             break
         }
 
-        Wrapped._patchNode(view.wrapped, node: node.child, reconciler: &reconciler)
+        Wrapped._patchNode(view.wrapped, node: node.child, tx: &tx)
     }
 }

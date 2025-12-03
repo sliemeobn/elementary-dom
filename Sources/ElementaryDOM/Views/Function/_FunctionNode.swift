@@ -23,7 +23,7 @@ where Value: __FunctionView, ChildNode: _Reconcilable, ChildNode == Value.Body._
     init(
         value: consuming Value,
         context: borrowing _ViewContext,
-        reconciler: inout _RenderContext
+        tx: inout _TransactionContext
     ) {
         self.depthInTree = context.functionDepth
 
@@ -41,10 +41,10 @@ where Value: __FunctionView, ChildNode: _Reconcilable, ChildNode == Value.Body._
         logTrace("added function \(identifier)")
 
         // we need to break here for scoped reactivity tracking
-        reconciler.addFunction(asFunctionNode, transaction: reconciler.transaction)
+        tx.addFunction(asFunctionNode, transaction: tx.transaction)
     }
 
-    func patch(_ value: consuming Value, context: inout _RenderContext) {
+    func patch(_ value: consuming Value, tx: inout _TransactionContext) {
         precondition(self.value != nil, "value must be set")
         precondition(self.context != nil, "context must be set")
 
@@ -59,29 +59,29 @@ where Value: __FunctionView, ChildNode: _Reconcilable, ChildNode == Value.Body._
         if needsRerender {
             let didStartAnimation = animatedValue.setValueAndReturnIfAnimationWasStarted(
                 Value.__getAnimatableData(from: self.value!),
-                transaction: context.transaction,
-                frameTime: context.currentFrameTime
+                transaction: tx.transaction,
+                frameTime: tx.currentFrameTime
             )
 
             if didStartAnimation == true {
-                context.scheduler.registerAnimation(.init(progressAnimation: self.progressAnimation(_:)))
+                tx.scheduler.registerAnimation(.init(progressAnimation: self.progressAnimation(_:)))
             }
 
-            context.addFunction(asFunctionNode, transaction: context.transaction)
+            tx.addFunction(asFunctionNode, transaction: tx.transaction)
         }
     }
 
-    func progressAnimation(_ context: inout _RenderContext) -> AnimationProgressResult {
+    func progressAnimation(_ tx: inout _TransactionContext) -> AnimationProgressResult {
         assert(!animatedValue.model.isEmpty, "animation should never be called without an animatable value")
         guard animatedValue.isAnimating else { return .completed }
 
-        animatedValue.progressToTime(context.currentFrameTime)
-        runFunction(reconciler: &context)
+        animatedValue.progressToTime(tx.currentFrameTime)
+        runFunction(tx: &tx)
 
         return animatedValue.isAnimating ? .stillRunning : .completed
     }
 
-    func runFunction(reconciler: inout _RenderContext) {
+    func runFunction(tx: inout _TransactionContext) {
         logTrace("running function \(identifier)")
 
         precondition(self.value != nil, "value must be set")
@@ -98,16 +98,16 @@ where Value: __FunctionView, ChildNode: _Reconcilable, ChildNode == Value.Body._
 
         let (newContent, session) = withReactiveTrackingSession {
             value.body
-        } onWillSet: { [scheduler = reconciler.scheduler, asFunctionNode = asFunctionNode!] in
+        } onWillSet: { [scheduler = tx.scheduler, asFunctionNode = asFunctionNode!] in
             scheduler.scheduleFunction(asFunctionNode)
         }
 
         self.trackingSession = session
 
         if child == nil {
-            self.child = Value.Body._makeNode(newContent, context: context!, reconciler: &reconciler)
+            self.child = Value.Body._makeNode(newContent, context: context!, tx: &tx)
         } else {
-            Value.Body._patchNode(newContent, node: child!, reconciler: &reconciler)
+            Value.Body._patchNode(newContent, node: child!, tx: &tx)
         }
     }
 }
@@ -118,8 +118,8 @@ extension _FunctionNode: _Reconcilable {
         child?.collectChildren(&ops, &context)
     }
 
-    public func apply(_ op: _ReconcileOp, _ reconciler: inout _RenderContext) {
-        child?.apply(op, &reconciler)
+    public func apply(_ op: _ReconcileOp, _ tx: inout _TransactionContext) {
+        child?.apply(op, &tx)
     }
 
     public consuming func unmount(_ context: inout _CommitContext) {

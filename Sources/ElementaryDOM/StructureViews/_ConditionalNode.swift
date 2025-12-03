@@ -31,50 +31,50 @@ public final class _ConditionalNode {
     }
 
     func patchWithA<NodeA: _Reconcilable>(
-        reconciler: inout _RenderContext,
-        makeNode: (borrowing _ViewContext, inout _RenderContext) -> NodeA,
-        updateNode: (NodeA, inout _RenderContext) -> Void
+        tx: inout _TransactionContext,
+        makeNode: (borrowing _ViewContext, inout _TransactionContext) -> NodeA,
+        updateNode: (NodeA, inout _TransactionContext) -> Void
     ) {
         switch state {
         case .a(let a):
-            updateNode(a.unwrap(), &reconciler)
+            updateNode(a.unwrap(), &tx)
             state = .a(a)
         case .b(let b):
-            let a = AnyReconcilable(makeNode(context, &reconciler))
-            b.apply(.startRemoval, &reconciler)
-            self.context.parentElement?.reportChangedChildren(.elementMoved, context: &reconciler)
+            let a = AnyReconcilable(makeNode(context, &tx))
+            b.apply(.startRemoval, &tx)
+            self.context.parentElement?.reportChangedChildren(.elementMoved, context: &tx)
             state = .aWithBLeaving(a, b)
         case .aWithBLeaving(let a, let b):
-            updateNode(a.unwrap(), &reconciler)
+            updateNode(a.unwrap(), &tx)
             state = .aWithBLeaving(a, b)
         case .bWithALeaving(let b, let a):
-            updateNode(a.unwrap(), &reconciler)
-            a.apply(.cancelRemoval, &reconciler)
-            b.apply(.startRemoval, &reconciler)
-            self.context.parentElement?.reportChangedChildren(.elementMoved, context: &reconciler)
+            updateNode(a.unwrap(), &tx)
+            a.apply(.cancelRemoval, &tx)
+            b.apply(.startRemoval, &tx)
+            self.context.parentElement?.reportChangedChildren(.elementMoved, context: &tx)
             state = .aWithBLeaving(a, b)
         }
     }
 
     func patchWithB<NodeB: _Reconcilable>(
-        reconciler: inout _RenderContext,
-        makeNode: (borrowing _ViewContext, inout _RenderContext) -> NodeB,
-        updateNode: (NodeB, inout _RenderContext) -> Void
+        tx: inout _TransactionContext,
+        makeNode: (borrowing _ViewContext, inout _TransactionContext) -> NodeB,
+        updateNode: (NodeB, inout _TransactionContext) -> Void
     ) {
         switch state {
         case .b(let b):
-            updateNode(b.unwrap(), &reconciler)
+            updateNode(b.unwrap(), &tx)
             state = .b(b)
         case .a(let a):
-            let b = AnyReconcilable(makeNode(context, &reconciler))
-            a.apply(.startRemoval, &reconciler)
-            self.context.parentElement?.reportChangedChildren(.elementMoved, context: &reconciler)
+            let b = AnyReconcilable(makeNode(context, &tx))
+            a.apply(.startRemoval, &tx)
+            self.context.parentElement?.reportChangedChildren(.elementMoved, context: &tx)
             state = .bWithALeaving(b, a)
         case .aWithBLeaving(let a, let b):
-            updateNode(b.unwrap(), &reconciler)
+            updateNode(b.unwrap(), &tx)
             state = .bWithALeaving(b, a)
         case .bWithALeaving(let b, let a):
-            updateNode(b.unwrap(), &reconciler)
+            updateNode(b.unwrap(), &tx)
             state = .bWithALeaving(b, a)
         }
     }
@@ -114,15 +114,15 @@ extension _ConditionalNode: _Reconcilable {
         }
     }
 
-    public func apply(_ op: _ReconcileOp, _ reconciler: inout _RenderContext) {
+    public func apply(_ op: _ReconcileOp, _ tx: inout _TransactionContext) {
         switch state {
         case .a(let a):
-            a.apply(op, &reconciler)
+            a.apply(op, &tx)
         case .b(let b):
-            b.apply(op, &reconciler)
+            b.apply(op, &tx)
         case .aWithBLeaving(let a, let b), .bWithALeaving(let b, let a):
-            a.apply(op, &reconciler)
-            b.apply(op, &reconciler)
+            a.apply(op, &tx)
+            b.apply(op, &tx)
         }
     }
 

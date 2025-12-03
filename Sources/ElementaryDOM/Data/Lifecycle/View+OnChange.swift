@@ -54,15 +54,15 @@ struct _OnChangeView<Wrapped: View, Value: Equatable>: View {
     static func _makeNode(
         _ view: consuming Self,
         context: borrowing _ViewContext,
-        reconciler: inout _RenderContext
+        tx: inout _TransactionContext
     ) -> _MountedNode {
         let state = State(value: view.value, action: view.action)
-        let child = Wrapped._makeNode(view.wrapped, context: context, reconciler: &reconciler)
+        let child = Wrapped._makeNode(view.wrapped, context: context, tx: &tx)
 
         if view.initial {
             let initialValue = view.value
             let action = view.action
-            reconciler.scheduler.afterReconcile {
+            tx.scheduler.afterReconcile {
                 action(initialValue, initialValue)
             }
         }
@@ -73,7 +73,7 @@ struct _OnChangeView<Wrapped: View, Value: Equatable>: View {
     static func _patchNode(
         _ view: consuming Self,
         node: _MountedNode,
-        reconciler: inout _RenderContext
+        tx: inout _TransactionContext
     ) {
         node.state.action = view.action
 
@@ -83,11 +83,11 @@ struct _OnChangeView<Wrapped: View, Value: Equatable>: View {
             node.state.value = newValue
 
             let action = view.action
-            reconciler.scheduler.afterReconcile {
+            tx.scheduler.afterReconcile {
                 action(oldValue, newValue)
             }
         }
 
-        Wrapped._patchNode(view.wrapped, node: node.child, reconciler: &reconciler)
+        Wrapped._patchNode(view.wrapped, node: node.child, tx: &tx)
     }
 }
