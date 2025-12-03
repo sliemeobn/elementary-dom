@@ -169,11 +169,9 @@ public final class _ElementNode: _Reconcilable {
         }
         childrenLayoutStatus.isDirty = false
 
-        // 1. Collect current children
         var ops = ContainerLayoutPass()  // TODO: initialize with count, could be allocationlessly somehow
         child!.collectChildren(&ops, &context)
 
-        // 2. Apply DOM changes
         if ops.canBatchReplace {
             if ops.isAllRemovals {
                 context.dom.replaceChildren([], in: ref)

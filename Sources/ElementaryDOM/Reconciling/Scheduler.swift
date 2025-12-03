@@ -18,6 +18,12 @@ struct CommitAction {
 }
 
 final class Scheduler {
+    // TODO: review the scheduling / timing of all this
+    // it seems a bit many "versions" of callback scheduling
+    // there are a few "one-shot" animation callbacks - maybe not ideal
+    // why not commit two transactions in one raf? no need to wait (better for layout)
+    // thinking about things like geometry reader and the like: we need to commit and re-read before paint ideally
+
     private var dom: any DOM.Interactor
 
     // Phase 1: View function updates (reconciliation)
@@ -99,7 +105,6 @@ final class Scheduler {
     /// Schedule a DOM operation for the commit phase (RAF)
     func addCommitAction(_ action: CommitAction) {
         commitActions.append(action)
-        scheduleFrameIfNecessary()
     }
 
     /// Schedule a DOM placement for the commit phase (RAF, runs in reverse order)
@@ -176,10 +181,8 @@ final class Scheduler {
         }
         placementActions.removeAll(keepingCapacity: true)
 
-        // Phase 3: Process FLIP animations (commit, measure LAST, apply)
         flip.commitScheduledAnimations(context: &context)
 
-        // Phase 5: Next tick callbacks (onAppear, onDisappear)
         if !onNextTickCallbacks.isEmpty {
             let callbacks = onNextTickCallbacks
             onNextTickCallbacks.removeAll(keepingCapacity: true)

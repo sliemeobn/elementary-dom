@@ -4,11 +4,6 @@ public struct _RenderContext: ~Copyable {
     var currentFrameTime: Double
     var transaction: Transaction
 
-    /// Accessor to scheduler's FLIPManager
-    var flip: FLIPScheduler {
-        scheduler.flip
-    }
-
     private(set) var pendingFunctions: PendingFunctionQueue
 
     init(
