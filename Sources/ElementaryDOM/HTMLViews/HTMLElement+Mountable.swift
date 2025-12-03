@@ -4,9 +4,9 @@ extension HTMLElement: _Mountable, View where Content: _Mountable {
     public static func _makeNode(
         _ view: consuming Self,
         context: borrowing _ViewContext,
-        reconciler: inout _RenderContext
+        tx: inout _TransactionContext
     ) -> _MountedNode {
-        let attributeModifier = _AttributeModifier(value: view._attributes, upstream: context.modifiers, &reconciler)
+        let attributeModifier = _AttributeModifier(value: view._attributes, upstream: context.modifiers, &tx)
 
         var context = copy context
         context.modifiers[_AttributeModifier.key] = attributeModifier
@@ -16,8 +16,8 @@ extension HTMLElement: _Mountable, View where Content: _Mountable {
             child: _ElementNode(
                 tag: self.Tag.name,
                 viewContext: context,
-                context: &reconciler,
-                makeChild: { viewContext, r in AnyReconcilable(Content._makeNode(view.content, context: viewContext, reconciler: &r)) }
+                context: &tx,
+                makeChild: { viewContext, r in AnyReconcilable(Content._makeNode(view.content, context: viewContext, tx: &r)) }
             )
         )
     }
@@ -25,15 +25,15 @@ extension HTMLElement: _Mountable, View where Content: _Mountable {
     public static func _patchNode(
         _ view: consuming Self,
         node: _MountedNode,
-        reconciler: inout _RenderContext
+        tx: inout _TransactionContext
     ) {
-        node.state.updateValue(view._attributes, &reconciler)
+        node.state.updateValue(view._attributes, &tx)
 
-        node.child.updateChild(&reconciler, as: Content._MountedNode.self) { child, r in
+        node.child.updateChild(&tx, as: Content._MountedNode.self) { child, r in
             Content._patchNode(
                 view.content,
                 node: child,
-                reconciler: &r
+                tx: &r
             )
         }
     }

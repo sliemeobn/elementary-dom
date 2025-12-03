@@ -8,13 +8,13 @@ final class OpacityModifier: DOMElementModifier {
 
     var value: CSSValueSource<CSSOpacity>
 
-    init(value: consuming Value, upstream: borrowing DOMElementModifiers, _ context: inout _RenderContext) {
+    init(value: consuming Value, upstream: borrowing DOMElementModifiers, _ context: inout _TransactionContext) {
         self.value = CSSValueSource(value: value)
         self.upstream = upstream[OpacityModifier.key]
         self.layerNumber = (self.upstream?.layerNumber ?? 0) + 1
     }
 
-    func updateValue(_ value: consuming Value, _ context: inout _RenderContext) {
+    func updateValue(_ value: consuming Value, _ context: inout _TransactionContext) {
         self.value.updateValue(value, &context)
     }
 

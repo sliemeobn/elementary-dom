@@ -12,9 +12,9 @@ public final class _TupleNode<each N: _Reconcilable>: _Reconcilable {
         }
     }
 
-    public func apply(_ op: _ReconcileOp, _ reconciler: inout _RenderContext) {
+    public func apply(_ op: _ReconcileOp, _ tx: inout _TransactionContext) {
         for value in repeat each value {
-            value.apply(op, &reconciler)
+            value.apply(op, &tx)
         }
     }
 
@@ -37,9 +37,9 @@ public final class _TupleNode2<N0: _Reconcilable, N1: _Reconcilable>: _Reconcila
         value.1.collectChildren(&ops, &context)
     }
 
-    public func apply(_ op: _ReconcileOp, _ reconciler: inout _RenderContext) {
-        value.0.apply(op, &reconciler)
-        value.1.apply(op, &reconciler)
+    public func apply(_ op: _ReconcileOp, _ tx: inout _TransactionContext) {
+        value.0.apply(op, &tx)
+        value.1.apply(op, &tx)
     }
 
     public consuming func unmount(_ context: inout _CommitContext) {
@@ -61,10 +61,10 @@ public final class _TupleNode3<N0: _Reconcilable, N1: _Reconcilable, N2: _Reconc
         value.2.collectChildren(&ops, &context)
     }
 
-    public func apply(_ op: _ReconcileOp, _ reconciler: inout _RenderContext) {
-        value.0.apply(op, &reconciler)
-        value.1.apply(op, &reconciler)
-        value.2.apply(op, &reconciler)
+    public func apply(_ op: _ReconcileOp, _ tx: inout _TransactionContext) {
+        value.0.apply(op, &tx)
+        value.1.apply(op, &tx)
+        value.2.apply(op, &tx)
     }
 
     public consuming func unmount(_ context: inout _CommitContext) {
@@ -88,11 +88,11 @@ public final class _TupleNode4<N0: _Reconcilable, N1: _Reconcilable, N2: _Reconc
         value.3.collectChildren(&ops, &context)
     }
 
-    public func apply(_ op: _ReconcileOp, _ reconciler: inout _RenderContext) {
-        value.0.apply(op, &reconciler)
-        value.1.apply(op, &reconciler)
-        value.2.apply(op, &reconciler)
-        value.3.apply(op, &reconciler)
+    public func apply(_ op: _ReconcileOp, _ tx: inout _TransactionContext) {
+        value.0.apply(op, &tx)
+        value.1.apply(op, &tx)
+        value.2.apply(op, &tx)
+        value.3.apply(op, &tx)
     }
 
     public consuming func unmount(_ context: inout _CommitContext) {
@@ -120,12 +120,12 @@ public final class _TupleNode5<N0: _Reconcilable, N1: _Reconcilable, N2: _Reconc
         value.4.collectChildren(&ops, &context)
     }
 
-    public func apply(_ op: _ReconcileOp, _ reconciler: inout _RenderContext) {
-        value.0.apply(op, &reconciler)
-        value.1.apply(op, &reconciler)
-        value.2.apply(op, &reconciler)
-        value.3.apply(op, &reconciler)
-        value.4.apply(op, &reconciler)
+    public func apply(_ op: _ReconcileOp, _ tx: inout _TransactionContext) {
+        value.0.apply(op, &tx)
+        value.1.apply(op, &tx)
+        value.2.apply(op, &tx)
+        value.3.apply(op, &tx)
+        value.4.apply(op, &tx)
     }
 
     public consuming func unmount(_ context: inout _CommitContext) {
@@ -162,13 +162,13 @@ public final class _TupleNode6<
         value.5.collectChildren(&ops, &context)
     }
 
-    public func apply(_ op: _ReconcileOp, _ reconciler: inout _RenderContext) {
-        value.0.apply(op, &reconciler)
-        value.1.apply(op, &reconciler)
-        value.2.apply(op, &reconciler)
-        value.3.apply(op, &reconciler)
-        value.4.apply(op, &reconciler)
-        value.5.apply(op, &reconciler)
+    public func apply(_ op: _ReconcileOp, _ tx: inout _TransactionContext) {
+        value.0.apply(op, &tx)
+        value.1.apply(op, &tx)
+        value.2.apply(op, &tx)
+        value.3.apply(op, &tx)
+        value.4.apply(op, &tx)
+        value.5.apply(op, &tx)
     }
 
     public consuming func unmount(_ context: inout _CommitContext) {

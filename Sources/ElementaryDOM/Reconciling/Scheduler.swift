@@ -1,7 +1,7 @@
 struct AnyFunctionNode {
     let identifier: ObjectIdentifier
     let depthInTree: Int
-    let runUpdate: (inout _RenderContext) -> Void
+    let runUpdate: (inout _TransactionContext) -> Void
 }
 
 enum AnimationProgressResult {
@@ -10,7 +10,7 @@ enum AnimationProgressResult {
 }
 
 struct AnyAnimatable {
-    let progressAnimation: (inout _RenderContext) -> AnimationProgressResult
+    let progressAnimation: (inout _TransactionContext) -> AnimationProgressResult
 }
 
 struct CommitAction {
@@ -50,7 +50,7 @@ final class Scheduler {
     private var currentFrameTime: Double = 0
 
     // TODO: this is a bit hacky, ideally we can use explicit dependencies on Environment
-    private var ambientRenderContext: _RenderContext?
+    private var ambientTransactionContext: _TransactionContext?
 
     private var needsFrame: Bool { !commitActions.isEmpty || !placementActions.isEmpty || !runningAnimations.isEmpty }
 
@@ -60,10 +60,10 @@ final class Scheduler {
     }
 
     func scheduleFunction(_ function: AnyFunctionNode) {
-        // NOTE: this is a bit of a hack to scheduel function in the same reconciler run if environment values change
+        // NOTE: this is a bit of a hack to scheduel function in the same transaction run if environment values change
         // we currently uses the same Reactivity tracking for environment changes, but they always happen during reconciliation
-        guard ambientRenderContext == nil else {
-            ambientRenderContext!.addFunction(function, transaction: ambientRenderContext!.transaction)
+        guard ambientTransactionContext == nil else {
+            ambientTransactionContext!.addFunction(function, transaction: ambientTransactionContext!.transaction)
             return
         }
 
@@ -97,6 +97,7 @@ final class Scheduler {
         scheduleFrameIfNecessary()
     }
 
+    // TODO: maybe move this onto the _TransactionContext itself?
     /// Schedule a callback to run after reconciliation completes (for onChange)
     func afterReconcile(_ callback: @escaping () -> Void) {
         afterReconcileCallbacks.append(callback)
@@ -117,11 +118,12 @@ final class Scheduler {
         onNextTickCallbacks.append(callback)
     }
 
-    func withAmbientRenderContext(_ context: inout _RenderContext, _ block: () -> Void) {
-        precondition(ambientRenderContext == nil, "ambient reconciliation already exists")
-        ambientRenderContext = consume context
+    // TODO: get rid of this
+    func withAmbientTransactionContext(_ context: inout _TransactionContext, _ block: () -> Void) {
+        precondition(ambientTransactionContext == nil, "ambient reconciliation already exists")
+        ambientTransactionContext = consume context
         block()
-        context = ambientRenderContext.take()!
+        context = ambientTransactionContext.take()!
     }
 
     private func reconcileTransaction() {
@@ -131,7 +133,7 @@ final class Scheduler {
         var functions = PendingFunctionQueue()
         swap(&pendingFunctionsQueue, &functions)
 
-        _RenderContext(
+        _TransactionContext(
             scheduler: self,
             currentTime: currentFrameTime,
             transaction: self.currentTransaction,
@@ -219,7 +221,7 @@ final class Scheduler {
         var transaction = Transaction()
         transaction.disablesAnimation = true
 
-        var context = _RenderContext(
+        var context = _TransactionContext(
             scheduler: self,
             currentTime: currentFrameTime,
             transaction: transaction

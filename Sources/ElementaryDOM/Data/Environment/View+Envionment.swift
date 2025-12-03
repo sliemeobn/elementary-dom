@@ -39,33 +39,34 @@ public struct _EnvironmentView<V, Wrapped: View>: View {
     public static func _makeNode(
         _ view: consuming Self,
         context: borrowing _ViewContext,
-        reconciler: inout _RenderContext
+        tx: inout _TransactionContext
     ) -> _MountedNode {
         var context = copy context
         let box = EnvironmentValues._Box<V>(view.value)
         context.environment.boxes[view.key.propertyID] = box
 
-        return .init(state: box, child: Wrapped._makeNode(view.wrapped, context: context, reconciler: &reconciler))
+        return .init(state: box, child: Wrapped._makeNode(view.wrapped, context: context, tx: &tx))
     }
 
     public static func _patchNode(
         _ view: consuming Self,
         node: _MountedNode,
-        reconciler: inout _RenderContext
+        tx: inout _TransactionContext
     ) {
         // IMPORTANT: _value does not cause access tracking!
         if view.isEqual?(node.state._value, view.value) ?? true {
             node.state._value = view.value
         } else {
-            // NOTE: a bit of a hack to allow dependent functions to run in the same reconciler run
-            reconciler.scheduler.withAmbientRenderContext(
-                &reconciler,
+            // TODO: rework this to explicit dependencies
+            // NOTE: a bit of a hack to allow dependent functions to run in the same transaction run
+            tx.scheduler.withAmbientTransactionContext(
+                &tx,
                 {
                     node.state.value = view.value
                 }
             )
         }
 
-        Wrapped._patchNode(view.wrapped, node: node.child, reconciler: &reconciler)
+        Wrapped._patchNode(view.wrapped, node: node.child, tx: &tx)
     }
 }

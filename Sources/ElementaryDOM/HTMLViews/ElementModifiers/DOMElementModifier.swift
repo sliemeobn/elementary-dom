@@ -3,8 +3,8 @@ protocol DOMElementModifier: AnyObject {
 
     static var key: DOMElementModifiers.Key<Self> { get }
 
-    init(value: consuming Value, upstream: borrowing DOMElementModifiers, _ context: inout _RenderContext)
-    func updateValue(_ value: consuming Value, _ context: inout _RenderContext)
+    init(value: consuming Value, upstream: borrowing DOMElementModifiers, _ context: inout _TransactionContext)
+    func updateValue(_ value: consuming Value, _ context: inout _TransactionContext)
 
     func mount(_ node: DOM.Node, _ context: inout _CommitContext) -> AnyUnmountable
 }
@@ -67,19 +67,19 @@ struct AnyUnmountable {
 }
 
 protocol Invalidateable {
-    func invalidate(_ context: inout _RenderContext)
+    func invalidate(_ context: inout _TransactionContext)
 }
 
 struct AnyInvalidateable: Equatable {
     fileprivate let ref: ObjectIdentifier
-    private let _invalidate: (inout _RenderContext) -> Void
+    private let _invalidate: (inout _TransactionContext) -> Void
 
     init(_ invalidateable: some Invalidateable & AnyObject) {
         self.ref = ObjectIdentifier(invalidateable)
         self._invalidate = invalidateable.invalidate(_:)
     }
 
-    func invalidate(_ context: inout _RenderContext) {
+    func invalidate(_ context: inout _TransactionContext) {
         _invalidate(&context)
     }
 
@@ -104,7 +104,7 @@ struct DependencyTracker: ~Copyable {
         dependencies.removeAll { $0.ref == ObjectIdentifier(dependency) }
     }
 
-    borrowing func invalidateAll(_ context: inout _RenderContext) {
+    borrowing func invalidateAll(_ context: inout _TransactionContext) {
         for dependency in dependencies {
             dependency.invalidate(&context)
         }

@@ -39,7 +39,7 @@ final class App<DOMInteractor: DOM.Interactor> {
                                         RootView._makeNode(
                                             rootView,
                                             context: viewContext,
-                                            reconciler: &context
+                                            tx: &context
                                         )
                                     )
                                 }

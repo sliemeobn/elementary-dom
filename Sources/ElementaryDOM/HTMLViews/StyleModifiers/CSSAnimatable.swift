@@ -53,7 +53,7 @@ final class CSSValueSource<Value: CSSAnimatable & Equatable> {
         self.value = value
     }
 
-    func updateValue(_ value: consuming Value, _ context: inout _RenderContext) {
+    func updateValue(_ value: consuming Value, _ context: inout _TransactionContext) {
         guard value != self.value else { return }
         self.value = value
         dependencies.invalidateAll(&context)
@@ -84,7 +84,7 @@ final class CSSValueSource<Value: CSSAnimatable & Equatable> {
             self.target = target
         }
 
-        func invalidate(_ context: inout _RenderContext) {
+        func invalidate(_ context: inout _TransactionContext) {
             _ = animatedValue.setValueAndReturnIfAnimationWasStarted(
                 source.value,
                 transaction: context.transaction,
@@ -93,7 +93,7 @@ final class CSSValueSource<Value: CSSAnimatable & Equatable> {
             updateValue(&context)
         }
 
-        func progressAnimation(_ context: inout _RenderContext) -> AnimationProgressResult {
+        func progressAnimation(_ context: inout _TransactionContext) -> AnimationProgressResult {
             animatedValue.progressToTime(context.currentFrameTime)
 
             updateValue(&context)
@@ -106,7 +106,7 @@ final class CSSValueSource<Value: CSSAnimatable & Equatable> {
             source.dependencies.removeDependency(self)
         }
 
-        private func updateValue(_ context: inout _RenderContext) {
+        private func updateValue(_ context: inout _TransactionContext) {
             value = animatedValue.nextCSSAnimationValue(frameTime: context.currentFrameTime)
             isDirty = true
             target?.invalidate(&context)
@@ -120,11 +120,11 @@ protocol CSSAnimatedValueInstance<CSSValue> {
     var isDirty: Bool { get nonmutating set }
     func setTarget(_ target: AnyInvalidateable)
     func unmount(_ context: inout _CommitContext)
-    func progressAnimation(_ context: inout _RenderContext) -> AnimationProgressResult
+    func progressAnimation(_ context: inout _TransactionContext) -> AnimationProgressResult
 }
 
 struct AnyCSSAnimatedValueInstance<CSSProperty: CSSPropertyValue>: CSSAnimatedValueInstance {
-    let _progressAnimation: (inout _RenderContext) -> AnimationProgressResult
+    let _progressAnimation: (inout _TransactionContext) -> AnimationProgressResult
     let _getValue: () -> CSSAnimatedValue<CSSProperty>
     let _getIsDirty: () -> Bool
     let _setIsDirty: (Bool) -> Void
@@ -140,7 +140,7 @@ struct AnyCSSAnimatedValueInstance<CSSProperty: CSSPropertyValue>: CSSAnimatedVa
         self._unmount = { value.unmount(&$0) }
     }
 
-    func progressAnimation(_ context: inout _RenderContext) -> AnimationProgressResult {
+    func progressAnimation(_ context: inout _TransactionContext) -> AnimationProgressResult {
         _progressAnimation(&context)
     }
 

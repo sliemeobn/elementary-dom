@@ -8,13 +8,13 @@ final class TransformModifier: DOMElementModifier {
 
     var value: CSSTransform.AnyFunction.ValueSource
 
-    init(value: consuming Value, upstream: borrowing DOMElementModifiers, _ context: inout _RenderContext) {
+    init(value: consuming Value, upstream: borrowing DOMElementModifiers, _ context: inout _TransactionContext) {
         self.value = value.makeSource()
         self.upstream = upstream[TransformModifier.key]
         self.layerNumber = (self.upstream?.layerNumber ?? 0) + 1
     }
 
-    func updateValue(_ value: consuming Value, _ context: inout _RenderContext) {
+    func updateValue(_ value: consuming Value, _ context: inout _TransactionContext) {
         switch (self.value, value) {
         case (.rotation(let rotation), .rotation(let newRotation)):
             rotation.updateValue(newRotation, &context)

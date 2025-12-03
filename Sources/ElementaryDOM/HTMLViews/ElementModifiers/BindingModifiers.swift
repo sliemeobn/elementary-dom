@@ -9,12 +9,12 @@ final class BindingModifier<Configuration>: DOMElementModifier, Unmountable wher
     var accessor: DOM.PropertyAccessor?
     var isDirty: Bool = false
 
-    init(value: consuming Value, upstream: borrowing DOMElementModifiers, _ context: inout _RenderContext) {
+    init(value: consuming Value, upstream: borrowing DOMElementModifiers, _ context: inout _TransactionContext) {
         self.lastValue = value.wrappedValue
         self.binding = value
     }
 
-    func updateValue(_ value: consuming Value, _ context: inout _RenderContext) {
+    func updateValue(_ value: consuming Value, _ context: inout _TransactionContext) {
         self.binding = value
 
         if !Configuration.equals(binding.wrappedValue, lastValue) {
@@ -23,7 +23,7 @@ final class BindingModifier<Configuration>: DOMElementModifier, Unmountable wher
         }
     }
 
-    private func markDirty(_ context: inout _RenderContext) {
+    private func markDirty(_ context: inout _TransactionContext) {
         precondition(mountedNode != nil, "Binding effect can only be marked dirty on a mounted element")
         guard !isDirty else { return }
         isDirty = true

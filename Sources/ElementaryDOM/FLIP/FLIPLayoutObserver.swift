@@ -10,7 +10,7 @@ final class FLIPLayoutObserver: DOMLayoutObserver {
         self.animateContainerSize = animateContainerSize
     }
 
-    func willLayoutChildren(parent: DOM.Node, context: inout _RenderContext) {
+    func willLayoutChildren(parent: DOM.Node, context: inout _TransactionContext) {
         guard !context.transaction.shouldSkipFLIP else {
             logTrace("skipping FLIP for children of parent \(parent) because transaction should skip FLIP")
             return
@@ -23,7 +23,7 @@ final class FLIPLayoutObserver: DOMLayoutObserver {
         }
     }
 
-    func setLeaveStatus(_ node: DOM.Node, isLeaving: Bool, context: inout _RenderContext) {
+    func setLeaveStatus(_ node: DOM.Node, isLeaving: Bool, context: inout _TransactionContext) {
         logTrace("setting leave status for node \(node) to \(isLeaving)")
         if isLeaving {
             context.scheduler.flip.markAsLeaving(node)

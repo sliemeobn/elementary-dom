@@ -5,11 +5,11 @@ extension Optional: _Mountable where Wrapped: _Mountable {
     public static func _makeNode(
         _ view: consuming Self,
         context: borrowing _ViewContext,
-        reconciler: inout _RenderContext
+        tx: inout _TransactionContext
     ) -> _MountedNode {
         switch view {
         case let .some(view):
-            return .init(a: Wrapped._makeNode(view, context: context, reconciler: &reconciler), context: context)
+            return .init(a: Wrapped._makeNode(view, context: context, tx: &tx), context: context)
         case .none:
             return .init(b: _EmptyNode(), context: context)
         }
@@ -18,18 +18,18 @@ extension Optional: _Mountable where Wrapped: _Mountable {
     public static func _patchNode(
         _ view: consuming Self,
         node: _MountedNode,
-        reconciler: inout _RenderContext
+        tx: inout _TransactionContext
     ) {
         switch view {
         case let .some(view):
             node.patchWithA(
-                reconciler: &reconciler,
-                makeNode: { c, r in Wrapped._makeNode(view, context: c, reconciler: &r) },
-                updateNode: { node, r in Wrapped._patchNode(view, node: node, reconciler: &r) }
+                tx: &tx,
+                makeNode: { c, tx in Wrapped._makeNode(view, context: c, tx: &tx) },
+                updateNode: { node, tx in Wrapped._patchNode(view, node: node, tx: &tx) }
             )
         case .none:
             node.patchWithB(
-                reconciler: &reconciler,
+                tx: &tx,
                 makeNode: { _, _ in _EmptyNode() },
                 updateNode: { _, _ in }
             )

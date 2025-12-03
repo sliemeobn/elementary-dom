@@ -4,13 +4,13 @@ extension _HTMLArray: _Mountable, View where Element: View {
     public static func _makeNode(
         _ view: consuming Self,
         context: borrowing _ViewContext,
-        reconciler: inout _RenderContext
+        tx: inout _TransactionContext
     ) -> _MountedNode {
         _MountedNode(
             view.value.enumerated().map { (index, element) in
                 (
                     key: _ViewKey(String(index)),
-                    node: Element._makeNode(element, context: context, reconciler: &reconciler)
+                    node: Element._makeNode(element, context: context, tx: &tx)
                 )
             },
             context: context
@@ -20,7 +20,7 @@ extension _HTMLArray: _Mountable, View where Element: View {
     public static func _patchNode(
         _ view: consuming Self,
         node: _MountedNode,
-        reconciler: inout _RenderContext
+        tx: inout _TransactionContext
     ) {
         // maybe we can optimize this
         // NOTE: written with cast for this https://github.com/swiftlang/swift/issues/83895
@@ -28,13 +28,13 @@ extension _HTMLArray: _Mountable, View where Element: View {
 
         node.patch(
             indexes,
-            context: &reconciler,
+            context: &tx,
             as: Element._MountedNode.self,
-            makeOrPatchNode: { index, node, context, r in
+            makeOrPatchNode: { index, node, context, tx in
                 if node == nil {
-                    node = Element._makeNode(view.value[index], context: context, reconciler: &r)
+                    node = Element._makeNode(view.value[index], context: context, tx: &tx)
                 } else {
-                    Element._patchNode(view.value[index], node: node!, reconciler: &r)
+                    Element._patchNode(view.value[index], node: node!, tx: &tx)
                 }
             }
         )

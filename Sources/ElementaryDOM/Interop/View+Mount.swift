@@ -39,12 +39,6 @@ public extension View {
     }
 
     consuming func mount(inNode domNode: JSObject) {
-        // _ = Reconciler(
-        //     dom: JSKitDOMInteractor(root: domNode),
-        //     root: Self._renderView(self, context: .empty)
-        // )
-
         _ = App(dom: JSKitDOMInteractor(root: domNode), root: self)
-        // _ = Reconciler<DummyDOMInteractor>(dom: DummyDOMInteractor(), root: Self._renderView(self, context: .empty))
     }
 }

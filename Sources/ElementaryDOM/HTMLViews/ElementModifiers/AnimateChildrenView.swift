@@ -10,7 +10,7 @@ struct AnimateContainerLayoutView<Wrapped: View>: View {
     static func _makeNode(
         _ view: consuming Self,
         context: borrowing _ViewContext,
-        reconciler: inout _RenderContext
+        tx: inout _TransactionContext
     ) -> _MountedNode {
 
         let observer = FLIPLayoutObserver(
@@ -22,17 +22,17 @@ struct AnimateContainerLayoutView<Wrapped: View>: View {
 
         return _MountedNode(
             state: observer,
-            child: Wrapped._makeNode(view.wrapped, context: context, reconciler: &reconciler)
+            child: Wrapped._makeNode(view.wrapped, context: context, tx: &tx)
         )
     }
 
     static func _patchNode(
         _ view: consuming Self,
         node: _MountedNode,
-        reconciler: inout _RenderContext
+        tx: inout _TransactionContext
     ) {
         node.state.update(animateContainerSize: view.animateContainerSize)
-        Wrapped._patchNode(view.wrapped, node: node.child, reconciler: &reconciler)
+        Wrapped._patchNode(view.wrapped, node: node.child, tx: &tx)
     }
 }
 

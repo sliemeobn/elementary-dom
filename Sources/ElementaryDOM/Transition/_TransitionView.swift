@@ -15,16 +15,16 @@ public struct _TransitionView<T: Transition, V: View>: View {
     public static func _makeNode(
         _ view: consuming Self,
         context: borrowing _ViewContext,
-        reconciler: inout _RenderContext
+        tx: inout _TransactionContext
     ) -> _MountedNode {
-        .init(view: view, context: context, reconciler: &reconciler)
+        .init(view: view, context: context, tx: &tx)
     }
 
     public static func _patchNode(
         _ view: consuming Self,
         node: _MountedNode,
-        reconciler: inout _RenderContext
+        tx: inout _TransactionContext
     ) {
-        node.update(view: view, context: &reconciler)
+        node.update(view: view, context: &tx)
     }
 }

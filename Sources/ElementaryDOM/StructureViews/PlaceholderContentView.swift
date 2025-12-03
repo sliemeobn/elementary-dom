@@ -1,7 +1,7 @@
 public struct PlaceholderContentView<Value>: View {
-    private var makeNodeFn: (borrowing _ViewContext, inout _RenderContext) -> _PlaceholderNode
+    private var makeNodeFn: (borrowing _ViewContext, inout _TransactionContext) -> _PlaceholderNode
 
-    init(makeNodeFn: @escaping (borrowing _ViewContext, inout _RenderContext) -> _PlaceholderNode) {
+    init(makeNodeFn: @escaping (borrowing _ViewContext, inout _TransactionContext) -> _PlaceholderNode) {
         self.makeNodeFn = makeNodeFn
     }
 }
@@ -12,15 +12,15 @@ extension PlaceholderContentView: _Mountable {
     public static func _makeNode(
         _ view: consuming Self,
         context: borrowing _ViewContext,
-        reconciler: inout _RenderContext
+        tx: inout _TransactionContext
     ) -> _MountedNode {
-        view.makeNodeFn(context, &reconciler)
+        view.makeNodeFn(context, &tx)
     }
 
     public static func _patchNode(
         _ view: consuming Self,
         node: _MountedNode,
-        reconciler: inout _RenderContext
+        tx: inout _TransactionContext
     ) {}
 }
 
@@ -31,8 +31,8 @@ public final class _PlaceholderNode: _Reconcilable {
         self.node = node
     }
 
-    public func apply(_ op: _ReconcileOp, _ reconciler: inout _RenderContext) {
-        node.apply(op, &reconciler)
+    public func apply(_ op: _ReconcileOp, _ tx: inout _TransactionContext) {
+        node.apply(op, &tx)
     }
 
     public func collectChildren(_ ops: inout ContainerLayoutPass, _ context: inout _CommitContext) {

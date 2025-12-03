@@ -8,62 +8,62 @@ public final class _TransitionNode<T: Transition, V: View>: _Reconcilable {
     private var additionalPlaceholderNodes: [_PlaceholderNode] = []
     private var currentRemovalAnimationTime: Double?
 
-    init(view: consuming _TransitionView<T, V>, context: borrowing _ViewContext, reconciler: inout _RenderContext) {
+    init(view: consuming _TransitionView<T, V>, context: borrowing _ViewContext, tx: inout _TransactionContext) {
         self.value = view
         placeholderView = PlaceholderContentView<T>(makeNodeFn: self.makePlaceholderNode)
 
         if let animation = value.animation {
-            reconciler.transaction.animation = animation
+            tx.transaction.animation = animation
         }
 
         // the idea is that with disablesAnimation set to true, only the top-level transition will be animated after a mount will be animated
-        guard reconciler.transaction.isAnimated == true else {
+        guard tx.transaction.isAnimated == true else {
             self.node = T.Body._makeNode(
                 self.value.transition.body(content: placeholderView!, phase: .identity),
                 context: context,
-                reconciler: &reconciler
+                tx: &tx
             )
             return
         }
 
-        let transaction = reconciler.transaction
+        let transaction = tx.transaction
 
-        reconciler.transaction.disablesAnimation = true
+        tx.transaction.disablesAnimation = true
         self.node = T.Body._makeNode(
             self.value.transition.body(content: placeholderView!, phase: .willAppear),
             context: context,
-            reconciler: &reconciler
+            tx: &tx
         )
 
         // NOTE: ideally we apply the animation before first-paint, but currently we DOM nodes mount their effect during commit
-        reconciler.scheduler.registerAnimation(
+        tx.scheduler.registerAnimation(
             AnyAnimatable { [self] context in
                 guard let node = self.node, let placeholderView = self.placeholderView else { return .completed }
                 context.transaction = transaction
                 T.Body._patchNode(
                     self.value.transition.body(content: placeholderView, phase: .identity),
                     node: node,
-                    reconciler: &context
+                    tx: &context
                 )
                 return .completed
             }
         )
     }
 
-    func update(view: consuming _TransitionView<T, V>, context: inout _RenderContext) {
+    func update(view: consuming _TransitionView<T, V>, context: inout _TransactionContext) {
         self.value = view
 
         if let placeholderNode {
-            V._patchNode(self.value.wrapped, node: placeholderNode.node.unwrap(), reconciler: &context)
+            V._patchNode(self.value.wrapped, node: placeholderNode.node.unwrap(), tx: &context)
         }
 
         for placeholder in additionalPlaceholderNodes {
-            V._patchNode(self.value.wrapped, node: placeholder.node.unwrap(), reconciler: &context)
+            V._patchNode(self.value.wrapped, node: placeholder.node.unwrap(), tx: &context)
         }
     }
 
-    private func makePlaceholderNode(context: borrowing _ViewContext, reconciler: inout _RenderContext) -> _PlaceholderNode {
-        let node = _PlaceholderNode(node: AnyReconcilable(V._makeNode(value.wrapped, context: context, reconciler: &reconciler)))
+    private func makePlaceholderNode(context: borrowing _ViewContext, tx: inout _TransactionContext) -> _PlaceholderNode {
+        let node = _PlaceholderNode(node: AnyReconcilable(V._makeNode(value.wrapped, context: context, tx: &tx)))
         if placeholderNode == nil {
             placeholderNode = node
         } else {
@@ -72,32 +72,32 @@ public final class _TransitionNode<T: Transition, V: View>: _Reconcilable {
         return node
     }
 
-    public func apply(_ op: _ReconcileOp, _ reconciler: inout _RenderContext) {
+    public func apply(_ op: _ReconcileOp, _ tx: inout _TransactionContext) {
         guard let placeholderView = placeholderView else { return }
         switch op {
         case .startRemoval:
             if let animation = value.animation {
-                reconciler.transaction.animation = animation
+                tx.transaction.animation = animation
             }
 
-            guard reconciler.transaction.isAnimated == true else {
-                node?.apply(op, &reconciler)
+            guard tx.transaction.isAnimated == true else {
+                node?.apply(op, &tx)
                 return
             }
 
-            node?.apply(.markAsLeaving, &reconciler)
+            node?.apply(.markAsLeaving, &tx)
 
             // the patch does not go past the placeholder, so this only animates the transition
             T.Body._patchNode(
                 value.transition.body(content: placeholderView, phase: .didDisappear),
                 node: node!,
-                reconciler: &reconciler
+                tx: &tx
             )
 
-            currentRemovalAnimationTime = reconciler.currentFrameTime
+            currentRemovalAnimationTime = tx.currentFrameTime
 
-            reconciler.transaction.addAnimationCompletion(criteria: .removed) {
-                [scheduler = reconciler.scheduler, frameTime = currentRemovalAnimationTime] in
+            tx.transaction.addAnimationCompletion(criteria: .removed) {
+                [scheduler = tx.scheduler, frameTime = currentRemovalAnimationTime] in
                 guard let currentTime = self.currentRemovalAnimationTime, currentTime == frameTime else { return }
                 // TODO: think if this is the right scheduling, we remove the node in the frame after we flush the final values
                 // probably correct, actually...
@@ -112,16 +112,16 @@ public final class _TransitionNode<T: Transition, V: View>: _Reconcilable {
         case .cancelRemoval:
             currentRemovalAnimationTime = nil
             // TODO: check this, stuff is for sure missing for reversible transitions
-            node?.apply(.cancelRemoval, &reconciler)
+            node?.apply(.cancelRemoval, &tx)
             T.Body._patchNode(
                 value.transition.body(content: placeholderView, phase: .identity),
                 node: node!,
-                reconciler: &reconciler
+                tx: &tx
             )
         case .markAsMoved:
-            node?.apply(op, &reconciler)
+            node?.apply(op, &tx)
         case .markAsLeaving:
-            node?.apply(op, &reconciler)
+            node?.apply(op, &tx)
         }
     }
 
