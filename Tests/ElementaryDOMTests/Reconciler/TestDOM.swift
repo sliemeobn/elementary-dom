@@ -1,5 +1,3 @@
-import Foundation
-
 @testable import ElementaryDOM
 
 private extension DOM.Event {

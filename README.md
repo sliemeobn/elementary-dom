@@ -34,7 +34,7 @@ For embedded builds, Swift 6.2 or later with matching *Swift SDKs for WebAssembl
 - ~~better control over animations~~
 - ~~somehow migrate over to "var body" instead of "var content" (what was I thinking....)~~
 - ~~automatic FLIP animations for certain layout changes (child-layout after changes, maybe size of containers)~~
-- fix those Foundation imports, review thread-local + mutex usage
+- ~~fix those Foundation imports, review thread-local + mutex usage~~
 - more built-in animatable CSS modifiers (colors, borders, borders?, blur)
 - basic phaseAnimator implementations
 - implement auto-flip animation for custom CSS values (on value triggers)
