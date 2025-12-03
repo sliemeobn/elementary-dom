@@ -20,6 +20,32 @@ struct ReactiveClassesTests {
         foo.one = "test"
         #expect(tracker.hasChanged)
     }
+
+    @Test
+    func tracksChangesInParellel() async {
+        await withTaskGroup { group in
+            for _ in 0..<1000 {
+                group.addTask {
+                    let foo = Foo()
+                    let tracker = ChangeTracker()
+                    await Task.yield()
+                    withReactiveTracking {
+                        _ = foo.one
+                    } onChange: {
+                        tracker.hasChanged = true
+                    }
+                    await Task.yield()
+                    foo.two = "test"
+                    await Task.yield()
+                    #expect(!tracker.hasChanged)
+                    await Task.yield()
+                    foo.one = "test"
+                    #expect(tracker.hasChanged)
+                }
+            }
+        }
+
+    }
 }
 
 final class ChangeTracker: Sendable {
