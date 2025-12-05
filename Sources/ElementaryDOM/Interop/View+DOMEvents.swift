@@ -16,6 +16,18 @@ public extension View {
         onClick { _ in handler() }
     }
 
+    consuming func onMouseDown(_ handler: @escaping (MouseEvent) -> Void) -> some View {
+        onEvent(DOMEventHandlers.MouseDown.self, handler: handler)
+    }
+
+    consuming func onMouseMove(_ handler: @escaping (MouseEvent) -> Void) -> some View {
+        onEvent(DOMEventHandlers.MouseMove.self, handler: handler)
+    }
+
+    consuming func onMouseUp(_ handler: @escaping (MouseEvent) -> Void) -> some View {
+        onEvent(DOMEventHandlers.MouseUp.self, handler: handler)
+    }
+
     consuming func onKeyDown(_ handler: @escaping (KeyboardEvent) -> Void) -> some View {
         onEvent(DOMEventHandlers.KeyDown.self, handler: handler)
     }
@@ -28,6 +40,21 @@ public extension View {
 enum DOMEventHandlers {
     enum Click: DOMEventHandlerConfig {
         static var name: String = "click"
+        typealias Event = MouseEvent
+    }
+
+    enum MouseDown: DOMEventHandlerConfig {
+        static var name: String = "mousedown"
+        typealias Event = MouseEvent
+    }
+
+    enum MouseMove: DOMEventHandlerConfig {
+        static var name: String = "mousemove"
+        typealias Event = MouseEvent
+    }
+
+    enum MouseUp: DOMEventHandlerConfig {
+        static var name: String = "mouseup"
         typealias Event = MouseEvent
     }
 
