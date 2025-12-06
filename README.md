@@ -69,5 +69,3 @@ This package is generally licensed as [Apache 2](LICENSE).
 
 The `Rectivity` module is inspired by the Swift stdlib's `Observation` framework, and code in `ReactivityMacros` is directly derived from it ([source](https://github.com/swiftlang/swift/tree/main/lib/Macros/Sources/ObservationMacros)).
 Find a copy of the Swift.org open source project license [here](LICENSE-swift_org.md).
-
-This project includes binaries from the [wasi-libc project](https://github.com/WebAssembly/wasi-libc), which is licensed under the Apache License 2.0 with LLVM Exceptions.
