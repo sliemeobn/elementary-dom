@@ -29,7 +29,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - uses: beeauvin/swiftly-swift@v1
+      - uses: swift-actions/setup-swift@v3
         with:
           swift-version: ${{ env.SWIFT_VERSION }}
       - name: Install Swift WASM SDK
