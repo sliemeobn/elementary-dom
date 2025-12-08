@@ -1,4 +1,4 @@
-// swift-tools-version:6.1
+// swift-tools-version:6.2
 import PackageDescription
 
 let package = Package(
@@ -6,7 +6,7 @@ let package = Package(
     platforms: [.macOS(.v15)],
     dependencies: [
         .package(path: "../../"),
-        .package(url: "https://github.com/sliemeobn/elementary-css", branch: "main"),
+        .package(url: "https://github.com/elementary-swift/elementary-css", branch: "main"),
         .package(url: "https://github.com/swiftwasm/JavaScriptKit.git", from: "0.36.0"),
     ],
     targets: [
