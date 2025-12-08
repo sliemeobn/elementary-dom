@@ -19,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        image: ["swift:6.1", "swift:6.2"]
+        image: ["swift:6.2"]
 
     container:
       image: ${{ matrix.image }}

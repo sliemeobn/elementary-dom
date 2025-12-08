@@ -1,6 +1,6 @@
 # "Swiftle" Example
 
-https://sliemeobn.github.io/elementary-dom/
+https://elementary-swift.github.io/elementary-dom/
 
 ## Run Locally
 
