@@ -1,7 +1,5 @@
-import Elementary
-
 // TODO: maybe this should not derive from HTML at all, or maybe HTML should already be "View" and _Mountable is an extra requirement for mounting?
-// TODO: think about how the square MainActor-isolation with server side usage
+// TODO: think about how to square MainActor-isolation with server side usage
 public protocol View<Tag>: HTML & _Mountable where Body: HTML & _Mountable {
 }
 

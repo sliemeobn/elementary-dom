@@ -1,5 +1,3 @@
-import Elementary
-
 public final class _AttributeModifier: DOMElementModifier, Invalidateable {
     typealias Value = _AttributeStorage
 

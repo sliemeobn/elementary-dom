@@ -1,5 +1,3 @@
-import Elementary
-
 final class OpacityModifier: DOMElementModifier {
     typealias Value = CSSOpacity
 

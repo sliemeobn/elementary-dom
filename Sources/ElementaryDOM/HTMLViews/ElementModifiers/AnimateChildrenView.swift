@@ -1,5 +1,3 @@
-import Elementary
-
 struct AnimateContainerLayoutView<Wrapped: View>: View {
     typealias Tag = Wrapped.Tag
     typealias _MountedNode = _StatefulNode<FLIPLayoutObserver, Wrapped._MountedNode>

@@ -1,5 +1,3 @@
-import Elementary
-
 public extension View {
     consuming func onEvent<Config: DOMEventHandlerConfig>(
         _ type: Config.Type,
