@@ -3,17 +3,28 @@ import CompilerPluginSupport
 import PackageDescription
 
 let package = Package(
-    name: "elementary-dom",
+    name: "elementary-ui",
     platforms: [.macOS(.v15)],
     products: [
-        .library(name: "ElementaryDOM", targets: ["ElementaryDOM", "Reactivity"])
+        .library(name: "ElementaryUI", targets: ["ElementaryUI", "Reactivity"])
+    ],
+    traits: [
+        .trait(name: "TraceLogs", description: "Enables trace logs for the ElementaryUI internals")
     ],
     dependencies: [
-        .package(url: "https://github.com/swiftwasm/JavaScriptKit", .upToNextMinor(from: "0.36.0")),
+        .package(url: "https://github.com/swiftwasm/JavaScriptKit", .upToNextMinor(from: "0.37.0")),
         .package(url: "https://github.com/elementary-swift/elementary", from: "0.6.0"),
         .package(url: "https://github.com/swiftlang/swift-syntax", "600.0.0"..<"603.0.0"),
     ],
     targets: [
+        .target(
+            name: "ElementaryUI",
+            dependencies: [
+                .product(name: "Elementary", package: "elementary"),
+                .target(name: "ElementaryDOM"),
+                .target(name: "Reactivity"),
+            ]
+        ),
         .target(
             name: "ElementaryDOM",
             dependencies: [

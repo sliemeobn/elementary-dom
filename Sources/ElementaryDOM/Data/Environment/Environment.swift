@@ -1,3 +1,5 @@
+import Reactivity
+
 @propertyWrapper
 public struct Environment<V> {
     enum Storage {
@@ -61,6 +63,8 @@ public struct EnvironmentValues {
     public typealias _Key<Value> = _StorageKey<Self, Value>
 
     var boxes: [PropertyID: AnyObject] = [:]
+
+    package init() {}
 
     public subscript<Value>(key: _Key<Value>) -> Value {
         get {

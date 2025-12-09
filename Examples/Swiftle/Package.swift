@@ -5,7 +5,7 @@ let package = Package(
     name: "Embedded",
     platforms: [.macOS(.v15)],
     dependencies: [
-        .package(path: "../../"),
+        .package(name: "elementary-ui", path: "../../"),
         .package(url: "https://github.com/elementary-swift/elementary-css", branch: "main"),
         .package(url: "https://github.com/swiftwasm/JavaScriptKit.git", from: "0.36.0"),
     ],
@@ -13,7 +13,7 @@ let package = Package(
         .executableTarget(
             name: "Swiftle",
             dependencies: [
-                .product(name: "ElementaryDOM", package: "elementary-dom"),
+                .product(name: "ElementaryUI", package: "elementary-ui"),
                 .product(name: "ElementaryCSS", package: "elementary-css"),
             ],
             linkerSettings: [

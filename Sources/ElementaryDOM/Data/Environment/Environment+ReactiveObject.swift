@@ -1,4 +1,6 @@
-internal extension ReactiveObject {
+import Reactivity
+
+package extension ReactiveObject {
     static var environmentKey: EnvironmentValues._Key<Self> {
         EnvironmentValues._Key(_$typeID)
     }

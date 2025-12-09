@@ -1,4 +1,4 @@
-import ElementaryDOM
+import ElementaryUI
 
 extension EnvironmentValues {
     @Entry var myText: String = ""
