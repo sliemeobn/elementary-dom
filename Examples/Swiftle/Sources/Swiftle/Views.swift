@@ -43,8 +43,8 @@ struct GameView {
                 "This is a proof of concept demo of an Embedded Swift Wasm app."
                 br()
                 "Find the source code in the "
-                a(.href("https://github.com/elementary-swift/elementary-dom")) {
-                    "elementary-dom github repository."
+                a(.href("https://github.com/elementary-swift/elementary-ui")) {
+                    "elementary-ui github repository."
                 }
                 .style(.color(.orange600))
                 .style(when: .hover, .textDecoration("underline"))

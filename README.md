@@ -10,7 +10,7 @@ Based on the [swift.org WebAssembly SDKs](https://forums.swift.org/t/swift-sdks-
 For embedded builds, Swift 6.2 or later with matching *Swift SDKs for WebAssembly* from [swift.org](https://www.swift.org/install) is required.
 
 > [!IMPORTANT]
-> ElementaryDOM is a passion project under active development.\
+> ElementaryUI is a passion project under active development.\
 > Expect sharp edges, APIs may change, and things may break while I balance performance, ergonomics, and feature set.
 >
 > Nothing is stopping us from having a viable, fully featured, client-side web frontend library powered by Swift.
