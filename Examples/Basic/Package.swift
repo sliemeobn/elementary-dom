@@ -1,11 +1,13 @@
 // swift-tools-version:6.2
 import PackageDescription
 
+let traceLogs = Context.environment["TRACE_LOGS"].flatMap { Bool($0) } ?? false
+
 let package = Package(
     name: "BasicExample",
     platforms: [.macOS(.v15)],
     dependencies: [
-        .package(name: "elementary-ui", path: "../../"),
+        .package(name: "elementary-ui", path: "../../", traits: traceLogs ? ["TraceLogs"] : []),
         .package(url: "https://github.com/swiftwasm/JavaScriptKit.git", from: "0.36.0"),
     ],
     targets: [
