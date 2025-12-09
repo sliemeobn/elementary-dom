@@ -1,3 +1,5 @@
+import Reactivity
+
 // TODO: find a better name for this, "function node" is weird terminology
 
 // NOTE: ChildNode must be specified as extra argument to avoid a compiler error in embedded

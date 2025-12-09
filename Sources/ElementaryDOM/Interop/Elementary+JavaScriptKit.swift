@@ -1,4 +1,3 @@
-import Elementary
 import JavaScriptKit
 
 extension DOM.Node {

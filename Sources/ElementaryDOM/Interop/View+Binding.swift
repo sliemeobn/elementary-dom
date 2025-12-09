@@ -1,5 +1,3 @@
-import Elementary
-
 public extension View where Tag == HTMLTag.input {
     consuming func bindValue(_ value: Binding<String>) -> some View {
         DOMEffectView<BindingModifier<TextBindingConfiguration>, Self>(value: value, wrapped: self)

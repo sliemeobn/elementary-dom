@@ -1,5 +1,3 @@
-import Elementary
-
 extension _HTMLTuple2: View where V0: View, V1: View {}
 extension _HTMLTuple2: _Mountable where V0: _Mountable, V1: _Mountable {
     public typealias _MountedNode = _TupleNode2<V0._MountedNode, V1._MountedNode>

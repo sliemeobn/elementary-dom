@@ -1,5 +1,3 @@
-import Elementary
-
 final class TransformModifier: DOMElementModifier {
     typealias Value = CSSTransform.AnyFunction
 

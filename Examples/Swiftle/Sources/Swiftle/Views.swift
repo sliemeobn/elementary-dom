@@ -1,5 +1,5 @@
 import ElementaryCSS
-import ElementaryDOM
+import ElementaryUI
 
 @View
 struct GameView {

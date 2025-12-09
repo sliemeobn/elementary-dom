@@ -1,5 +1,3 @@
-import Elementary
-
 protocol DOMLayoutObserver: Unmountable {
     func willLayoutChildren(parent: DOM.Node, context: inout _TransactionContext)
     func setLeaveStatus(_ node: DOM.Node, isLeaving: Bool, context: inout _TransactionContext)

@@ -1,3 +1,5 @@
+import Reactivity
+
 public struct _StorageKey<Container, Value>: Sendable {
     private let defaultValueClosure: (@Sendable () -> sending Value)?
     public let propertyID: PropertyID

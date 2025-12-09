@@ -1,5 +1,3 @@
-import Elementary
-
 public extension View {
     /// Adds an action to perform when the given value changes.
     ///

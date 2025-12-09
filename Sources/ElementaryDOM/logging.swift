@@ -1,9 +1,7 @@
 @inline(__always)
 func logTrace(_ message: @autoclosure () -> String) {
-    #if DEBUG  // TODO: make this conditional somehow
-    if true {
-        print(message())
-    }
+    #if TraceLogs
+    print(message())
     #endif
 }
 
