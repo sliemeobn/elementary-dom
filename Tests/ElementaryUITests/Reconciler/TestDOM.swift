@@ -1,4 +1,4 @@
-@testable import ElementaryDOM
+@testable import ElementaryUI
 
 private extension DOM.Event {
     //init(_ event: TestDOM) { self.init(ref: event) }

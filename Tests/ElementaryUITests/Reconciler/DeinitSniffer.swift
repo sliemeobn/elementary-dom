@@ -1,4 +1,4 @@
-import ElementaryDOM
+import ElementaryUI
 
 struct DeinitSnifferView: View {
     static func _makeNode(

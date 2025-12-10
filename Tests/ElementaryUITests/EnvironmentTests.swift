@@ -1,7 +1,7 @@
 import Reactivity
 import Testing
 
-@testable import ElementaryDOM
+@testable import ElementaryUI
 
 @Suite
 struct EnvionmentTests {

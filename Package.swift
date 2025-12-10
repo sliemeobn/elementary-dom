@@ -22,16 +22,8 @@ let package = Package(
             name: "ElementaryUI",
             dependencies: [
                 .product(name: "Elementary", package: "elementary"),
-                .target(name: "ElementaryDOM"),
-                .target(name: "Reactivity"),
-            ]
-        ),
-        .target(
-            name: "ElementaryDOM",
-            dependencies: [
-                .product(name: "Elementary", package: "elementary"),
                 .product(name: "JavaScriptKit", package: "JavaScriptKit"),
-                .target(name: "ElementaryDOMMacros"),
+                .target(name: "ElementaryUIMacros"),
                 .target(name: "Reactivity"),
                 .target(name: "_ElementaryMath"),
             ],
@@ -49,7 +41,7 @@ let package = Package(
             ]
         ),
         .macro(
-            name: "ElementaryDOMMacros",
+            name: "ElementaryUIMacros",
             dependencies: [
                 .product(name: "SwiftSyntax", package: "swift-syntax"),
                 .product(name: "SwiftSyntaxBuilder", package: "swift-syntax"),
@@ -58,8 +50,8 @@ let package = Package(
             ]
         ),
         .testTarget(
-            name: "ElementaryDOMTests",
-            dependencies: ["ElementaryDOM"]
+            name: "ElementaryUITests",
+            dependencies: ["ElementaryUI"]
         ),
         /// --- REACTIVITY ---
         .target(

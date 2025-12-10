@@ -36,7 +36,7 @@
     named(__arePropertiesEqual)
 )
 @attached(memberAttribute)
-public macro View() = #externalMacro(module: "ElementaryDOMMacros", type: "ViewMacro")
+public macro View() = #externalMacro(module: "ElementaryUIMacros", type: "ViewMacro")
 
 /// Creates an environment key from a key path to an environment value.
 ///
@@ -58,7 +58,7 @@ public macro View() = #externalMacro(module: "ElementaryDOMMacros", type: "ViewM
 /// - Returns: A typed environment key that can be used with ``View/environment(_:_:)``.
 @freestanding(expression)
 public macro Key<Value>(_: KeyPath<EnvironmentValues, Value>) -> EnvironmentValues._Key<Value> =
-    #externalMacro(module: "ElementaryDOMMacros", type: "EnvironmentKeyMacro")
+    #externalMacro(module: "ElementaryUIMacros", type: "EnvironmentKeyMacro")
 
 /// Creates a binding to a nested property for two-way data flow.
 ///
@@ -94,7 +94,7 @@ public macro Key<Value>(_: KeyPath<EnvironmentValues, Value>) -> EnvironmentValu
 /// - Returns: A ``Binding`` that can read and write to the nested property.
 @freestanding(expression)
 public macro Binding<Value>(_ valueExpression: Value) -> Binding<Value> =
-    #externalMacro(module: "ElementaryDOMMacros", type: "BindingMacro")
+    #externalMacro(module: "ElementaryUIMacros", type: "BindingMacro")
 
 /// Marks a property as an environment value entry.
 ///
@@ -121,4 +121,4 @@ public macro Binding<Value>(_ valueExpression: Value) -> Binding<Value> =
 /// ```
 @attached(accessor, names: named(get), named(set))
 @attached(peer, names: prefixed(_$key_))
-public macro Entry() = #externalMacro(module: "ElementaryDOMMacros", type: "EntryMacro")
+public macro Entry() = #externalMacro(module: "ElementaryUIMacros", type: "EntryMacro")

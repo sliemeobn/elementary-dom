@@ -1,4 +1,4 @@
-import ElementaryDOM
+import ElementaryUI
 import Testing
 
 struct DOMMountingTests {
