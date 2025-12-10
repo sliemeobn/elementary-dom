@@ -2,7 +2,7 @@
 ///
 /// Use the `var body` property to define the view's content.
 ///
-/// Apply this macro to a struct to make it conform to the view protocol and enable
+/// Apply this macro to a struct to make it conform to the ``View`` protocol and enable
 /// automatic state management. The macro generates the necessary infrastructure for:
 /// - View lifecycle management
 /// - ``State`` and ``Environment`` property handling
@@ -55,7 +55,7 @@ public macro View() = #externalMacro(module: "ElementaryDOMMacros", type: "ViewM
 /// ```
 ///
 /// - Parameter keyPath: A key path to a property on ``EnvironmentValues``.
-/// - Returns: A typed environment key that can be used with ``View/environment(_:_:)-5xjk7``.
+/// - Returns: A typed environment key that can be used with ``View/environment(_:_:)``.
 @freestanding(expression)
 public macro Key<Value>(_: KeyPath<EnvironmentValues, Value>) -> EnvironmentValues._Key<Value> =
     #externalMacro(module: "ElementaryDOMMacros", type: "EnvironmentKeyMacro")

@@ -1,9 +1,9 @@
 import Reactivity
 
 // Type-erased node reference
-public enum DOM {
+enum DOM {
     // TODO: remove anyobject and make reconcier runs generic over this
-    public protocol Interactor: AnyObject {
+    protocol Interactor: AnyObject {
         var root: Node { get }
 
         func makeEventSink(_ handler: @escaping (String, Event) -> Void) -> EventSink

@@ -8,7 +8,7 @@
 ///
 /// You typically create bindings using one of these approaches:
 ///
-/// 1. **From State**: Use the `$` prefix on a ``State`` property (in a ``@View()`` type):
+/// 1. **From State**: Use the `$` prefix on a ``State`` property (in a ``View()-macro`` type):
 /// ```swift
 /// @State var text: String = ""
 /// TextField(text: $text)  // $text is a Binding<String>

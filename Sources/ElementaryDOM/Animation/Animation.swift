@@ -1,7 +1,7 @@
 /// A description of how a value animates over time.
 ///
 /// `Animation` defines the timing and behavior of animated transitions between values.
-/// Use animations with the ``withAnimation(_:_:)-4pgxw`` function or the
+/// Use animations with the ``withAnimation(_:_:)`` function or the
 /// ``View/animation(_:value:)`` modifier to animate changes.
 ///
 /// ## Creating Animations

@@ -5,7 +5,7 @@
 ///
 /// ## Using Transactions
 ///
-/// Typically, you don't create transactions directly. Instead, use ``withAnimation(_:_:)-4pgxw``
+/// Typically, you don't create transactions directly. Instead, use ``withAnimation(_:_:)``
 /// or ``withTransaction(_:_:)`` to wrap state changes:
 ///
 /// ```swift

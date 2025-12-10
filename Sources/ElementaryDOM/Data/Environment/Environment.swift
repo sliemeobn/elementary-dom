@@ -5,7 +5,7 @@ import Reactivity
 /// Use `@Environment` to read values that are passed down through the view hierarchy.
 /// Environment values are shared by all descendant views and can be overridden at any level.
 ///
-/// - Important: `@Environment` only works in types marked with the ``@View()`` macro.
+/// - Important: `@Environment` only works in types marked with the ``View()`` macro.
 ///   The macro sets up the infrastructure needed for environment access.
 ///
 /// ## Usage
@@ -40,7 +40,7 @@ import Reactivity
 /// ```
 ///
 /// - Note: Environment values are read-only from the view's perspective. To modify them,
-///   pass a new value using ``View/environment(_:_:)-5xjk7``.
+///   pass a new value using ``View/environment(_:_:)``.
 @propertyWrapper
 public struct Environment<V> {
     enum Storage {
@@ -140,7 +140,7 @@ public struct Environment<V> {
 ///
 /// ## Setting Environment Values
 ///
-/// Use the ``View/environment(_:_:)-5xjk7`` modifier to set values for descendant views:
+/// Use the ``View/environment(_:_:)`` modifier to set values for descendant views:
 ///
 /// ```swift
 /// UserProfile()

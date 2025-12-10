@@ -3,7 +3,7 @@
 /// Use `@State` to store values that are owned and managed by a view. When the state
 /// changes, the view automatically updates to reflect the new value.
 ///
-/// - Important: `@State` only works in types marked with the ``@View()`` macro.
+/// - Important: `@State` only works in types marked with the ``View()-macro`` macro.
 ///   The macro sets up the infrastructure needed for state management.
 ///
 /// ## Usage

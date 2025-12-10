@@ -15,6 +15,7 @@ let package = Package(
         .package(url: "https://github.com/swiftwasm/JavaScriptKit", .upToNextMinor(from: "0.37.0")),
         .package(url: "https://github.com/elementary-swift/elementary", from: "0.6.0"),
         .package(url: "https://github.com/swiftlang/swift-syntax", "600.0.0"..<"603.0.0"),
+        .package(url: "https://github.com/swiftlang/swift-docc-plugin", from: "1.4.5"),
     ],
     targets: [
         .target(

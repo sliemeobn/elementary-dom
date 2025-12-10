@@ -1,5 +1,5 @@
 extension DOM {
-    public struct Animation {
+    struct Animation {
         let _cancel: () -> Void
         let _update: (KeyframeEffect) -> Void
 
@@ -14,13 +14,13 @@ extension DOM {
 }
 
 extension DOM.Animation {
-    public enum CompositeOperation: Sendable {
+    enum CompositeOperation: Sendable {
         case replace
         case add
         case accumulate
     }
 
-    public struct KeyframeEffect {
+    struct KeyframeEffect {
         var property: String
         var values: [String]
         var duration: Int  // milliseconds

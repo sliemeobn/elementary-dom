@@ -73,7 +73,7 @@ extension View {
     /// Applies an animation when a value changes.
     ///
     /// Use this modifier to automatically animate changes to a view when a specific
-    /// value changes, without wrapping the state changes in ``withAnimation(_:_:)-4pgxw``.
+    /// value changes, without wrapping the state changes in ``withAnimation(_:_:)``.
     ///
     /// ## Usage
     ///

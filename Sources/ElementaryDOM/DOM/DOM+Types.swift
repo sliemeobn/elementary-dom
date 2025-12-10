@@ -1,31 +1,31 @@
 extension DOM {
-    public struct Node: Hashable {
+    struct Node: Hashable {
         let ref: AnyObject
 
-        public func hash(into hasher: inout Hasher) {
+        func hash(into hasher: inout Hasher) {
             hasher.combine(ObjectIdentifier(ref))
         }
 
-        public static func == (lhs: Node, rhs: Node) -> Bool {
+        static func == (lhs: Node, rhs: Node) -> Bool {
             ObjectIdentifier(lhs.ref) == ObjectIdentifier(rhs.ref)
         }
     }
 
-    public struct Event {
+    struct Event {
         let ref: AnyObject
     }
 
-    public struct EventSink {
+    struct EventSink {
         let ref: AnyObject
     }
 
-    public struct Rect: Equatable {
-        public var x: Double
-        public var y: Double
-        public var width: Double
-        public var height: Double
+    struct Rect: Equatable {
+        var x: Double
+        var y: Double
+        var width: Double
+        var height: Double
 
-        public init(x: Double, y: Double, width: Double, height: Double) {
+        init(x: Double, y: Double, width: Double, height: Double) {
             self.x = x
             self.y = y
             self.width = width
@@ -33,7 +33,7 @@ extension DOM {
         }
     }
 
-    public enum PropertyValue {
+    enum PropertyValue {
         case string(String)
         case number(Double)
         case boolean(Bool)
@@ -42,7 +42,7 @@ extension DOM {
         case undefined
     }
 
-    public struct PropertyAccessor {
+    struct PropertyAccessor {
         let _get: () -> PropertyValue?
         let _set: (PropertyValue) -> Void
 
@@ -63,7 +63,7 @@ extension DOM {
         }
     }
 
-    public struct StyleAccessor {
+    struct StyleAccessor {
         let _get: () -> String
         let _set: (String) -> Void
 
@@ -84,7 +84,7 @@ extension DOM {
         }
     }
 
-    public struct ComputedStyleAccessor {
+    struct ComputedStyleAccessor {
         let _get: (String) -> String
 
         init(
