@@ -1,12 +1,80 @@
 public extension View where Tag == HTMLTag.input {
-    consuming func bindValue(_ value: Binding<String>) -> some View {
+    /// Binds an input's value to a string binding.
+    ///
+    /// Use this method to create a two-way binding between an input element
+    /// and a string value. Changes to the binding update the input, and user
+    /// input updates the binding.
+    ///
+    /// ## Usage
+    ///
+    /// ```swift
+    /// @View
+    /// struct TextInput {
+    ///     @State var text: String = ""
+    ///
+    ///     var body: some View {
+    ///         input(.type(.text))
+    ///             .bindValue($text)
+    ///         p { "You typed: \(text)" }
+    ///     }
+    /// }
+    /// ```
+    ///
+    /// - Parameter value: A binding to a string value.
+    /// - Returns: An input view bound to the string value.
+    consuming func bindValue(_ value: Binding<String>) -> some View<Tag> {
         DOMEffectView<BindingModifier<TextBindingConfiguration>, Self>(value: value, wrapped: self)
     }
 
-    consuming func bindValue(_ value: Binding<Double?>) -> some View {
+    /// Binds a number input's value to an optional double binding.
+    ///
+    /// Use this method to create a two-way binding between a number input
+    /// and an optional double value. Invalid input results in `nil`.
+    ///
+    /// ## Usage
+    ///
+    /// ```swift
+    /// @View
+    /// struct NumberInput {
+    ///     @State var amount: Double? = 0
+    ///
+    ///     var body: some View {
+    ///         input(.type(.number))
+    ///             .bindValue($amount)
+    ///         if let amount {
+    ///             p { "Amount: \(amount)" }
+    ///         }
+    ///     }
+    /// }
+    /// ```
+    ///
+    /// - Parameter value: A binding to an optional double value.
+    /// - Returns: An input view bound to the number value.
+    consuming func bindValue(_ value: Binding<Double?>) -> some View<Tag> {
         DOMEffectView<BindingModifier<NumberBindingConfiguration>, Self>(value: value, wrapped: self)
     }
 
+    /// Binds a checkbox input's checked state to a boolean binding.
+    ///
+    /// Use this method to create a two-way binding between a checkbox input
+    /// and a boolean value.
+    ///
+    /// ## Usage
+    ///
+    /// ```swift
+    /// @View
+    /// struct Checkbox {
+    ///     @State var isChecked: Bool = false
+    ///
+    ///     var body: some View {
+    ///         input(.type(.checkbox))
+    ///             .bindChecked($isChecked)
+    ///     }
+    /// }
+    /// ```
+    ///
+    /// - Parameter value: A binding to a boolean value.
+    /// - Returns: An input view bound to the checkbox state.
     consuming func bindChecked(_ value: Binding<Bool>) -> some View {
         DOMEffectView<BindingModifier<CheckboxBindingConfiguration>, Self>(value: value, wrapped: self)
     }

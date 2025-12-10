@@ -1,14 +1,78 @@
 import _Concurrency
 
 public extension View {
+    /// Adds an action to perform after this view appears.
+    ///
+    /// Use this modifier to run code when a view is first mounted in the DOM.
+    /// This is useful for initializing state, starting timers, or setting up
+    /// external resources.
+    ///
+    /// ## Usage
+    ///
+    /// ```swift
+    /// div { "Hello, world!" }
+    ///     .onMount {
+    ///         print("View mounted")
+    ///     }
+    /// ```
+    ///
+    /// - Parameter action: A closure to execute after the view appears.
+    /// - Returns: A view that performs the action on mount.
     func onMount(_ action: @escaping () -> Void) -> some View<Tag> {
         _LifecycleEventView(wrapped: self, listener: .onMount(action))
     }
 
+    /// Adds an action to perform when this view disappears.
+    ///
+    /// Use this modifier to run cleanup code when a view is removed from the DOM.
+    /// This is useful for releasing resources, canceling timers, or removing listeners.
+    ///
+    /// ## Usage
+    ///
+    /// ```swift
+    /// div { "Temporary content" }
+    ///     .onUnmount {
+    ///         print("View removed")
+    ///         cleanupResources()
+    ///     }
+    /// ```
+    ///
+    /// - Parameter action: A closure to execute before the view disappears.
+    /// - Returns: A view that performs the action on unmount.
     func onUnmount(_ action: @escaping () -> Void) -> some View<Tag> {
         _LifecycleEventView(wrapped: self, listener: .onUnmount(action))
     }
 
+    /// Adds an asynchronous task to perform after this view appears.
+    ///
+    /// Use this modifier to run async operations when a view appears. The task
+    /// is automatically cancelled when the view is removed.
+    ///
+    /// ## Usage
+    ///
+    /// ```swift
+    /// @View
+    /// struct UserProfile {
+    ///     @State var user: User?
+    ///
+    ///     var body: some View {
+    ///         div {
+    ///             if let user {
+    ///                 p { user.name }
+    ///             } else {
+    ///                 p { "Loading..." }
+    ///             }
+    ///         }
+    ///         .task {
+    ///             user = await fetchUser()
+    ///         }
+    ///     }
+    /// }
+    /// ```
+    ///
+    /// - Parameter task: An async closure to execute when the view appears.
+    ///   The task is cancelled when the view disappears.
+    /// - Returns: A view that performs the task on mount and cancels it on unmount.
     func task(_ task: @escaping () async -> Void) -> some View<Tag> {
         _LifecycleEventView(
             wrapped: self,

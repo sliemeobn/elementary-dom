@@ -38,8 +38,8 @@ public struct _KeyedView<Value: View>: View {
 }
 
 public extension View {
-    func key<K: LosslessStringConvertible>(_ key: K) -> _KeyedView<Self> {
-        .init(key: _ViewKey(key), value: self)
+    func key<K: LosslessStringConvertible>(_ key: K) -> some View<Tag> & _KeyReadableView {
+        _KeyedView(key: _ViewKey(key), value: self)
     }
 }
 
