@@ -1,4 +1,3 @@
-// TOOD: finally find a good name for this
 public struct _TransactionContext: ~Copyable {
     let scheduler: Scheduler
     let currentFrameTime: Double
