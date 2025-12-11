@@ -22,7 +22,7 @@
 /// )
 /// ```
 ///
-/// 3. **Nested Properties**: Use `#Binding` for nested property access:
+/// 3. **Nested Properties**: Use ``Binding(_:)-macro`` for nested property access:
 /// ```swift
 /// @State var user: User = User()
 /// TextField(text: #Binding(user.name))  // Access nested property
