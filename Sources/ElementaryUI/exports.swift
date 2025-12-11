@@ -4,5 +4,4 @@
 // We can refine the sub-module structure later and figure out how to evolve the OG elementary package into a "core" package - or just include it here eventually.
 // CSR-only imports (JavaScriptKit) will eventually be conditionally included.
 
-@_exported import ElementaryDOM
-@_exported import Reactivity
+@_exported import Elementary  // TODO: is this good? maybe some "_ElementaryCore" library would a be good

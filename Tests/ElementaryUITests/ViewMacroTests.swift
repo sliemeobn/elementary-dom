@@ -1,0 +1,31 @@
+import ElementaryUI
+import Testing
+
+@Suite
+struct ViewMacroTests {
+    @Test
+    func viewMacro() {
+        let view = MyView(number: 2)
+        let storage = MyView.__initializeState(from: view)
+
+        var view2 = MyView()
+        MyView.__restoreState(storage, in: &view2)
+        #expect(view2.number == 2)
+    }
+}
+
+@View
+struct MyView {
+    @State var number = 0
+
+    var body: some View {
+        "Hello \(number)"
+    }
+}
+
+@View
+struct StatelessView {
+    var body: some View {
+        "Hello"
+    }
+}

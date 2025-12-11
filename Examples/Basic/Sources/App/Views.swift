@@ -1,4 +1,5 @@
 import ElementaryUI
+import Reactivity
 
 extension EnvironmentValues {
     @Entry var myText: String = ""
