@@ -6,11 +6,11 @@ import Testing
 @MainActor
 struct LifecycleTests {
     @Test
-    func callsOnMountWhenElementIsMounted() {
+    func callsonAppearWhenElementIsMounted() {
         var mountCount = 0
         _ = mountOps {
             div {}
-                .onMount {
+                .onAppear {
                     mountCount += 1
                 }
         }
@@ -19,26 +19,26 @@ struct LifecycleTests {
     }
 
     @Test
-    func callsOnMountForMultipleElements() {
+    func callsonAppearForMultipleElements() {
         var mountCount = 0
         _ = mountOps {
             div {
-                p {}.onMount { mountCount += 1 }
-                span {}.onMount { mountCount += 1 }
-            }.onMount { mountCount += 1 }
+                p {}.onAppear { mountCount += 1 }
+                span {}.onAppear { mountCount += 1 }
+            }.onAppear { mountCount += 1 }
         }
 
         #expect(mountCount == 3)
     }
 
     @Test
-    func callsOnMountForConditionalElements() {
+    func callsonAppearForConditionalElements() {
         var mountCount = 0
         let state = ToggleState()
         _ = patchOps {
             div {
                 if state.value {
-                    p {}.onMount {
+                    p {}.onAppear {
                         mountCount += 1
                     }
                 }
@@ -51,21 +51,21 @@ struct LifecycleTests {
     }
 
     @Test
-    func callsOnMountMultipleTimesForNestedLifecycleEvents() {
+    func callsonAppearMultipleTimesForNestedLifecycleEvents() {
         var mountCount = 0
         _ = mountOps {
             div {}
-                .onMount { mountCount += 1 }
-                .onMount { mountCount += 1 }
+                .onAppear { mountCount += 1 }
+                .onAppear { mountCount += 1 }
         }
 
         #expect(mountCount == 2)
     }
 
-    // MARK: - onUnmount Tests
+    // MARK: - onDisappear Tests
 
     @Test
-    func callsOnUnmountWhenElementIsUnmounted() {
+    func callsonDisappearWhenElementIsUnmounted() {
         var unmountCount = 0
         let state = ToggleState()
         state.toggle()
@@ -73,7 +73,7 @@ struct LifecycleTests {
         _ = patchOps {
             div {
                 if state.value {
-                    p {}.onUnmount {
+                    p {}.onDisappear {
                         unmountCount += 1
                     }
                 }
@@ -86,7 +86,7 @@ struct LifecycleTests {
     }
 
     @Test
-    func callsOnUnmountForMultipleElements() {
+    func callsonDisappearForMultipleElements() {
         var unmountCount = 0
         let state = ToggleState()
         state.toggle()
@@ -94,9 +94,9 @@ struct LifecycleTests {
         _ = patchOps {
             if state.value {
                 div {
-                    p {}.onUnmount { unmountCount += 1 }
-                    span {}.onUnmount { unmountCount += 1 }
-                }.onUnmount { unmountCount += 1 }
+                    p {}.onDisappear { unmountCount += 1 }
+                    span {}.onDisappear { unmountCount += 1 }
+                }.onDisappear { unmountCount += 1 }
             }
         } toggle: {
             state.toggle()
@@ -106,13 +106,13 @@ struct LifecycleTests {
     }
 
     @Test
-    func callsOnUnmountForKeyedElements() {
+    func callsonDisappearForKeyedElements() {
         nonisolated(unsafe) var unmountCount = 0
         let state = StringListState(["A", "B"])
 
         _ = patchOps {
             ForEach(state.items, key: \.self) { item in
-                p { item }.onUnmount {
+                p { item }.onDisappear {
                     if item == "A" {
                         unmountCount += 1
                     }
@@ -128,7 +128,7 @@ struct LifecycleTests {
     // MARK: - task Tests
 
     @Test
-    func executesTaskOnMount() async {
+    func executesTaskonAppear() async {
         let taskStream = AsyncStream<Void> { continuation in
             _ = mountOps {
                 div {}
@@ -148,7 +148,7 @@ struct LifecycleTests {
     }
 
     @Test
-    func cancelsTaskOnUnmount() async {
+    func cancelsTaskonDisappear() async {
         let taskStream = AsyncStream<Void> { continuation in
             let state = ToggleState()
             state.toggle()
@@ -212,7 +212,7 @@ struct LifecycleTests {
     // MARK: - Combined Lifecycle Tests
 
     @Test
-    func combinesOnMountAndOnUnmount() {
+    func combinesonAppearAndonDisappear() {
         var mountCount = 0
         var unmountCount = 0
         let state = ToggleState()
@@ -222,8 +222,8 @@ struct LifecycleTests {
             div {
                 if state.value {
                     p {}
-                        .onMount { mountCount += 1 }
-                        .onUnmount { unmountCount += 1 }
+                        .onAppear { mountCount += 1 }
+                        .onDisappear { unmountCount += 1 }
                 }
             }
         } toggle: {
@@ -241,7 +241,7 @@ struct LifecycleTests {
 
         _ = mountOps {
             ForEach(items, key: \.self) { item in
-                p { item }.onMount { mountCount += 1 }
+                p { item }.onAppear { mountCount += 1 }
             }
         }
 
@@ -257,8 +257,8 @@ struct LifecycleTests {
         _ = patchOps {
             ForEach(0..<state.number, key: \.self) { i in
                 p { "\(i)" }
-                    .onMount { mountCount += 1 }
-                    .onUnmount { unmountCount += 1 }
+                    .onAppear { mountCount += 1 }
+                    .onDisappear { unmountCount += 1 }
             }
         } toggle: {
             state.number = 2  // Add 2 items
@@ -270,27 +270,27 @@ struct LifecycleTests {
     }
 
     @Test
-    func doesNotCallOnMountForExistingElements() {
+    func doesNotCallonAppearForExistingElements() {
         nonisolated(unsafe) var mountCount = 0
         let state = ToggleState()
         state.toggle()  // Start with true
 
         _ = patchOps {
             div {
-                p {}.onMount { mountCount += 1 }
+                p {}.onAppear { mountCount += 1 }
                 if state.value {
-                    span {}  // This doesn't have onMount, so adding it shouldn't trigger existing onMount
+                    span {}  // This doesn't have onAppear, so adding it shouldn't trigger existing onAppear
                 }
             }
         } toggle: {
             state.toggle()  // Just changes the conditional, doesn't remount the p
         }
 
-        #expect(mountCount == 1)  // onMount was called during initial mount when p was created
+        #expect(mountCount == 1)  // onAppear was called during initial mount when p was created
     }
 
     @Test
-    func callsOnUnmountMultipleTimesForNestedLifecycleEvents() {
+    func callsonDisappearMultipleTimesForNestedLifecycleEvents() {
         nonisolated(unsafe) var unmountCount = 0
         let state = ToggleState()
         state.toggle()  // Start with true
@@ -298,8 +298,8 @@ struct LifecycleTests {
         _ = patchOps {
             if state.value {
                 div {}
-                    .onUnmount { unmountCount += 1 }
-                    .onUnmount { unmountCount += 1 }
+                    .onDisappear { unmountCount += 1 }
+                    .onDisappear { unmountCount += 1 }
             }
         } toggle: {
             state.toggle()

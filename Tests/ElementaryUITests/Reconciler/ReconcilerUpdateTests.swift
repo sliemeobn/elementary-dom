@@ -4,7 +4,7 @@ import Testing
 
 struct ReconcilerUpdateTests {
     @Test
-    func runsBodiesOnMount() {
+    func runsBodiesonAppear() {
         let state = State()
         let calls = trackMounting { Outer(state: state) }
 

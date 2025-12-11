@@ -30,8 +30,8 @@ struct Counter {
 - ``Environment``
 
 ## Lifecycle
-- ``View/onMount(_:)``
-- ``View/onUnmount(_:)``
+- ``View/onAppear(_:)``
+- ``View/onDisappear(_:)``
 - ``View/onChange(of:initial:_:)``
 
 ## Animations

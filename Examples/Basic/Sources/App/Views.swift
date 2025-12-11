@@ -128,10 +128,10 @@ struct Counter {
                 .onClick { _ in count += 1 }
 
         }
-        .onMount {
+        .onAppear {
             print("Counter with count \(count) mounted")
         }
-        .onUnmount {
+        .onDisappear {
             print("Counter with count \(count) unmounted")
         }
     }

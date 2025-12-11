@@ -22,7 +22,7 @@ public extension View {
     func receive<Event>(_ eventSource: some EventSource<Event>, handler: @escaping (Event) -> Void) -> some View<Tag> {
         _LifecycleEventView(
             wrapped: self,
-            listener: .onMountReturningCancelFunction {
+            listener: .onAppearReturningCancelFunction {
                 let subscription = eventSource.subscribe(handler)
                 return subscription.cancel
             }
