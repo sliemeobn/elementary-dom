@@ -1,8 +1,9 @@
 public extension View {
-    consuming func onEvent<Config: DOMEventHandlerConfig>(
+    // TODO: embedded - for whatever reason this must be public or the embedded compiler freaks out. investigate why, check if still an issue in 6.3
+    consuming func _onEvent<Config: _DOMEventHandlerConfig>(
         _ type: Config.Type,
         handler: @escaping (Config.Event) -> Void
-    ) -> some View {
+    ) -> some View<Tag> {
         DOMEffectView<EventModifier<Config>, Self>(value: handler, wrapped: self)
     }
 
@@ -23,8 +24,8 @@ public extension View {
     ///
     /// - Parameter handler: A closure that receives a ``MouseEvent`` when clicked.
     /// - Returns: A view that responds to click events.
-    consuming func onClick(_ handler: @escaping (MouseEvent) -> Void) -> some View {
-        onEvent(DOMEventHandlers.Click.self, handler: handler)
+    consuming func onClick(_ handler: @escaping (MouseEvent) -> Void) -> some View<Tag> {
+        _onEvent(DOMEventHandlers.Click.self, handler: handler)
     }
 
     /// Adds a handler for click events.
@@ -49,7 +50,7 @@ public extension View {
     ///
     /// - Parameter handler: A closure to execute when clicked.
     /// - Returns: A view that responds to click events.
-    consuming func onClick(_ handler: @escaping () -> Void) -> some View {
+    consuming func onClick(_ handler: @escaping () -> Void) -> some View<Tag> {
         onClick { _ in handler() }
     }
 
@@ -67,8 +68,8 @@ public extension View {
     ///
     /// - Parameter handler: A closure that receives a ``MouseEvent`` when the mouse button is pressed.
     /// - Returns: A view that responds to mouse down events.
-    consuming func onMouseDown(_ handler: @escaping (MouseEvent) -> Void) -> some View {
-        onEvent(DOMEventHandlers.MouseDown.self, handler: handler)
+    consuming func onMouseDown(_ handler: @escaping (MouseEvent) -> Void) -> some View<Tag> {
+        _onEvent(DOMEventHandlers.MouseDown.self, handler: handler)
     }
 
     /// Adds a handler for mouse move events.
@@ -84,8 +85,8 @@ public extension View {
     ///
     /// - Parameter handler: A closure that receives a ``MouseEvent`` as the mouse moves.
     /// - Returns: A view that responds to mouse move events.
-    consuming func onMouseMove(_ handler: @escaping (MouseEvent) -> Void) -> some View {
-        onEvent(DOMEventHandlers.MouseMove.self, handler: handler)
+    consuming func onMouseMove(_ handler: @escaping (MouseEvent) -> Void) -> some View<Tag> {
+        _onEvent(DOMEventHandlers.MouseMove.self, handler: handler)
     }
 
     /// Adds a handler for mouse up events.
@@ -102,8 +103,8 @@ public extension View {
     ///
     /// - Parameter handler: A closure that receives a ``MouseEvent`` when the mouse button is released.
     /// - Returns: A view that responds to mouse up events.
-    consuming func onMouseUp(_ handler: @escaping (MouseEvent) -> Void) -> some View {
-        onEvent(DOMEventHandlers.MouseUp.self, handler: handler)
+    consuming func onMouseUp(_ handler: @escaping (MouseEvent) -> Void) -> some View<Tag> {
+        _onEvent(DOMEventHandlers.MouseUp.self, handler: handler)
     }
 
     /// Adds a handler for keyboard key down events.
@@ -125,8 +126,8 @@ public extension View {
     ///
     /// - Parameter handler: A closure that receives a ``KeyboardEvent`` when a key is pressed.
     /// - Returns: A view that responds to key down events.
-    consuming func onKeyDown(_ handler: @escaping (KeyboardEvent) -> Void) -> some View {
-        onEvent(DOMEventHandlers.KeyDown.self, handler: handler)
+    consuming func onKeyDown(_ handler: @escaping (KeyboardEvent) -> Void) -> some View<Tag> {
+        _onEvent(DOMEventHandlers.KeyDown.self, handler: handler)
     }
 
     /// Adds a handler for input events.
@@ -148,38 +149,38 @@ public extension View {
     ///
     /// - Parameter handler: A closure that receives an ``InputEvent`` when the input changes.
     /// - Returns: A view that responds to input events.
-    consuming func onInput(_ handler: @escaping (InputEvent) -> Void) -> some View {
-        onEvent(DOMEventHandlers.Input.self, handler: handler)
+    consuming func onInput(_ handler: @escaping (InputEvent) -> Void) -> some View<Tag> {
+        _onEvent(DOMEventHandlers.Input.self, handler: handler)
     }
 }
 
 enum DOMEventHandlers {
-    enum Click: DOMEventHandlerConfig {
+    enum Click: _DOMEventHandlerConfig {
         static var name: String = "click"
         typealias Event = MouseEvent
     }
 
-    enum MouseDown: DOMEventHandlerConfig {
+    enum MouseDown: _DOMEventHandlerConfig {
         static var name: String = "mousedown"
         typealias Event = MouseEvent
     }
 
-    enum MouseMove: DOMEventHandlerConfig {
+    enum MouseMove: _DOMEventHandlerConfig {
         static var name: String = "mousemove"
         typealias Event = MouseEvent
     }
 
-    enum MouseUp: DOMEventHandlerConfig {
+    enum MouseUp: _DOMEventHandlerConfig {
         static var name: String = "mouseup"
         typealias Event = MouseEvent
     }
 
-    enum KeyDown: DOMEventHandlerConfig {
+    enum KeyDown: _DOMEventHandlerConfig {
         static var name: String = "keydown"
         typealias Event = KeyboardEvent
     }
 
-    enum Input: DOMEventHandlerConfig {
+    enum Input: _DOMEventHandlerConfig {
         static var name: String = "input"
         typealias Event = InputEvent
     }

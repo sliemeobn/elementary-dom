@@ -1,31 +1,39 @@
 import _Concurrency
 
 public extension View {
-    /// Adds an action to perform after this view appears.
+    /// Adds an action to perform when this view appears.
     ///
-    /// Use this modifier to run code when a view is first mounted in the DOM.
+    /// Use this modifier to run code when a view is added to the view hierarchy.
     /// This is useful for initializing state, starting timers, or setting up
     /// external resources.
+    ///
+    /// > Note: This fires when the view appears in the view hierarchy, not when
+    /// > it becomes visible on screen. Views can be present in the hierarchy but
+    /// > hidden or scrolled out of view.
     ///
     /// ## Usage
     ///
     /// ```swift
     /// div { "Hello, world!" }
-    ///     .onMount {
+    ///     .onAppear {
     ///         print("View mounted")
     ///     }
     /// ```
     ///
     /// - Parameter action: A closure to execute after the view appears.
     /// - Returns: A view that performs the action on mount.
-    func onMount(_ action: @escaping () -> Void) -> some View<Tag> {
-        _LifecycleEventView(wrapped: self, listener: .onMount(action))
+    func onAppear(_ action: @escaping () -> Void) -> some View<Tag> {
+        _LifecycleEventView(wrapped: self, listener: .onAppear(action))
     }
 
     /// Adds an action to perform when this view disappears.
     ///
-    /// Use this modifier to run cleanup code when a view is removed from the DOM.
+    /// Use this modifier to run cleanup code when a view is removed from the view hierarchy.
     /// This is useful for releasing resources, canceling timers, or removing listeners.
+    ///
+    /// > Note: This fires when the view is removed from the view hierarchy, not when
+    /// > it is hidden or scrolled out of view. Views can be present in the hierarchy but
+    /// > hidden or scrolled out of view.
     ///
     /// ## Usage
     ///
@@ -39,13 +47,13 @@ public extension View {
     ///
     /// - Parameter action: A closure to execute before the view disappears.
     /// - Returns: A view that performs the action on unmount.
-    func onUnmount(_ action: @escaping () -> Void) -> some View<Tag> {
-        _LifecycleEventView(wrapped: self, listener: .onUnmount(action))
+    func onDisappear(_ action: @escaping () -> Void) -> some View<Tag> {
+        _LifecycleEventView(wrapped: self, listener: .onDisappear(action))
     }
 
-    /// Adds an asynchronous task to perform after this view appears.
+    /// Adds an asynchronous task to run when this view appears.
     ///
-    /// Use this modifier to run async operations when a view appears. The task
+    /// Use this modifier to run async operations when a view is added to the view hierarchy. The task
     /// is automatically cancelled when the view is removed.
     ///
     /// ## Usage
@@ -76,15 +84,15 @@ public extension View {
     func task(_ task: @escaping () async -> Void) -> some View<Tag> {
         _LifecycleEventView(
             wrapped: self,
-            listener: .onMountReturningCancelFunction({ Task { await task() }.cancel })
+            listener: .onAppearReturningCancelFunction({ Task { await task() }.cancel })
         )
     }
 }
 
 enum LifecycleHook {
-    case onMount(() -> Void)
-    case onUnmount(() -> Void)
-    case onMountReturningCancelFunction(() -> () -> Void)
+    case onAppear(() -> Void)
+    case onDisappear(() -> Void)
+    case onAppearReturningCancelFunction(() -> () -> Void)
 }
 
 struct _LifecycleEventView<Wrapped: View>: View {
@@ -102,13 +110,13 @@ struct _LifecycleEventView<Wrapped: View>: View {
             self.scheduler = scheduler
 
             switch hook {
-            case .onMount(let onMount):
-                scheduler.onNextTick { onMount() }
-            case .onUnmount(let callback):
+            case .onAppear(let onAppear):
+                scheduler.onNextTick { onAppear() }
+            case .onDisappear(let callback):
                 self.onUnmount = callback
-            case .onMountReturningCancelFunction(let onMountReturningCancelFunction):
+            case .onAppearReturningCancelFunction(let onAppearReturningCancelFunction):
                 scheduler.onNextTick {
-                    let cancelFunc = onMountReturningCancelFunction()
+                    let cancelFunc = onAppearReturningCancelFunction()
                     self.onUnmount = cancelFunc
                 }
             }
@@ -140,7 +148,7 @@ struct _LifecycleEventView<Wrapped: View>: View {
         tx: inout _TransactionContext
     ) {
         switch view.listener {
-        case .onUnmount(let callback):
+        case .onDisappear(let callback):
             // unmount is the only lifecycle hook that can be patched
             node.state.onUnmount = callback
         default:

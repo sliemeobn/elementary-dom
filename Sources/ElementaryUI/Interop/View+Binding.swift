@@ -81,6 +81,7 @@ public extension View where Tag == HTMLTag.input {
 }
 
 struct DOMEffectView<Effect: DOMElementModifier, Wrapped: View>: View {
+    typealias Body = Never
     typealias Tag = Wrapped.Tag
     var value: Effect.Value
     var wrapped: Wrapped

@@ -1,9 +1,9 @@
-public protocol DOMEventHandlerConfig {
+public protocol _DOMEventHandlerConfig {
     static var name: String { get }
-    associatedtype Event: DOMEvent
+    associatedtype Event: _TypedDOMEvent
 }
 
-final class EventModifier<Config: DOMEventHandlerConfig>: DOMElementModifier {
+final class EventModifier<Config: _DOMEventHandlerConfig>: DOMElementModifier {
     typealias Value = (Config.Event) -> Void
 
     let upstream: EventModifier?

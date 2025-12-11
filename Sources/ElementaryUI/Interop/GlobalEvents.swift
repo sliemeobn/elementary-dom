@@ -22,7 +22,7 @@ public extension View {
     func receive<Event>(_ eventSource: some EventSource<Event>, handler: @escaping (Event) -> Void) -> some View<Tag> {
         _LifecycleEventView(
             wrapped: self,
-            listener: .onMountReturningCancelFunction {
+            listener: .onAppearReturningCancelFunction {
                 let subscription = eventSource.subscribe(handler)
                 return subscription.cancel
             }
@@ -39,14 +39,14 @@ extension GlobalDocument {
         DOMEventSource(eventName: "keydown")
     }
 
-    struct DOMEventSource<Event: DOMEvent>: EventSource {
+    struct DOMEventSource<Event: _TypedDOMEvent>: EventSource {
         typealias Event = Event
 
         let eventName: String
 
         func subscribe(_ callback: @escaping (Event) -> Void) -> EventSourceSubscription {
             let closure = JSClosure { event in
-                callback(Event(event[0].object!)!)
+                callback(Event(__jsObject: event[0].object!)!)
                 return .undefined
             }
 

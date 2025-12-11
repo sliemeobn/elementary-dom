@@ -1,23 +1,24 @@
 import JavaScriptKit
 
-public protocol DOMEvent {
-    init?(_: JSObject)
+// TODO: figure out the typing for this, this is not great
+public protocol _TypedDOMEvent {
+    init?(__jsObject: JSObject)
 }
 
-extension DOMEvent {
+extension _TypedDOMEvent {
     init?(raw: DOM.Event) {
         guard let rawEvent = raw.ref as? JSObject else {
             return nil
         }
 
-        self.init(rawEvent)
+        self.init(__jsObject: rawEvent)
     }
 }
 
-public struct KeyboardEvent: DOMEvent {
+public struct KeyboardEvent: _TypedDOMEvent {
     var rawEvent: JSObject
 
-    public init?(_ rawEvent: JSObject) {
+    public init?(__jsObject rawEvent: JSObject) {
         // TODO: maybe check some stuff..
         self.rawEvent = rawEvent
     }
@@ -27,10 +28,10 @@ public struct KeyboardEvent: DOMEvent {
     }
 }
 
-public struct MouseEvent: DOMEvent {
+public struct MouseEvent: _TypedDOMEvent {
     var rawEvent: JSObject
 
-    public init?(_ rawEvent: JSObject) {
+    public init?(__jsObject rawEvent: JSObject) {
         // TODO: maybe check some stuff..
         self.rawEvent = rawEvent
     }
@@ -100,10 +101,10 @@ public struct MouseEvent: DOMEvent {
     }
 }
 
-public struct InputEvent: DOMEvent {
+public struct InputEvent: _TypedDOMEvent {
     var rawEvent: JSObject
 
-    public init?(_ rawEvent: JSObject) {
+    public init?(__jsObject rawEvent: JSObject) {
         self.rawEvent = rawEvent
     }
 
