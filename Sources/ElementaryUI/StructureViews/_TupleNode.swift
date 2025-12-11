@@ -6,7 +6,7 @@ public final class _TupleNode<each N: _Reconcilable>: _Reconcilable {
         self.value = (repeat each value)
     }
 
-    public func collectChildren(_ ops: inout ContainerLayoutPass, _ context: inout _CommitContext) {
+    public func collectChildren(_ ops: inout _ContainerLayoutPass, _ context: inout _CommitContext) {
         for value in repeat each value {
             value.collectChildren(&ops, &context)
         }
@@ -32,7 +32,7 @@ public final class _TupleNode2<N0: _Reconcilable, N1: _Reconcilable>: _Reconcila
         self.value = (n0, n1)
     }
 
-    public func collectChildren(_ ops: inout ContainerLayoutPass, _ context: inout _CommitContext) {
+    public func collectChildren(_ ops: inout _ContainerLayoutPass, _ context: inout _CommitContext) {
         value.0.collectChildren(&ops, &context)
         value.1.collectChildren(&ops, &context)
     }
@@ -55,7 +55,7 @@ public final class _TupleNode3<N0: _Reconcilable, N1: _Reconcilable, N2: _Reconc
         self.value = (n0, n1, n2)
     }
 
-    public func collectChildren(_ ops: inout ContainerLayoutPass, _ context: inout _CommitContext) {
+    public func collectChildren(_ ops: inout _ContainerLayoutPass, _ context: inout _CommitContext) {
         value.0.collectChildren(&ops, &context)
         value.1.collectChildren(&ops, &context)
         value.2.collectChildren(&ops, &context)
@@ -81,7 +81,7 @@ public final class _TupleNode4<N0: _Reconcilable, N1: _Reconcilable, N2: _Reconc
         self.value = (n0, n1, n2, n3)
     }
 
-    public func collectChildren(_ ops: inout ContainerLayoutPass, _ context: inout _CommitContext) {
+    public func collectChildren(_ ops: inout _ContainerLayoutPass, _ context: inout _CommitContext) {
         value.0.collectChildren(&ops, &context)
         value.1.collectChildren(&ops, &context)
         value.2.collectChildren(&ops, &context)
@@ -112,7 +112,7 @@ public final class _TupleNode5<N0: _Reconcilable, N1: _Reconcilable, N2: _Reconc
         self.value = (n0, n1, n2, n3, n4)
     }
 
-    public func collectChildren(_ ops: inout ContainerLayoutPass, _ context: inout _CommitContext) {
+    public func collectChildren(_ ops: inout _ContainerLayoutPass, _ context: inout _CommitContext) {
         value.0.collectChildren(&ops, &context)
         value.1.collectChildren(&ops, &context)
         value.2.collectChildren(&ops, &context)
@@ -153,7 +153,7 @@ public final class _TupleNode6<
         self.value = (n0, n1, n2, n3, n4, n5)
     }
 
-    public func collectChildren(_ ops: inout ContainerLayoutPass, _ context: inout _CommitContext) {
+    public func collectChildren(_ ops: inout _ContainerLayoutPass, _ context: inout _CommitContext) {
         value.0.collectChildren(&ops, &context)
         value.1.collectChildren(&ops, &context)
         value.2.collectChildren(&ops, &context)

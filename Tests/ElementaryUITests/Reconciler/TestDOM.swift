@@ -374,7 +374,7 @@ func trackUpdating(@HTMLBuilder _ view: @escaping () -> some View, toggle: () ->
 
 extension TestDOM {
     func mount(_ view: @escaping () -> some View) {
-        _ = App(dom: self, root: DeferredResolutionView(root: view))
+        _ = App(dom: self, domRoot: self.root, appView: DeferredResolutionView(root: view))
     }
 }
 

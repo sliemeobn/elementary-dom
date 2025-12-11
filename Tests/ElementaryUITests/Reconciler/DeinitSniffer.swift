@@ -20,7 +20,7 @@ struct DeinitSnifferView: View {
     class _MountedNode: _Reconcilable {
         func apply(_ op: _ReconcileOp, _ tx: inout _TransactionContext) {}
 
-        func collectChildren(_ ops: inout ContainerLayoutPass, _ context: inout _CommitContext) {}
+        func collectChildren(_ ops: inout _ContainerLayoutPass, _ context: inout _CommitContext) {}
 
         func unmount(_ context: inout _CommitContext) {
             print("sniffer unmount")

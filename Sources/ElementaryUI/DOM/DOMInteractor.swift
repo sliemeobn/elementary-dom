@@ -4,8 +4,6 @@ import Reactivity
 enum DOM {
     // TODO: remove anyobject and make reconcier runs generic over this
     protocol Interactor: AnyObject {
-        var root: Node { get }
-
         func makeEventSink(_ handler: @escaping (String, Event) -> Void) -> EventSink
 
         func makePropertyAccessor(_ node: Node, name: String) -> PropertyAccessor

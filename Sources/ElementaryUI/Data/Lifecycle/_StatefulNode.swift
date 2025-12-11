@@ -22,7 +22,7 @@ public final class _StatefulNode<State, Child: _Reconcilable> {
 }
 
 extension _StatefulNode: _Reconcilable {
-    public func collectChildren(_ ops: inout ContainerLayoutPass, _ context: inout _CommitContext) {
+    public func collectChildren(_ ops: inout _ContainerLayoutPass, _ context: inout _CommitContext) {
         child.collectChildren(&ops, &context)
     }
 

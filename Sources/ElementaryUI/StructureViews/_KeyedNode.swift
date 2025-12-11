@@ -106,7 +106,7 @@ extension _KeyedNode: _Reconcilable {
         }
     }
 
-    public func collectChildren(_ ops: inout ContainerLayoutPass, _ context: inout _CommitContext) {
+    public func collectChildren(_ ops: inout _ContainerLayoutPass, _ context: inout _CommitContext) {
         // the trick here is to efficiently interleave the leaving nodes with the active nodes to match the DOM order
         // the other trick is to stay noncopyable compatible (one fine day we will have lists, associated types and stuff like that)
         // in any case, we need to mutate in place
@@ -177,7 +177,7 @@ private extension _KeyedNode {
             shiftEntriesFromIndexUpwards(index, by: 1)
         }
 
-        mutating func commitAndCheckRemoval(at index: Int, ops: inout ContainerLayoutPass, context: inout _CommitContext) -> Bool {
+        mutating func commitAndCheckRemoval(at index: Int, ops: inout _ContainerLayoutPass, context: inout _CommitContext) -> Bool {
             let isRemovalCommitted = ops.withRemovalTracking { ops in
                 entries[index].value.collectChildren(&ops, &context)
             }

@@ -39,6 +39,6 @@ public extension View {
     }
 
     consuming func mount(inNode domNode: JSObject) {
-        _ = App(dom: JSKitDOMInteractor(root: domNode), root: self)
+        _ = App(dom: JSKitDOMInteractor(), domRoot: DOM.Node(domNode), appView: self)
     }
 }

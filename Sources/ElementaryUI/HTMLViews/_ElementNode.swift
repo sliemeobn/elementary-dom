@@ -105,7 +105,7 @@ public final class _ElementNode: _Reconcilable {
         }
     }
 
-    public func collectChildren(_ ops: inout ContainerLayoutPass, _ context: inout _CommitContext) {
+    public func collectChildren(_ ops: inout _ContainerLayoutPass, _ context: inout _CommitContext) {
         assert(domNode != nil, "unitialized element in layout pass")
         self.domNode?.collectLayoutChanges(&ops, type: .element)
     }
@@ -169,7 +169,7 @@ public final class _ElementNode: _Reconcilable {
         }
         childrenLayoutStatus.isDirty = false
 
-        var ops = ContainerLayoutPass()  // TODO: initialize with count, could be allocationlessly somehow
+        var ops = _ContainerLayoutPass()  // TODO: initialize with count, could be allocationlessly somehow
         child!.collectChildren(&ops, &context)
 
         if ops.canBatchReplace {
@@ -222,11 +222,11 @@ enum ElementNodeChildrenChange {
 
 struct ManagedDOMReference: ~Copyable {
     let reference: DOM.Node
-    var status: ContainerLayoutPass.Entry.Status
+    var status: _ContainerLayoutPass.Entry.Status
 }
 
 extension ManagedDOMReference {
-    mutating func collectLayoutChanges(_ ops: inout ContainerLayoutPass, type: ContainerLayoutPass.Entry.NodeType) {
+    mutating func collectLayoutChanges(_ ops: inout _ContainerLayoutPass, type: _ContainerLayoutPass.Entry.NodeType) {
         ops.append(.init(kind: status, reference: reference, type: type))
         self.status = .unchanged
     }
