@@ -50,7 +50,7 @@ public final class _PlaceholderNode: _Reconcilable {
         node.apply(op, &tx)
     }
 
-    public func collectChildren(_ ops: inout ContainerLayoutPass, _ context: inout _CommitContext) {
+    public func collectChildren(_ ops: inout _ContainerLayoutPass, _ context: inout _CommitContext) {
         node.collectChildren(&ops, &context)
     }
 

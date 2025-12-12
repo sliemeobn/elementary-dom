@@ -2,7 +2,7 @@
 public protocol _Reconcilable: AnyObject {
     func apply(_ op: _ReconcileOp, _ tx: inout _TransactionContext)
 
-    func collectChildren(_ ops: inout ContainerLayoutPass, _ context: inout _CommitContext)
+    func collectChildren(_ ops: inout _ContainerLayoutPass, _ context: inout _CommitContext)
 
     // TODO: should this be destroy?
     func unmount(_ context: inout _CommitContext)
@@ -18,7 +18,7 @@ public enum _ReconcileOp {
 struct AnyReconcilable {
     private var node: AnyObject
     private var _apply: (_ReconcileOp, inout _TransactionContext) -> Void
-    private var _collectChildren: (inout ContainerLayoutPass, inout _CommitContext) -> Void
+    private var _collectChildren: (inout _ContainerLayoutPass, inout _CommitContext) -> Void
     private var _unmount: (inout _CommitContext) -> Void
 
     init<R: _Reconcilable>(_ node: R) {
@@ -33,7 +33,7 @@ struct AnyReconcilable {
         _apply(op, &tx)
     }
 
-    func collectChildren(_ ops: inout ContainerLayoutPass, _ context: inout _CommitContext) {
+    func collectChildren(_ ops: inout _ContainerLayoutPass, _ context: inout _CommitContext) {
         _collectChildren(&ops, &context)
     }
 

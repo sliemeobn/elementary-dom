@@ -98,8 +98,8 @@ struct DOMEffectView<Effect: DOMElementModifier, Wrapped: View>: View {
         #if hasFeature(Embedded)
         if __omg_this_was_annoying_I_am_false {
             var context = _CommitContext(
-                dom: JSKitDOMInteractor(root: .global),
-                scheduler: Scheduler(dom: JSKitDOMInteractor(root: .global)),
+                dom: JSKitDOMInteractor(),
+                scheduler: Scheduler(dom: JSKitDOMInteractor()),
                 currentFrameTime: 0
             )
             // force inclusion of types used in mount

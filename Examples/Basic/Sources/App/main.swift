@@ -1,3 +1,3 @@
 import ElementaryUI
 
-App().mount(in: .cssSelector("#app"))
+Application(AppView()).mount(in: "#app")

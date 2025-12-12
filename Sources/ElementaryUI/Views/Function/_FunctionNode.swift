@@ -116,7 +116,7 @@ where Value: __FunctionView, ChildNode: _Reconcilable, ChildNode == Value.Body._
 
 extension _FunctionNode: _Reconcilable {
 
-    public func collectChildren(_ ops: inout ContainerLayoutPass, _ context: inout _CommitContext) {
+    public func collectChildren(_ ops: inout _ContainerLayoutPass, _ context: inout _CommitContext) {
         child?.collectChildren(&ops, &context)
     }
 

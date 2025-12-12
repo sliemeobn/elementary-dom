@@ -23,6 +23,9 @@ struct Counter {
 
 *Coming soon*
 
+## Mounting an application
+- ``Application``
+
 ## Defining views
 
 - ``View()-macro``
@@ -37,3 +40,4 @@ struct Counter {
 ## Animations
 - ``withAnimation(_:_:)``
 - ``View/animation(_:value:)``
+- ``Animatable``

@@ -82,7 +82,7 @@ public final class _ConditionalNode {
 }
 
 extension _ConditionalNode: _Reconcilable {
-    public func collectChildren(_ ops: inout ContainerLayoutPass, _ context: inout _CommitContext) {
+    public func collectChildren(_ ops: inout _ContainerLayoutPass, _ context: inout _CommitContext) {
         switch state {
         case .a(let a):
             a.collectChildren(&ops, &context)
@@ -139,7 +139,7 @@ extension _ConditionalNode: _Reconcilable {
     }
 }
 
-extension ContainerLayoutPass {
+extension _ContainerLayoutPass {
     mutating func withRemovalTracking(_ block: (inout Self) -> Void) -> Bool {
         let index = entries.count
         block(&self)

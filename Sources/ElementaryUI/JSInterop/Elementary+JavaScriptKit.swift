@@ -61,11 +61,7 @@ final class JSKitDOMInteractor: DOM.Interactor {
     private let jsQueueMicrotask = JSObject.global.queueMicrotask.function!
     private let jsPerformance = JSObject.global.performance.object!
 
-    let root: DOM.Node
-
-    init(root: JSObject) {
-        self.root = .init(root)
-
+    init() {
         #if hasFeature(Embedded)
         if __omg_this_was_annoying_I_am_false {
             // NOTE: this is just to force inclusion of some types that would otherwise crash the 6.2 compiler
@@ -275,6 +271,13 @@ final class JSKitDOMInteractor: DOM.Interactor {
             x: window.scrollX.number ?? 0,
             y: window.scrollY.number ?? 0
         )
+    }
+
+    func querySelector(_ selector: String) -> DOM.Node? {
+        guard let element = jsDocument.querySelector(selector).object else {
+            return nil
+        }
+        return DOM.Node(element)
     }
 }
 

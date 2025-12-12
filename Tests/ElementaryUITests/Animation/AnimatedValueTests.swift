@@ -224,8 +224,8 @@ struct TestValue: AnimatableVectorConvertible, ExpressibleByIntegerLiteral {
         Float(value).animatableVector
     }
 
-    init(_ animatableVector: AnimatableVector) {
-        self.value = Int(Float(animatableVector))
+    init(_animatableVector animatableVector: AnimatableVector) {
+        self.value = Int(Float(_animatableVector: animatableVector))
     }
 }
 

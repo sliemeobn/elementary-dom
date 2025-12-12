@@ -1,5 +1,5 @@
 // TODO: move to a better place, maybe use a span with lifecycle stuff
-public struct ContainerLayoutPass: ~Copyable {
+public struct _ContainerLayoutPass: ~Copyable {
     var entries: [Entry]
     private(set) var isAllRemovals: Bool = true
     private(set) var isAllAdditions: Bool = true
