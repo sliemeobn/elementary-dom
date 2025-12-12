@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://elementary-swift.github.io/assets/elementary-logo.svg" width="100px" alt="Elementary Logo">
+  <img src="https://elementary-swift.github.io/assets/elementary-logo.svg" width="125px" alt="Elementary Logo">
 </p>
 
 # ElementaryUI: A SwiftUI-inspired frontend framework 
