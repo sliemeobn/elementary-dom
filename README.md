@@ -34,6 +34,8 @@ struct Counter {
 
 *Coming soon*
 
+[API docs](https://swiftpackageindex.com/elementary-swift/elementary-ui/documentation)
+
 ## Example
 
 **[Check out the "Swiftle" demo app!](/Examples/Swiftle/)**
