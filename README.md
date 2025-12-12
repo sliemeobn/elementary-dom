@@ -4,6 +4,9 @@
 
 # ElementaryUI: A SwiftUI-inspired frontend framework 
 
+[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Felementary-swift%2Felementary-ui%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/elementary-swift/elementary-ui)
+[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Felementary-swift%2Felementary-ui%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/elementary-swift/elementary-ui)
+
 ElementaryUI brings declarative Swift applications to the browser with WebAssembly. With familiar APIs, built-in reactivity, and a magical animation system, you can create beautiful web apps with a few lines of Swift code. The framework is fully compatible with [Embedded Swift](https://docs.swift.org/embedded/documentation/embedded/), so your wasm binaries are measured in kB instead of MB.
 
 ```swift
