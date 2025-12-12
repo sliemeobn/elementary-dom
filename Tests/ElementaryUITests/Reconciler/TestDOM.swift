@@ -128,6 +128,10 @@ final class TestDOM: DOM.Interactor {
         self.root = DOM.Node(NodeRef(kind: .element(ElementData(tag: ""))))
     }
 
+    func querySelector(_ selector: String) -> DOM.Node? {
+        fatalError("Not implemented")
+    }
+
     func makeEventSink(_ handler: @escaping (String, DOM.Event) -> Void) -> DOM.EventSink {
         .init(EventSink(handler))
     }
@@ -374,7 +378,7 @@ func trackUpdating(@HTMLBuilder _ view: @escaping () -> some View, toggle: () ->
 
 extension TestDOM {
     func mount(_ view: @escaping () -> some View) {
-        _ = App(dom: self, domRoot: self.root, appView: DeferredResolutionView(root: view))
+        _ = ApplicationRuntime(dom: self, domRoot: self.root, appView: DeferredResolutionView(root: view))
     }
 }
 

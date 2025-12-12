@@ -272,6 +272,13 @@ final class JSKitDOMInteractor: DOM.Interactor {
             y: window.scrollY.number ?? 0
         )
     }
+
+    func querySelector(_ selector: String) -> DOM.Node? {
+        guard let element = jsDocument.querySelector(selector).object else {
+            return nil
+        }
+        return DOM.Node(element)
+    }
 }
 
 private extension DOM.Animation.KeyframeEffect {

@@ -32,6 +32,10 @@ public extension View {
 
 public enum GlobalDocument {
     static let document = JSObject.global.document
+
+    static var body: DOM.Node {
+        DOM.Node(document.body.object!)
+    }
 }
 
 extension GlobalDocument {

@@ -1,16 +1,11 @@
+// TODO: rethink this whole API - maybe once usage of async is clearer
+// TODO: there should probably be a way to "unmount" the app
 // TODO: main-actor stuff very unclear at the moment, ideally not needed at all
-final class App<DOMInteractor: DOM.Interactor> {
+// TODO: find a good name for this
+final class ApplicationRuntime<DOMInteractor: DOM.Interactor> {
     private var rootNode: _ElementNode?
     private var scheduler: Scheduler
 
-    var rootTransaction: Transaction {
-        var tx = Transaction()
-        tx.disablesAnimation = true
-        return tx
-    }
-
-    // TODO: rethink this whole API - maybe once usage of async is clearer
-    // there should probably be a way to "unmount" the app
     init(dom: DOMInteractor) {
         self.scheduler = Scheduler(dom: dom)
         self.rootNode = nil
@@ -20,6 +15,9 @@ final class App<DOMInteractor: DOM.Interactor> {
     // https://github.com/swiftlang/swift/issues/78150
     convenience init<RootView: View>(dom: DOMInteractor, domRoot: DOM.Node, appView rootView: consuming RootView) {
         self.init(dom: dom)
+
+        var rootTransaction = Transaction()
+        rootTransaction.disablesAnimation = true
 
         // TODO: defer running to a "async run" function that hosts the run loop?
         // wait until async stuff is solid for embedded wasm case

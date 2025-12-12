@@ -4,6 +4,7 @@ import Reactivity
 enum DOM {
     // TODO: remove anyobject and make reconcier runs generic over this
     protocol Interactor: AnyObject {
+
         func makeEventSink(_ handler: @escaping (String, Event) -> Void) -> EventSink
 
         func makePropertyAccessor(_ node: Node, name: String) -> PropertyAccessor
@@ -38,6 +39,9 @@ enum DOM {
         // New explicit child list operations
         func insertChild(_ child: Node, before sibling: Node?, in parent: Node)
         func removeChild(_ child: Node, from parent: Node)
+
+        // Document query APIs
+        func querySelector(_ selector: String) -> Node?
 
         // TODO: these are more scheduling APIs, but they kind of fit here...
         func requestAnimationFrame(_ callback: @escaping (Double) -> Void)

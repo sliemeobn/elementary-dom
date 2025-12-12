@@ -23,6 +23,9 @@ struct Counter {
 
 *Coming soon*
 
+## Mounting an application
+- ``Application``
+
 ## Defining views
 
 - ``View()-macro``

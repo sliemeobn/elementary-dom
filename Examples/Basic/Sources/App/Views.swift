@@ -6,7 +6,7 @@ extension EnvironmentValues {
 }
 
 @View
-struct App {
+struct AppView {
     @State var counters: [Int] = [1]
     @State var nextCounterName = 1
     @State var data = SomeData()
