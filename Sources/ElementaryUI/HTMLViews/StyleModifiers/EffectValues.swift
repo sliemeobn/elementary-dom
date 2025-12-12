@@ -120,16 +120,14 @@ extension CSSTransform {
             return CSSTransform(.rotation(self))
         }
 
-        init(_ animatableVector: AnimatableVector) {
-            guard case .d4(let value) = animatableVector else {
-                fatalError("Unsupported animatable vector")
-            }
-            self.angle = Angle(degrees: Double(value[0]))
-            self.anchor = UnitPoint(x: value[1], y: value[2])
+        init(_animatableVector animatableVector: AnimatableVector) {
+            let simd = SIMD4<Float>(_animatableVector: animatableVector)
+            self.angle = Angle(degrees: Double(simd[0]))
+            self.anchor = UnitPoint(x: simd[1], y: simd[2])
         }
 
         var animatableVector: AnimatableVector {
-            .d4(SIMD4<Float>(Float(angle.degrees), Float(anchor.x), Float(anchor.y), 0))
+            SIMD4<Float>(Float(angle.degrees), Float(anchor.x), Float(anchor.y), 0).animatableVector
         }
     }
 }
@@ -148,16 +146,14 @@ extension CSSTransform {
             CSSTransform(.translation(self))
         }
 
-        init(_ animatableVector: AnimatableVector) {
-            guard case .d2(let x, let y) = animatableVector else {
-                fatalError("Unsupported animatable vector")
-            }
-            self.x = x
-            self.y = y
+        init(_animatableVector animatableVector: AnimatableVector) {
+            let simd = SIMD2(_animatableVector: animatableVector)
+            self.x = simd[0]
+            self.y = simd[1]
         }
 
         var animatableVector: AnimatableVector {
-            .d2(x, y)
+            SIMD2(x, y).animatableVector
         }
     }
 }
@@ -172,15 +168,12 @@ struct CSSOpacity {
 
 extension CSSOpacity: CSSAnimatable {
     var cssValue: CSSOpacity { self }
-    init(_ animatableVector: AnimatableVector) {
-        guard case .d1(let value) = animatableVector else {
-            fatalError("Unsupported animatable vector")
-        }
-        self.value = Double(value)
+    init(_animatableVector animatableVector: AnimatableVector) {
+        self.value = Double(_animatableVector: animatableVector)
     }
 
     var animatableVector: AnimatableVector {
-        .d1(Float(value))
+        value.animatableVector
     }
 }
 
@@ -206,16 +199,14 @@ struct CSSTranslate {
 
 extension CSSTranslate: CSSAnimatable {
     var cssValue: CSSTranslate { self }
-    init(_ animatableVector: AnimatableVector) {
-        guard case .d2(let x, let y) = animatableVector else {
-            fatalError("Unsupported animatable vector")
-        }
-        self.x = Double(x)
-        self.y = Double(y)
+    init(_animatableVector animatableVector: AnimatableVector) {
+        let simd = SIMD2(_animatableVector: animatableVector)
+        self.x = Double(simd[0])
+        self.y = Double(simd[1])
     }
 
     var animatableVector: AnimatableVector {
-        .d2(Float(x), Float(y))
+        SIMD2(Float(x), Float(y)).animatableVector
     }
 }
 
@@ -240,15 +231,12 @@ struct CSSWidth {
 
 extension CSSWidth: CSSAnimatable {
     var cssValue: CSSWidth { self }
-    init(_ animatableVector: AnimatableVector) {
-        guard case .d1(let value) = animatableVector else {
-            fatalError("Unsupported animatable vector")
-        }
-        self.value = Double(value)
+    init(_animatableVector animatableVector: AnimatableVector) {
+        self.value = Double(_animatableVector: animatableVector)
     }
 
     var animatableVector: AnimatableVector {
-        .d1(Float(value))
+        value.animatableVector
     }
 }
 
@@ -272,15 +260,12 @@ struct CSSHeight {
 
 extension CSSHeight: CSSAnimatable {
     var cssValue: CSSHeight { self }
-    init(_ animatableVector: AnimatableVector) {
-        guard case .d1(let value) = animatableVector else {
-            fatalError("Unsupported animatable vector")
-        }
-        self.value = Double(value)
+    init(_animatableVector animatableVector: AnimatableVector) {
+        self.value = Double(_animatableVector: animatableVector)
     }
 
     var animatableVector: AnimatableVector {
-        .d1(Float(value))
+        value.animatableVector
     }
 }
 

@@ -120,7 +120,7 @@ struct AnimatedValue<Value: AnimatableVectorConvertible>: ~Copyable {
         }
 
         if isAnimating {
-            self.currentAnimationValue = Value(animationBase + animatedVector)
+            self.currentAnimationValue = Value(_animatableVector: animationBase + animatedVector)
         } else {
             // NOTE: avoid floating point weirdness
             self.currentAnimationValue = self.currentTarget
@@ -160,7 +160,7 @@ struct AnimatedValue<Value: AnimatableVectorConvertible>: ~Copyable {
                 results.append(self.currentTarget)
                 shouldBailEarly = true
             } else {
-                results.append(Value(base + animatedVector))
+                results.append(Value(_animatableVector: base + animatedVector))
             }
 
             if shouldBailEarly {

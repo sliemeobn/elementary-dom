@@ -40,3 +40,4 @@ struct Counter {
 ## Animations
 - ``withAnimation(_:_:)``
 - ``View/animation(_:value:)``
+- ``Animatable``

@@ -20,6 +20,8 @@ extension View {
     ///
     /// - Parameter value: The opacity value, from 0 (invisible) to 1 (fully visible).
     /// - Returns: A view with the specified opacity.
+    ///
+    /// - Note: Changes to opacity are automatically animated when done in an animated transaction.
     public func opacity(_ value: Double) -> some View<Self.Tag> {
         DOMEffectView<OpacityModifier, Self>(value: CSSOpacity(value: value), wrapped: self)
     }
@@ -48,6 +50,8 @@ extension View {
     ///   - angle: The angle to rotate by.
     ///   - anchor: The point around which to rotate. Default is `.center`.
     /// - Returns: A view rotated by the specified angle.
+    ///
+    /// - Note: Changes to rotation are automatically animated when done in an animated transaction.
     public func rotationEffect(_ angle: Angle, anchor: UnitPoint = .center) -> some View<Self.Tag> {
         DOMEffectView<TransformModifier, Self>(value: .rotation(CSSTransform.Rotation(angle: angle, anchor: anchor)), wrapped: self)
     }
@@ -75,6 +79,8 @@ extension View {
     ///   - x: The horizontal offset in pixels. Default is 0.
     ///   - y: The vertical offset in pixels. Default is 0.
     /// - Returns: A view offset by the specified amounts.
+    ///
+    /// - Note: Changes to offset are automatically animated when done in an animated transaction.
     public func offset(x: Float = 0, y: Float = 0) -> some View<Self.Tag> {
         DOMEffectView<TransformModifier, Self>(value: .translation(CSSTransform.Translation(x: x, y: y)), wrapped: self)
     }

@@ -1,4 +1,34 @@
-/// A protocol for types that can be animated.
+/// A type that describes how to animate a value.
+///
+/// Conform your view to this protocol to enable custom animations.
+///
+/// ## Creating Custom Animation
+///
+/// To make a view animatable, implement the `animatableValue` property that
+/// converts your view's properties into an animatable vector type:
+///
+/// ```swift
+/// @View
+/// struct MyAnimatedView {
+///     var x: Double
+///     var y: Double
+///
+///     var body: some View {
+///         p { "x: \(x) y: \(y)" }
+///     }
+/// }
+///
+/// extension MyAnimatedView: Animatable {
+///     var animatableValue: SIMD2<Float> {
+///         get {
+///             SIMD2(Float(x), Float(y))
+///         }
+///         set {
+///             x = Double(newValue[0])
+///             y = Double(newValue[1])
+///         }
+///     }
+/// }
 /// ```
 public protocol Animatable {
     /// The type that represents the animatable data.
@@ -8,86 +38,17 @@ public protocol Animatable {
     var animatableValue: Value { get set }
 }
 
-/// A protocol for types that can be converted to and from an animatable vector.
-///
-/// Types conforming to this protocol can be used with the animation system.
-/// The protocol provides conversion between Swift types and ``AnimatableVector``,
-/// which the framework uses for interpolation.
-///
-/// ## Implementation
-///
-/// ```swift
-/// struct Size: AnimatableVectorConvertible {
-///     var width: Float
-///     var height: Float
-///
-///     var animatableVector: AnimatableVector {
-///         .d2(width, height)
-///     }
-///
-///     init(_ vector: AnimatableVector) {
-///         guard case .d2(let w, let h) = vector else {
-///             fatalError("Invalid vector dimension")
-///         }
-///         self.width = w
-///         self.height = h
-///     }
-/// }
-/// ```
+/// A type that can be converted to and from an animatable vector.
 public protocol AnimatableVectorConvertible: Equatable {
+
     /// Creates a value from an animatable vector.
     ///
-    /// - Parameter animatableVector: The vector representation to convert from.
-    init(_ animatableVector: AnimatableVector)
+    /// - Parameter animatableVector: The animatable vector to convert from.
+    ///
+    /// - Note: Calling this initializer with a vector that has a mismatching dimensions
+    ///   will cause a fatal error.
+    init(_animatableVector animatableVector: AnimatableVector)
 
     /// The animatable vector representation of this value.
     var animatableVector: AnimatableVector { get }
-}
-
-extension AnimatableVectorConvertible where Self: Animatable, Value == Self {
-    public typealias Value = Self
-    public var animatableValue: Self {
-        get { self }
-        set { self = newValue }
-    }
-}
-
-extension Double: AnimatableVectorConvertible, Animatable {
-    public init(_ animatableVector: AnimatableVector) {
-        guard case .d1(let value) = animatableVector else {
-            fatalError("Unsupported animatable vector")
-        }
-        self = Double(value)
-    }
-
-    public var animatableVector: AnimatableVector {
-        .d1(Float(self))
-    }
-}
-
-extension Float: AnimatableVectorConvertible, Animatable {
-    public init(_ animatableVector: AnimatableVector) {
-        guard case .d1(let value) = animatableVector else {
-            fatalError("Unsupported animatable vector")
-        }
-        self = value
-    }
-
-    public var animatableVector: AnimatableVector {
-        .d1(self)
-    }
-}
-
-struct EmptyAnimatableData: AnimatableVectorConvertible {
-    init() {}
-
-    init(_ animatableVector: AnimatableVector) {
-        guard case .d0 = animatableVector else {
-            fatalError("Unsupported animatable vector")
-        }
-    }
-
-    var animatableVector: AnimatableVector {
-        .d0
-    }
 }

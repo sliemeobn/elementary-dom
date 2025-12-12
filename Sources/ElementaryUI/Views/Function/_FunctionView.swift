@@ -42,7 +42,7 @@ public extension __FunctionView where __ViewState == Void {
 
 public extension __FunctionView {
     static func __getAnimatableData(from view: borrowing Self) -> AnimatableVector {
-        .d0
+        .empty
     }
 
     static func __setAnimatableData(_ data: AnimatableVector, to view: inout Self) {
@@ -57,7 +57,7 @@ public extension __FunctionView where Self: Animatable {
     }
 
     static func __setAnimatableData(_ data: AnimatableVector, to view: inout Self) {
-        view.animatableValue = Value(data)
+        view.animatableValue = Value(_animatableVector: data)
     }
 }
 
