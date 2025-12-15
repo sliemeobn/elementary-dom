@@ -7,9 +7,9 @@ JSKITDIR="$SCRIPT_DIR/../.build/checkouts/JavaScriptKit"
 VENDORDIR="$SCRIPT_DIR/../BrowserRuntime/src/vendored/javascriptkit"
 
 cd "$JSKITDIR"
-pnpm install --frozen-lockfile
-pnpm i -D tslib # TODO: remove this once fixed in JavaScriptKit
-pnpm build
+npm ci
+npm i -D tslib # TODO: remove this once fixed in JavaScriptKit
+npm run build
 
 rm -rf "$VENDORDIR"/*
 cp Runtime/lib/* "$VENDORDIR/"
