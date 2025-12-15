@@ -1,6 +1,6 @@
 {
   "name": "elementary-ui-browser-runtime",
-  "description": "Bundled Browser runtime for ElementaryUI",
+  "description": "Bundled browser runtime for ElementaryUI",
   "type": "module",
   "exports": {
     ".": {
@@ -15,10 +15,10 @@
   "author": "",
   "license": "Apache-2.0 AND MIT",
   "peerDependencies": {
-    "@bjorn3/browser_wasi_shim": "^0.4.2"
+    "@bjorn3/browser_wasi_shim": "~0.4.2"
   },
   "devDependencies": {
-    "@bjorn3/browser_wasi_shim": "^0.4.2",
+    "@bjorn3/browser_wasi_shim": "~0.4.2",
     "tsdown": "^0.18.0",
     "typescript": "^5.9.3"
   }
