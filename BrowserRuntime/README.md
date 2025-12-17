@@ -4,14 +4,27 @@ Bundled JavaScriptKit + WASI bootstrap for running ElementaryUI WebAssembly appl
 
 ## What is this?
 
-This package provides a bit of glue code to easily run.
+This package provides JavaScript glue code to run ElementaryUI WebAssembly applications in the browser.
 
 > [!IMPORTANT]
-> If you are not targetting an ElementaryUI vite setup, you should probably use the `swift package js` plugin from JavaScriptKit instead.
+> If you are not targeting an ElementaryUI Vite setup, you should use the JavaScriptKit `swift package js` plugin instead.
 
 - **JavaScriptKit Runtime** - Swift-to-JavaScript interop layer (vendored from [JavaScriptKit](https://github.com/swiftwasm/JavaScriptKit))
-- **WASI Bootstrap** - A minimal WASI bootstrap for browser environments ([@bjorn3/browser_wasi_shim](https://github.com/bjorn3/browser_wasi_shim))
+- **WASI Bootstrap** - Minimal WASI setup for browser environments ([@bjorn3/browser_wasi_shim](https://github.com/bjorn3/browser_wasi_shim))
+
+## Usage
+```ts
+import { runApplication } from "elementary-ui-browser-runtime";
+
+await runApplication(async (imports) => {
+  const { instance } = await WebAssembly.instantiateStreaming(
+    fetch("./App.wasm"),
+    imports
+  );
+  return instance;
+});
+```
 
 ## License
 
-This package contains code under multiple licenses. see [LICENSE](LICENSE.md)
+This package contains code under multiple licenses. See [LICENSE](LICENSE.md) for details.

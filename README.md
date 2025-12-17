@@ -100,6 +100,8 @@ This package is generally licensed as [Apache 2](LICENSE).
 The `Reactivity` module is inspired by the Swift stdlib's `Observation` framework, and code in `ReactivityMacros` is directly derived from it ([source](https://github.com/swiftlang/swift/tree/main/lib/Macros/Sources/ObservationMacros)).
 Find a copy of the Swift.org open source project license [here](LICENSE-swift_org.md).
 
+This repo also contains the [BrowserRuntime](BrowserRuntime) javascript package which bundles source code from [JavaScriptKit](https://github.com/swiftwasm/JavaScriptKit) (see [license](./BrowserRuntime/LICENSE.md))
+
 ---
 
 *SwiftUI is a trademark of Apple Inc. This project is not affiliated with or connected to Apple in any way.*
