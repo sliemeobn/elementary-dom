@@ -12,12 +12,10 @@ public final class _TransitionNode<T: Transition, V: View>: _Reconcilable {
         self.value = view
         placeholderView = PlaceholderContentView<T>(makeNodeFn: self.makePlaceholderNode)
 
-        if let animation = value.animation {
-            tx.transaction.animation = animation
-        }
+        let transitionAnimation = tx.transaction.disablesAnimation ? nil : tx.transaction.animation ?? value.animation
 
         // the idea is that with disablesAnimation set to true, only the top-level transition will be animated after a mount will be animated
-        guard tx.transaction.isAnimated == true else {
+        guard let transitionAnimation else {
             self.node = T.Body._makeNode(
                 self.value.transition.body(content: placeholderView!, phase: .identity),
                 context: context,
@@ -26,25 +24,29 @@ public final class _TransitionNode<T: Transition, V: View>: _Reconcilable {
             return
         }
 
-        let transaction = tx.transaction
-
-        tx.transaction.disablesAnimation = true
-        self.node = T.Body._makeNode(
-            self.value.transition.body(content: placeholderView!, phase: .willAppear),
-            context: context,
-            tx: &tx
-        )
+        tx.withModifiedTransaction(modifier: {
+            $0.disablesAnimation = true
+            $0.animation = transitionAnimation
+        }) { tx in
+            self.node = T.Body._makeNode(
+                self.value.transition.body(content: placeholderView!, phase: .willAppear),
+                context: context,
+                tx: &tx
+            )
+        }
 
         // NOTE: ideally we apply the animation before first-paint, but currently we DOM nodes mount their effect during commit
+        // IDEA: if we change DOM node creation and mount to in-line (during tx), we can apply the animation before frame flush
         tx.scheduler.registerAnimation(
-            AnyAnimatable { [self] context in
+            AnyAnimatable { [self] tx in
                 guard let node = self.node, let placeholderView = self.placeholderView else { return .completed }
-                context.transaction = transaction
-                T.Body._patchNode(
-                    self.value.transition.body(content: placeholderView, phase: .identity),
-                    node: node,
-                    tx: &context
-                )
+                tx.withModifiedTransaction(modifier: { $0.animation = transitionAnimation }) { tx in
+                    T.Body._patchNode(
+                        self.value.transition.body(content: placeholderView, phase: .identity),
+                        node: node,
+                        tx: &tx
+                    )
+                }
                 return .completed
             }
         )
@@ -76,23 +78,24 @@ public final class _TransitionNode<T: Transition, V: View>: _Reconcilable {
         guard let placeholderView = placeholderView else { return }
         switch op {
         case .startRemoval:
-            if let animation = value.animation {
-                tx.transaction.animation = animation
-            }
+            let transitionAnimation = tx.transaction.disablesAnimation ? nil : tx.transaction.animation ?? value.animation
 
-            guard tx.transaction.isAnimated == true else {
+            // if no animation is set, we just pass down removal op
+            guard let transitionAnimation else {
                 node?.apply(op, &tx)
                 return
             }
 
-            node?.apply(.markAsLeaving, &tx)
+            tx.withModifiedTransaction(modifier: { $0.animation = transitionAnimation }) { tx in
+                node?.apply(.markAsLeaving, &tx)
 
-            // the patch does not go past the placeholder, so this only animates the transition
-            T.Body._patchNode(
-                value.transition.body(content: placeholderView, phase: .didDisappear),
-                node: node!,
-                tx: &tx
-            )
+                // the patch does not go past the placeholder, so this only animates the transition
+                T.Body._patchNode(
+                    value.transition.body(content: placeholderView, phase: .didDisappear),
+                    node: node!,
+                    tx: &tx
+                )
+            }
 
             currentRemovalAnimationTime = tx.currentFrameTime
 
@@ -135,11 +138,5 @@ public final class _TransitionNode<T: Transition, V: View>: _Reconcilable {
         node = nil
         placeholderNode = nil
         additionalPlaceholderNodes.removeAll()
-    }
-}
-
-private extension Transaction {
-    var isAnimated: Bool {
-        animation != nil && !disablesAnimation
     }
 }
