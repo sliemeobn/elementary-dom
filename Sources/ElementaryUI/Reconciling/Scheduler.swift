@@ -63,7 +63,7 @@ final class Scheduler {
         // NOTE: this is a bit of a hack to scheduel function in the same transaction run if environment values change
         // we currently uses the same Reactivity tracking for environment changes, but they always happen during reconciliation
         guard ambientTransactionContext == nil else {
-            ambientTransactionContext!.addFunction(function, transaction: ambientTransactionContext!.transaction)
+            ambientTransactionContext!.addFunction(function)
             return
         }
 

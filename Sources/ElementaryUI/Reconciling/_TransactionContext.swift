@@ -1,7 +1,7 @@
 public struct _TransactionContext: ~Copyable {
     let scheduler: Scheduler
     let currentFrameTime: Double
-    var transaction: Transaction
+    private(set) var transaction: Transaction
 
     private(set) var pendingFunctions: PendingFunctionQueue
 
@@ -17,8 +17,16 @@ public struct _TransactionContext: ~Copyable {
         self.transaction = transaction ?? .init()
     }
 
-    mutating func addFunction(_ function: AnyFunctionNode, transaction: Transaction) {
+    mutating func addFunction(_ function: AnyFunctionNode) {
         pendingFunctions.registerFunctionForUpdate(function, transaction: transaction)
+    }
+
+    // TODO: review this whole ordeal
+    mutating func withModifiedTransaction(_ modifier: (inout Transaction) -> Void, run operation: (inout _TransactionContext) -> Void) {
+        let previous = self.transaction
+        modifier(&self.transaction)
+        operation(&self)
+        self.transaction = previous
     }
 
     consuming func drain() {
