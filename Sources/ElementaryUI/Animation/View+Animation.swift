@@ -27,7 +27,7 @@ struct _TransactionModifierView<Wrapped: View, Value: Equatable>: View {
     ) {
         if node.state.value != view.value {
             node.state.value = view.value
-            tx.withModifiedTransaction(modifier: view.transactionModifier) { tx in
+            tx.withModifiedTransaction(view.transactionModifier) { tx in
                 Wrapped._patchNode(view.view, node: node.child, tx: &tx)
             }
         } else {

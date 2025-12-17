@@ -22,10 +22,10 @@ public struct _TransactionContext: ~Copyable {
     }
 
     // TODO: review this whole ordeal
-    mutating func withModifiedTransaction(modifier: (inout Transaction) -> Void, _ body: (inout _TransactionContext) -> Void) {
+    mutating func withModifiedTransaction(_ modifier: (inout Transaction) -> Void, run operation: (inout _TransactionContext) -> Void) {
         let previous = self.transaction
         modifier(&self.transaction)
-        body(&self)
+        operation(&self)
         self.transaction = previous
     }
 

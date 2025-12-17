@@ -24,10 +24,10 @@ public final class _TransitionNode<T: Transition, V: View>: _Reconcilable {
             return
         }
 
-        tx.withModifiedTransaction(modifier: {
+        tx.withModifiedTransaction {
             $0.disablesAnimation = true
             $0.animation = transitionAnimation
-        }) { tx in
+        } run: { tx in
             self.node = T.Body._makeNode(
                 self.value.transition.body(content: placeholderView!, phase: .willAppear),
                 context: context,
@@ -40,7 +40,9 @@ public final class _TransitionNode<T: Transition, V: View>: _Reconcilable {
         tx.scheduler.registerAnimation(
             AnyAnimatable { [self] tx in
                 guard let node = self.node, let placeholderView = self.placeholderView else { return .completed }
-                tx.withModifiedTransaction(modifier: { $0.animation = transitionAnimation }) { tx in
+                tx.withModifiedTransaction {
+                    $0.animation = transitionAnimation
+                } run: { tx in
                     T.Body._patchNode(
                         self.value.transition.body(content: placeholderView, phase: .identity),
                         node: node,
@@ -86,7 +88,9 @@ public final class _TransitionNode<T: Transition, V: View>: _Reconcilable {
                 return
             }
 
-            tx.withModifiedTransaction(modifier: { $0.animation = transitionAnimation }) { tx in
+            tx.withModifiedTransaction {
+                $0.animation = transitionAnimation
+            } run: { tx in
                 node?.apply(.markAsLeaving, &tx)
 
                 // the patch does not go past the placeholder, so this only animates the transition
