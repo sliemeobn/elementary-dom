@@ -39,7 +39,7 @@ struct Counter {
 >
 > The ambition is simple: make Swift a first-class option for building serious web applications, and keep the project healthy for the long run.
 > 
-> If you want this to exist and keep improving, sponsorship funds the work.
+> If you want this to exist and keep improving, sponsorship funds the work.  
 > [![](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=%23fe8e86)](https://github.com/sponsors/sliemeobn)
 
 ## Get Started
