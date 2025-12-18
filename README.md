@@ -2,12 +2,21 @@
   <img src="https://elementary-swift.github.io/assets/elementary-logo.svg" width="125px" alt="Elementary Logo">
 </p>
 
-# ElementaryUI: A SwiftUI-inspired frontend framework 
+# ElementaryUI - A Swift Frontend Framework
 
 [![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Felementary-swift%2Felementary-ui%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/elementary-swift/elementary-ui)
 [![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Felementary-swift%2Felementary-ui%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/elementary-swift/elementary-ui)
 
-ElementaryUI brings declarative Swift applications to the browser with WebAssembly. With familiar APIs, built-in reactivity, and a magical animation system, you can create beautiful web apps with a few lines of Swift code. The framework is fully compatible with [Embedded Swift](https://docs.swift.org/embedded/documentation/embedded/), so your wasm binaries are measured in kB instead of MB.
+## Features
+
+- 🌐 **Swift in the Browser** - Run declarative Swift applications natively in the browser with WebAssembly
+- 🎨 **SwiftUI-inspired APIs** - Familiar and intuitive syntax for building web UIs
+- ⚡ **Built-in Reactivity** - Automatic state management with `@State`, `@Environment`, and `@Reactive`
+- 📦 **Tiny Binaries** - Full Embedded Swift support means kB-sized wasm bundles instead of MB
+- ✨ **Magical Animations** - Powerful CSS-based animation system including automatic FLIP transitions
+- 🚀 **Vite-Powered Development** - Fast dev server with hot reload for rapid iteration
+
+<br>
 
 ```swift
 @View
@@ -24,13 +33,13 @@ struct Counter {
 }
 ```
 
-> [!IMPORTANT]
-> ElementaryUI is a passion project under active development.\
-> Expect sharp edges, APIs may change, and things may break while I balance performance, ergonomics, and feature set.
+> [!NOTE]
+> ElementaryUI is an actively developed passion project in its early days.
+> Expect sharp edges, APIs may change, and things may break as I balance performance, ergonomics, and feature set.
 >
-> Nothing is stopping us from having a viable, fully featured, client-side web frontend library powered by Swift.
+> The ambition is simple: make Swift a first-class option for building serious web applications, and keep the project healthy for the long run.
 > 
-> If you want to see this come to life, sponsorship is sincerely appreciated 🙏\
+> If you want this to exist and keep improving, sponsorship funds the work.
 > [![](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=%23fe8e86)](https://github.com/sponsors/sliemeobn)
 
 ## Get Started
@@ -78,7 +87,7 @@ Swift 6.2 or later with matching *Swift SDKs for WebAssembly* from [swift.org](h
 - more unit testing (FLIP handling, animations, reactivity, ...)
 - implement @ViewEquatableIgnored
 - split out JavaScriptKit stuff in separate module to contain spread, maybe one day we can switch to faster interop somehow
-- add basic docs, a good intro readme, and push a 0.1 out the door! (probably best to wait for Swift 6.2 to drop)
+- ~~add basic docs, a good intro readme, and push a 0.1 out the door! (probably best to wait for Swift 6.2 to drop)~~
 - a router implementation (probably in extra module?)
 - maybe conditionally support @Observable for non-embedded builds?
 - ~~figure out why `@Environment` with optional `ReactiveObject` does not build in embedded~~
@@ -88,7 +97,7 @@ Swift 6.2 or later with matching *Swift SDKs for WebAssembly* from [swift.org](h
 - ~~make printing work without WASI (maybe pipe putchar through to JavaScript?)~~
 - isolation and @MainActor stuff for reusable types (server-side rendering and client apps - probably never quite possible to have same types render "multi-threaded" server side and stay single-threaded client side....)
 - ~~decide whether the current idea of `Views` flattening themselves into renderable types is even necessary, or if views should just "apply" themselves into the reconciler - might be a bit messier, but maybe faster and more flexible~~
-- move all elementary repos under one project roof and use a traits-based, single "ElementaryUI" top-level package (or similar)
+- ~~move all elementary repos under one project roof and use a traits-based, single "ElementaryUI" top-level package (or similar)~~
 
 ### Embedded Swift for WASM waitlist
 
@@ -104,7 +113,7 @@ This package is generally licensed as [Apache 2](LICENSE).
 The `Reactivity` module is inspired by the Swift stdlib's `Observation` framework, and code in `ReactivityMacros` is directly derived from it ([source](https://github.com/swiftlang/swift/tree/main/lib/Macros/Sources/ObservationMacros)).
 Find a copy of the Swift.org open source project license [here](LICENSE-swift_org.md).
 
-This repo also contains the [BrowserRuntime](BrowserRuntime) javascript package which bundles source code from [JavaScriptKit](https://github.com/swiftwasm/JavaScriptKit) (see [license](./BrowserRuntime/LICENSE.md))
+This repo also contains the [BrowserRuntime](BrowserRuntime) JavaScript package which bundles source code from [JavaScriptKit](https://github.com/swiftwasm/JavaScriptKit) (see [license](./BrowserRuntime/LICENSE.md))
 
 ---
 
