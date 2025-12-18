@@ -33,6 +33,10 @@ struct Counter {
 > If you want to see this come to life, sponsorship is sincerely appreciated 🙏\
 > [![](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=%23fe8e86)](https://github.com/sponsors/sliemeobn)
 
+## Get Started
+
+Go from zero to Swift-in-the-browser in minutes, with the **[Vite Starter](https://github.com/elementary-swift/starter-vite)** template.
+
 ## Guides & Documentation
 
 *Coming soon*
@@ -41,7 +45,7 @@ struct Counter {
 
 ## Example
 
-**[Check out the "Swiftle" demo app!](/Examples/Swiftle/)**
+[Check out the "Swiftle" demo app](/Examples/Swiftle/)
 
 ## 🚧 Work In Progress 🚧
 Based on the [swift.org WebAssembly SDKs](https://forums.swift.org/t/swift-sdks-for-webassembly-now-available-on-swift-org/80405), [JavaScriptKit](https://github.com/swiftwasm/JavaScriptKit), and [Elementary](https://github.com/elementary-swift/elementary).
