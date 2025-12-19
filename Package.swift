@@ -31,7 +31,6 @@ let package = Package(
                 .enableUpcomingFeature("ExistentialAny"),
                 .enableUpcomingFeature("ConciseMagicFile"),
                 .enableUpcomingFeature("ImplicitOpenExistentials"),
-                .treatWarning("EmbeddedRestrictions", as: .warning),
             ]
         ),
         .target(
