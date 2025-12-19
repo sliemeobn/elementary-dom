@@ -1,4 +1,4 @@
-name: Build Embedded
+name: Build Embedded Snapshots
 
 on:
   push:
@@ -32,9 +32,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - uses: swift-actions/setup-swift@v3
+      - uses: vapor/swiftly-action@v0.2
         with:
-          swift-version: ${{ matrix.swift.version }}
+          toolchain: ${{ matrix.swift.version }}
 
       - name: Install Swift WASM SDK
         run: swift sdk install ${{ matrix.swift.wasm-sdk-url }} --checksum ${{ matrix.swift.wasm-sdk-checksum }}
