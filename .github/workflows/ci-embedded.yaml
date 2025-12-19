@@ -17,6 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
+      fail-fast: false
       matrix:
         swift:
           - version: 6.3-snapshot-2025-12-17
@@ -40,5 +41,4 @@ jobs:
         run: swift sdk install ${{ matrix.swift.wasm-sdk-url }} --checksum ${{ matrix.swift.wasm-sdk-checksum }}
 
       - name: Build
-        continue-on-error: true
         run: swift build --swift-sdk ${{ matrix.swift.wasm_sdk_id }}
