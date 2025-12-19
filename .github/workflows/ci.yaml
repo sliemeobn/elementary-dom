@@ -56,7 +56,7 @@ jobs:
       - name: Install Swift WASM SDK
         run: swift sdk install ${{ env.SDK_URL }} --checksum ${{ env.SDK-CHECKSUM }}
 
-      - run: swift build --swift-sdk $${{ env.SWIFT_SDK_ID }}
+      - run: swift build --swift-sdk ${{ env.SWIFT_SDK_ID }}
 
   bundled-runtime:
     runs-on: ubuntu-latest
