@@ -34,7 +34,7 @@ jobs:
         uses: actions/checkout@v4
       - uses: swift-actions/setup-swift@v3
         with:
-          swift-version: ${{ matrix.swift.SWIFT_VERSION }}
+          swift-version: ${{ matrix.swift.version }}
 
       - name: Install Swift WASM SDK
         run: swift sdk install ${{ matrix.swift.wasm-sdk-url }} --checksum ${{ matrix.swift.wasm-sdk-checksum }}
